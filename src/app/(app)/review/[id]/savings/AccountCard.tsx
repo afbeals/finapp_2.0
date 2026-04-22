@@ -40,7 +40,7 @@ const AccountRowHeader = styled.button.withConfig({
   &:hover { background: ${colors.bg}; }
 `;
 
-const AccountIcon = styled.span`font-size: 22px; flex-shrink: 0;`;
+const AccountIcon = styled.span`font-size: ${font.size['2xl']}; flex-shrink: 0;`;
 
 const AccountName = styled.span`
   flex: 1;
@@ -67,7 +67,7 @@ const MetaValue = styled.span.withConfig({
 const ChevronIcon = styled.span.withConfig({
   shouldForwardProp: (p) => p !== 'open',
 })<{ open: boolean }>`
-  font-size: 12px;
+  font-size: ${font.size.sm};
   color: ${colors.textMuted};
   transform: ${({ open }) => open ? 'rotate(90deg)' : 'rotate(0deg)'};
   transition: transform 180ms ease;
@@ -94,7 +94,7 @@ const SnapKpi = styled.div`
 `;
 
 const SnapKpiLabel = styled.p`
-  font-size: 10px; font-weight: ${font.weight.semibold}; color: ${colors.textMuted};
+  font-size: ${font.size.xxs}; font-weight: ${font.weight.semibold}; color: ${colors.textMuted};
   text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 4px;
 `;
 

@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import styled from 'styled-components';
-import { colors, font, radius, spacing } from '@/styles/tokens';
+import { colors, font, radius, semanticColors, shadow, spacing } from '@/styles/tokens';
 import { useSessionStore } from '@/lib/store';
 import { apiPost } from '@/lib/api';
 
@@ -29,7 +29,7 @@ const Brand = styled(Link)`
 `;
 
 const BrandIcon = styled.span`
-  font-size: 18px;
+  font-size: ${font.size.xl};
 `;
 
 const BrandName = styled.span`
@@ -53,7 +53,7 @@ const MemberTrigger = styled.button`
   align-items: center;
   gap: ${spacing[2]};
   padding: 6px 10px;
-  border: 1px solid rgba(255,255,255,0.15);
+  border: 1px solid ${semanticColors.navbarOverlayMid};
   border-radius: ${radius.md};
   background: transparent;
   color: ${colors.navbarText};
@@ -63,7 +63,7 @@ const MemberTrigger = styled.button`
   transition: background 150ms ease;
 
   &:hover {
-    background: rgba(255,255,255,0.08);
+    background: ${semanticColors.navbarOverlayLight};
   }
 `;
 
@@ -72,12 +72,12 @@ const Avatar = styled.div.withConfig({
 })<{ color: string }>`
   width: 24px;
   height: 24px;
-  border-radius: 50%;
+  border-radius: ${radius.full};
   background: ${({ color }) => color};
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 11px;
+  font-size: ${font.size.xs};
   font-weight: ${font.weight.semibold};
   color: ${colors.surface};
   flex-shrink: 0;
@@ -91,7 +91,7 @@ const Dropdown = styled.div`
   background: ${colors.surface};
   border: 1px solid ${colors.border};
   border-radius: ${radius.lg};
-  box-shadow: 0 8px 24px rgba(15,23,42,0.12);
+  box-shadow: ${shadow.lg};
   overflow: hidden;
   z-index: 50;
 `;
@@ -139,13 +139,13 @@ const IconButton = styled(Link)`
   height: 36px;
   border-radius: ${radius.md};
   color: ${colors.navbarText};
-  font-size: 18px;
+  font-size: ${font.size.xl};
   text-decoration: none;
   transition: background 150ms ease;
   opacity: 0.8;
 
   &:hover {
-    background: rgba(255,255,255,0.08);
+    background: ${semanticColors.navbarOverlayLight};
     opacity: 1;
   }
 `;
@@ -183,7 +183,7 @@ export function Navbar() {
               {state.memberName?.[0] ?? '?'}
             </Avatar>
             {state.memberName ?? 'Select member'}
-            <span style={{ opacity: 0.6, fontSize: 10 }}>▼</span>
+            <span style={{ opacity: 0.6, fontSize: font.size.xxs }}>▼</span>
           </MemberTrigger>
 
           {open && (

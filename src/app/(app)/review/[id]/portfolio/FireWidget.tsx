@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import styled from 'styled-components';
-import { formatDollarsWhole, toCents, toDollars } from '@/lib/money';
+import { formatDollarsWhole, toCents, toDollars, toNumber } from '@/lib/money';
 import { fireNumber, yearsToFire } from '@/lib/fire';
 import { colors, semanticColors, font, spacing, radius } from '@/styles/tokens';
 import { ProgressBar } from '@/components/ui/ProgressBar';
@@ -70,11 +70,11 @@ export function FireWidget({ totalPortfolioValue, actualYearlyExpenses }: FireWi
   const [fireMonthlyContrib, setFireMonthlyContrib] = useState('3000');
   const [fireAnnualReturn, setFireAnnualReturn] = useState('7');
 
-  const fireExpenses = useActual ? actualYearlyExpenses : toCents(parseFloat(estimatedExpenses) || 0);
+  const fireExpenses = useActual ? actualYearlyExpenses : toCents(toNumber(estimatedExpenses));
   const fireTarget = fireNumber(fireExpenses);
   const firePct = Math.min(100, (totalPortfolioValue / Math.max(1, fireTarget)) * 100);
   const ytf = totalPortfolioValue > 0 && fireTarget > 0
-    ? yearsToFire(totalPortfolioValue, toCents(parseFloat(fireMonthlyContrib) || 0), (parseFloat(fireAnnualReturn) || 0) / 100, fireTarget)
+    ? yearsToFire(totalPortfolioValue, toCents(toNumber(fireMonthlyContrib)), toNumber(fireAnnualReturn) / 100, fireTarget)
     : Infinity;
 
   return (

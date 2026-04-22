@@ -1,9 +1,12 @@
 'use client';
 
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useState } from 'react';
 import styled from 'styled-components';
-import { colors, font, radius, spacing } from '@/styles/tokens';
+import { colors, font, radius, shadow, spacing } from '@/styles/tokens';
 import { apiGet } from '@/lib/api';
+import { InlineEdit } from '@/components/shared/InlineEdit';
+import { formatDollars, toCents, toNumber } from '@/lib/money';
+import { DTable, DThead, DTh, DTr, DTd } from '@/components/shared/DataTable/parts';
 
 // ─── Accordion shell ──────────────────────────────────────────────────────────
 
@@ -28,7 +31,7 @@ export const AccordionHeader = styled.button.withConfig({
   border-radius: ${radius.lg} ${radius.lg} 0 0;
 `;
 
-export const AccordionIcon = styled.span`font-size: 20px; flex-shrink: 0;`;
+export const AccordionIcon = styled.span`font-size: ${font.size['2xl']}; flex-shrink: 0;`;
 
 export const AccordionName = styled.span.withConfig({
   shouldForwardProp: (prop) => prop !== 'textColor',
@@ -68,53 +71,11 @@ export const AccordionChevron = styled.span.withConfig({
 
 export const AccordionBody = styled.div`background: ${colors.surface};`;
 
-// ─── Entry table ──────────────────────────────────────────────────────────────
+// ─── Entry table — canonical DataTable parts re-exported under accordion names ──
 
-export const EntryTable = styled.table`width: 100%; border-collapse: collapse;`;
-export const EntryThead = styled.thead`background: ${colors.bg};`;
-export const EntryTh = styled.th`
-  padding: 8px ${spacing[4]};
-  font-size: ${font.size.xs};
-  font-weight: ${font.weight.semibold};
-  color: ${colors.textMuted};
-  text-align: left;
-  border-bottom: 1px solid ${colors.border};
-  white-space: nowrap;
-  &:last-child { width: 36px; }
-`;
-export const EntryTr = styled.tr`
-  border-bottom: 1px solid ${colors.border};
-  &:last-of-type { border-bottom: none; }
-  &:hover { background: ${colors.bg}; }
-`;
-export const EntryTd = styled.td`
-  padding: 10px ${spacing[4]};
-  font-size: ${font.size.sm};
-  color: ${colors.textPrimary};
-  vertical-align: middle;
-`;
+export { DTable as EntryTable, DThead as EntryThead, DTh as EntryTh, DTr as EntryTr, DTd as EntryTd };
 
-// ─── Inline edit cell ─────────────────────────────────────────────────────────
-
-const EditableSpan = styled.span`
-  cursor: text;
-  border-radius: 4px;
-  padding: 2px 4px;
-  &:hover { background: ${colors.bg}; outline: 1px solid ${colors.border}; }
-`;
-
-const InlineInput = styled.input`
-  font-size: ${font.size.sm};
-  font-family: inherit;
-  color: ${colors.textPrimary};
-  background: ${colors.surface};
-  border: 1px solid ${colors.primary};
-  border-radius: 4px;
-  padding: 2px 6px;
-  width: 100%;
-  outline: none;
-  &:focus { box-shadow: 0 0 0 2px ${colors.primaryLight}; }
-`;
+// ─── Editable cell — delegates to shared InlineEdit ───────────────────────────
 
 export function EditableCell({
   value, onSave, isAmount, readOnly,
@@ -124,36 +85,28 @@ export function EditableCell({
   isAmount?: boolean;
   readOnly: boolean;
 }) {
-  const [editing, setEditing] = useState(false);
-  const [draft, setDraft] = useState(value);
-  const inputRef = useRef<HTMLInputElement>(null);
-
-  useEffect(() => {
-    if (editing) inputRef.current?.select();
-  }, [editing]);
-
-  function commit() {
-    setEditing(false);
-    if (draft !== value) onSave(draft);
+  if (isAmount) {
+    return (
+      <InlineEdit
+        value={value}
+        readOnly={readOnly}
+        type="currency"
+        align="left"
+        formatter={(v) => formatDollars(toCents(toNumber(v)))}
+        parser={(v) => String(toNumber(v))}
+        onSave={onSave}
+      />
+    );
   }
-
-  if (readOnly) return <span>{value || <span style={{ color: colors.textMuted }}>—</span>}</span>;
-
-  return editing ? (
-    <InlineInput
-      ref={inputRef}
-      value={draft}
-      onChange={(e) => setDraft(e.target.value)}
-      onBlur={commit}
-      onKeyDown={(e) => { if (e.key === 'Enter') commit(); if (e.key === 'Escape') { setDraft(value); setEditing(false); } }}
-      type={isAmount ? 'number' : 'text'}
-      step={isAmount ? '0.01' : undefined}
+  return (
+    <InlineEdit
+      value={value}
+      readOnly={readOnly}
+      type="text"
+      align="left"
+      placeholder="Add note…"
+      onSave={onSave}
     />
-  ) : (
-    <EditableSpan onClick={() => { setDraft(value); setEditing(true); }}>
-      {value || <span style={{ color: colors.textMuted, fontStyle: 'italic' }}>Add note…</span>}
-      <span style={{ fontSize: 10, color: colors.textMuted, opacity: 0.5, marginLeft: 3 }}>✎</span>
-    </EditableSpan>
   );
 }
 
@@ -202,7 +155,7 @@ export const AutocompleteDropdown = styled.ul`
   background: ${colors.surface};
   border: 1px solid ${colors.border};
   border-radius: ${radius.sm};
-  box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+  box-shadow: ${shadow.md};
   z-index: 50;
   list-style: none;
   padding: 4px 0;
@@ -242,10 +195,10 @@ export const TrashBtn = styled.button`
   background: none;
   border: none;
   cursor: pointer;
-  font-size: 15px;
+  font-size: ${font.size.md};
   color: ${colors.textMuted};
   padding: 2px 4px;
-  border-radius: 4px;
+  border-radius: ${radius.sm};
   &:hover { color: ${colors.danger}; background: ${colors.dangerLight}; }
 `;
 

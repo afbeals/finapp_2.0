@@ -64,6 +64,22 @@ import type {
   InvestmentsResponse, InvestmentCategoriesResponse, InvestmentAccountsResponse,
   ExpensesResponse, IncomeResponse, CategoriesResponse,
 } from '@/types/api';
+
+// Re-export for page consumers
+export type { InvestmentsResponse } from '@/types/api';
+
+// Extended savings response with historical data (returned by /api/reviews/[id]/savings)
+export interface PortfolioSavingsResponse {
+  accounts: { id: number }[];
+  allSnapshots: {
+    accountId: number;
+    deposits: number;
+    interest: number;
+    endingBalance: number;
+    review: { id: number; periodYear: number; periodMonth: number };
+  }[];
+  allReviews: { id: number; periodYear: number }[];
+}
 import type {
   Loan, LoanSnapshot, SavingsAccount, SavingsSnapshot, Vault, VaultSnapshot,
   ExpenseEntry, IncomeEntry, ExpenseCategory, InvestmentCategory, InvestmentAccount,
@@ -85,8 +101,8 @@ export const patchLoan = (loanId: number, fields: Partial<Pick<Loan, 'name' | 'r
   apiPatch(`/api/loans/${loanId}`, fields);
 
 // Savings
-export const getReviewSavings = (reviewId: string | number): Promise<SavingsResponse> =>
-  apiGet<SavingsResponse>(`/api/reviews/${reviewId}/savings`);
+export const getReviewSavings = (reviewId: string | number): Promise<PortfolioSavingsResponse> =>
+  apiGet<PortfolioSavingsResponse>(`/api/reviews/${reviewId}/savings`);
 
 export const putReviewSavings = (reviewId: string | number, snapshots: Partial<SavingsSnapshot>[]): Promise<{ snapshots: SavingsSnapshot[] }> =>
   apiPut(`/api/reviews/${reviewId}/savings`, snapshots);

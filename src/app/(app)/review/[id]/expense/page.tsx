@@ -121,7 +121,6 @@ export default function ExpensePage() {
       onNext={goNext}
       saving={saving}
       readOnly={readOnly}
-      hideFooter
     >
       <IncomeAccordion
         entries={income}

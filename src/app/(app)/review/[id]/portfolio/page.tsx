@@ -1,18 +1,20 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useParams } from 'next/navigation';
 import styled from 'styled-components';
 import { StepShell } from '@/components/review/StepShell';
 import { useStepNav } from '@/lib/useStepNav';
 import { useReviewStore } from '@/lib/store';
-import { formatDollars, formatDollarsWhole, toDollars } from '@/lib/money';
+import { formatDollarsWhole } from '@/lib/money';
 import { fireNumber } from '@/lib/fire';
 import { getReviewIncome, getReviewExpenses, getReviewInvestments, getReviewSavings, apiGet } from '@/lib/api';
-import { colors, font, spacing, radius } from '@/styles/tokens';
+import { colors, spacing } from '@/styles/tokens';
 import { LoadingState } from '@/components/shared/LoadingState';
 import { ProgressBar } from '@/components/ui/ProgressBar';
 import { PanelCard, PanelHead, PanelTitle, PanelSubtitle, PanelBody } from '@/components/ui/Card';
+import { KpiCard, KpiIcon, KpiBody, KpiLabel, KpiValue, KpiSub } from '@/components/ui/KpiCard';
+import { CircleProgress } from '@/components/ui/CircleProgress';
 import { FireWidget } from './FireWidget';
 import { WealthProjection } from './WealthProjection';
 import { AssetAllocationCard } from './AssetAllocationCard';
@@ -26,35 +28,6 @@ const KpiBanner = styled.div`
   gap: ${spacing[4]};
   margin-bottom: ${spacing[6]};
   @media (max-width: 768px) { grid-template-columns: 1fr; }
-`;
-
-const KpiCard = styled.div`
-  background: ${colors.surface};
-  border: 1px solid ${colors.border};
-  border-radius: ${radius.lg};
-  padding: ${spacing[4]} ${spacing[5]};
-  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-  display: flex;
-  align-items: flex-start;
-  gap: 14px;
-`;
-const KpiIcon = styled.span`font-size: 26px; flex-shrink: 0; margin-top: 2px;`;
-const KpiBody = styled.div`flex: 1;`;
-const KpiLabel = styled.p`
-  font-size: ${font.size.xs}; font-weight: ${font.weight.semibold};
-  color: ${colors.textMuted}; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 3px;
-`;
-const KpiValue = styled.p.withConfig({ shouldForwardProp: (p) => p !== 'tc' })<{ tc?: string }>`
-  font-size: ${font.size['2xl']}; font-weight: ${font.weight.bold};
-  color: ${({ tc }) => tc ?? colors.textPrimary}; line-height: 1; margin-bottom: 4px;
-`;
-const KpiSub = styled.p`font-size: ${font.size.xs}; color: ${colors.textMuted};`;
-
-const CircleWrap = styled.div`position: relative; width: 52px; height: 52px; flex-shrink: 0;`;
-const CircleSvg = styled.svg`transform: rotate(-90deg);`;
-const CircleLabel = styled.div`
-  position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
-  font-size: ${font.size.micro}; font-weight: ${font.weight.bold}; color: ${colors.success};
 `;
 
 // ─── Two-column layout ────────────────────────────────────────────────────────
@@ -93,16 +66,12 @@ export default function PortfolioPage() {
       getReviewSavings(reviewId),
       apiGet<{ reviews: { periodYear: number; totalIncome: number }[] }>('/api/reviews'),
     ]).then(([inv, inc, exp, sav, allReviews]) => {
-      const snapArr = Object.values((inv as { snapshots: Record<number, { value: number }> }).snapshots ?? {});
+      const snapArr = Object.values(inv.snapshots ?? {});
       setTotalPortfolio(snapArr.reduce((s, sn) => s + sn.value, 0));
       setTotalIncome((inc.entries ?? []).reduce((s, e) => s + e.amount, 0));
       setTotalExpenses((exp.entries ?? []).reduce((s, e) => s + e.amount, 0));
 
-      const savData = sav as unknown as {
-        accounts: { id: number }[];
-        allSnapshots: { accountId: number; deposits: number; interest: number; endingBalance: number; review: { id: number; periodYear: number; periodMonth: number } }[];
-        allReviews: { id: number; periodYear: number }[];
-      };
+      const savData = sav;
       const currentYear = savData.allReviews?.find((r) => r.id === Number(reviewId))?.periodYear ?? new Date().getFullYear();
       const ytdSnaps = (savData.allSnapshots ?? []).filter((s) => s.review.periodYear === currentYear);
       const hysaTotal = (savData.accounts ?? []).reduce((sum, acc) => {
@@ -122,23 +91,27 @@ export default function PortfolioPage() {
   }, [reviewId]);
 
   // Asset allocation: investments + HYSA + yearly income
-  const netWorth = totalPortfolio + hysa;
-  const allocationItems = [
+  const netWorth = useMemo(() => totalPortfolio + hysa, [totalPortfolio, hysa]);
+
+  const allocationItems = useMemo(() => [
     { label: 'Investments', value: totalPortfolio, color: colors.primary },
     { label: 'HYSA Savings', value: hysa, color: colors.success },
     { label: 'Yearly Income', value: ytdIncome, color: colors.warning },
-  ].filter((a) => a.value > 0);
+  ].filter((a) => a.value > 0), [totalPortfolio, hysa, ytdIncome]);
 
   // FIRE calc (for banner only)
   const actualYearlyExpenses = totalExpenses * 12;
-  const fireExpensesEstimated = 75000 * 100; // default estimated $75k in cents
+  const fireExpensesEstimated = 75000 * 100;
   const fireTarget = fireNumber(fireExpensesEstimated);
   const fireProgressPct = Math.min(100, (totalPortfolio / Math.max(1, fireTarget)) * 100);
 
   // YTD savings rate (from current review month)
-  const savingsRate = totalIncome > 0 ? ((totalIncome - totalExpenses) / totalIncome) * 100 : 0;
+  const savingsRate = useMemo(
+    () => totalIncome > 0 ? ((totalIncome - totalExpenses) / totalIncome) * 100 : 0,
+    [totalIncome, totalExpenses],
+  );
 
-  // Net worth YTD growth — approximate as ytdSaved + investment gains (we only have investments total)
+  // Net worth YTD growth — approximate as ytdSaved
   const ytdNetWorthGrowth = ytdSaved;
 
   if (loading) return <LoadingState centered />;
@@ -190,18 +163,7 @@ export default function PortfolioPage() {
               {formatDollarsWhole(totalIncome - totalExpenses)} saved of {formatDollarsWhole(totalIncome)} earned
             </KpiSub>
           </KpiBody>
-          <CircleWrap>
-            <CircleSvg width={52} height={52} viewBox="0 0 52 52">
-              <circle cx="26" cy="26" r="22" fill="none" stroke={colors.border} strokeWidth="5" />
-              <circle
-                cx="26" cy="26" r="22" fill="none"
-                stroke={colors.success} strokeWidth="5"
-                strokeDasharray={`${Math.min(100, savingsRate) / 100 * 138.2} 138.2`}
-                strokeLinecap="round"
-              />
-            </CircleSvg>
-            <CircleLabel>{savingsRate.toFixed(0)}%</CircleLabel>
-          </CircleWrap>
+          <CircleProgress value={Math.min(100, savingsRate)} color={colors.success} label={`${savingsRate.toFixed(0)}%`} />
         </KpiCard>
       </KpiBanner>
 

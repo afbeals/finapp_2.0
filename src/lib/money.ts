@@ -49,6 +49,12 @@ export function formatRate(rate: number): string {
   return `${(rate * 100).toFixed(2)}%`;
 }
 
+/** Parse a string to number, returning `fallback` if NaN. */
+export function toNumber(s: string, fallback = 0): number {
+  const n = parseFloat(s);
+  return Number.isNaN(n) ? fallback : n;
+}
+
 /** Parse a dollar string like "$1,234.56" to cents */
 export function parseDollarsToCents(input: string): number {
   const cleaned = input.replace(/[$,\s]/g, '');

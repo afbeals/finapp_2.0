@@ -93,11 +93,11 @@ const BadgeArea = styled.div`
 const QuarterlyBadge = styled.div`
   background: ${colors.warning};
   color: ${colors.surface};
-  font-size: 8px;
+  font-size: ${font.size.micro};
   font-weight: ${font.weight.bold};
   letter-spacing: 0.04em;
   padding: 2px 5px;
-  border-radius: 3px;
+  border-radius: ${radius.sm};
 `;
 
 type CircleStatus = 'current' | 'complete' | 'skipped' | 'pending' | 'quarterly';
@@ -107,7 +107,7 @@ const Circle = styled.button.withConfig({
 })<{ status: CircleStatus; clickable: boolean }>`
   width: ${CIRCLE_SIZE}px;
   height: ${CIRCLE_SIZE}px;
-  border-radius: 50%;
+  border-radius: ${radius.full};
   display: flex;
   align-items: center;
   justify-content: center;
@@ -152,7 +152,7 @@ const LabelLine = styled.span.withConfig({
   shouldForwardProp: (prop) => prop !== 'muted',
 })<{ muted?: boolean }>`
   display: block;
-  font-size: 10px;
+  font-size: ${font.size.xxs};
   font-weight: ${({ muted }) => muted ? font.weight.normal : font.weight.medium};
   color: ${({ muted }) => muted ? colors.textMuted : colors.textSecondary};
   line-height: 1.3;
@@ -209,14 +209,14 @@ const LegendDot = styled.div.withConfig({
 })<{ fill: string; stroke?: string }>`
   width: 10px;
   height: 10px;
-  border-radius: 50%;
+  border-radius: ${radius.full};
   background: ${({ fill }) => fill};
   border: 1.5px solid ${({ stroke, fill }) => stroke ?? fill};
   flex-shrink: 0;
 `;
 
 const LegendLabel = styled.span`
-  font-size: 10px;
+  font-size: ${font.size.xxs};
   color: ${colors.textMuted};
 `;
 
@@ -228,7 +228,7 @@ const LegendSkipBtn = styled.button`
   color: ${colors.danger};
   background: ${colors.surface};
   border: 1px solid ${colors.danger};
-  border-radius: 6px;
+  border-radius: ${radius.md};
   padding: 6px 12px;
   cursor: pointer;
   white-space: nowrap;

@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import styled from 'styled-components';
 import { formatDollars, toDollars } from '@/lib/money';
-import { colors, semanticColors, font, spacing, radius } from '@/styles/tokens';
+import { colors, semanticColors, font, spacing, radius, shadow } from '@/styles/tokens';
 import type { InvestmentAccount } from '@/types/entities';
 import {
   type Position,
@@ -22,7 +22,7 @@ const SectionWrap = styled.div`
   border: 1px solid ${colors.border};
   border-radius: ${radius.lg};
   margin-bottom: ${spacing[4]};
-  box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+  box-shadow: ${shadow.sm};
   overflow: hidden;
 `;
 
@@ -39,7 +39,7 @@ const SectionHeaderRow = styled.div.withConfig({ shouldForwardProp: (p) => p !==
 `;
 
 const Chevron = styled.span.withConfig({ shouldForwardProp: (p) => p !== 'open' && p !== 'green' })<{ open: boolean; green?: boolean }>`
-  font-size: 11px;
+  font-size: ${font.size.xs};
   color: ${({ green }) => green ? semanticColors.successTextMedium : colors.primary};
   transform: ${({ open }) => open ? 'rotate(90deg)' : 'none'};
   transition: transform 0.15s;
@@ -62,28 +62,28 @@ const HeaderStats = styled.div`
 `;
 
 const HStat = styled.div`display: flex; flex-direction: column; gap: 1px;`;
-const HStatLabel = styled.span`font-size: 9px; color: ${colors.textMuted}; text-transform: uppercase; letter-spacing: 0.04em;`;
+const HStatLabel = styled.span`font-size: ${font.size.micro}; color: ${colors.textMuted}; text-transform: uppercase; letter-spacing: 0.04em;`;
 const HStatVal = styled.span.withConfig({ shouldForwardProp: (p) => p !== 'textColor' })<{ textColor?: string }>`
   font-size: ${font.size.sm};
-  font-weight: 600;
+  font-weight: ${font.weight.semibold};
   color: ${({ textColor }) => textColor ?? colors.textPrimary};
 `;
 
 const ExpandLink = styled.span.withConfig({ shouldForwardProp: (p) => p !== 'green' })<{ green?: boolean }>`
   margin-left: auto;
-  font-size: 11px;
-  font-weight: 600;
+  font-size: ${font.size.xs};
+  font-weight: ${font.weight.semibold};
   color: ${({ green }) => green ? semanticColors.successTextMedium : colors.primary};
   white-space: nowrap;
   padding: 0 4px;
 `;
 
 const PositionBadge = styled.span`
-  font-size: 10px;
+  font-size: ${font.size.xxs};
   color: ${colors.textMuted};
   background: ${colors.bg};
   border: 1px solid ${colors.border};
-  border-radius: 99px;
+  border-radius: ${radius.full};
   padding: 2px 8px;
   white-space: nowrap;
 `;
@@ -145,7 +145,7 @@ const HThead = styled.thead`background: ${semanticColors.surfaceMuted}; position
 
 const HTh = styled.th.withConfig({ shouldForwardProp: (p) => p !== 'right' })<{ right?: boolean }>`
   padding: 7px 10px;
-  font-size: 10px;
+  font-size: ${font.size.xxs};
   font-weight: ${font.weight.semibold};
   color: ${colors.textMuted};
   text-transform: uppercase;
@@ -163,7 +163,7 @@ const HTr = styled.tr`
 const HTd = styled.td.withConfig({ shouldForwardProp: (p) => p !== 'right' && p !== 'bold' })<{ right?: boolean; bold?: boolean }>`
   padding: 9px 10px;
   text-align: ${({ right }) => right ? 'right' : 'left'};
-  font-weight: ${({ bold }) => bold ? 600 : 'normal'};
+  font-weight: ${({ bold }) => bold ? font.weight.semibold : 'normal'};
   white-space: nowrap;
   color: ${colors.textPrimary};
 `;
@@ -171,9 +171,9 @@ const HTd = styled.td.withConfig({ shouldForwardProp: (p) => p !== 'right' && p 
 const CategoryBadge = styled.span.withConfig({ shouldForwardProp: (p) => p !== 'bg' && p !== 'fg' })<{ bg: string; fg: string }>`
   display: inline-block;
   padding: 1px 7px;
-  border-radius: 99px;
-  font-size: 10px;
-  font-weight: 600;
+  border-radius: ${radius.full};
+  font-size: ${font.size.xxs};
+  font-weight: ${font.weight.semibold};
   background: ${({ bg }) => bg};
   color: ${({ fg }) => fg};
 `;

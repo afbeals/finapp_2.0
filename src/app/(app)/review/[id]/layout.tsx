@@ -31,6 +31,7 @@ export default function ReviewLayout({ children }: { children: React.ReactNode }
         setLoaded(true);
       })
       .catch(() => router.replace('/dashboard'));
+  // intentional: only re-fetch when reviewId changes, not on every render cycle
   }, [reviewId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (!loaded) {

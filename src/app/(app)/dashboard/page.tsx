@@ -232,7 +232,7 @@ export default function DashboardPage() {
       {/* Welcome banner */}
       <WelcomeBanner>
         <WelcomeText>
-          <span style={{ fontSize: 24 }}>👋</span>
+          <span style={{ fontSize: font.size['3xl'] }}>👋</span>
           <WelcomeGreeting>{greeting}</WelcomeGreeting>
         </WelcomeText>
         {!activeReview && (

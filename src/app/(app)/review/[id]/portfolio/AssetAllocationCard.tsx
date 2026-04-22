@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useMemo } from 'react';
 import styled from 'styled-components';
 import { PieChart, Pie, Cell } from 'recharts';
 import { formatDollarsWhole } from '@/lib/money';
@@ -37,7 +37,10 @@ interface AssetAllocationCardProps {
 
 export function AssetAllocationCard({ allocationItems, netWorth }: AssetAllocationCardProps) {
   const allocationTotal = allocationItems.reduce((s, a) => s + a.value, 0);
-  const pieData = allocationItems.map((a) => ({ name: a.label, value: a.value, fill: a.color }));
+  const pieData = useMemo(
+    () => allocationItems.map((a) => ({ name: a.label, value: a.value, fill: a.color })),
+    [allocationItems],
+  );
 
   return (
     <PanelCard>

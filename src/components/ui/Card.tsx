@@ -27,7 +27,7 @@ export const Card = styled.div.withConfig({
       transition: box-shadow 150ms ease, border-color 150ms ease;
       cursor: pointer;
       &:hover {
-        box-shadow: 0 4px 12px rgba(15, 23, 42, 0.10);
+        box-shadow: ${shadow.md};
         border-color: ${colors.borderStrong};
       }
     `
@@ -55,16 +55,19 @@ export const CardSubtitle = styled.p`
 
 // ─── Panel card: surface card with a divided header, used in review pages ────
 
-export const PanelCard = styled.div`
+export const PanelCard = styled.div.withConfig({
+  shouldForwardProp: (p) => p !== 'mb',
+})<{ mb?: string }>`
   background: ${colors.surface};
   border: 1px solid ${colors.border};
   border-radius: ${radius.lg};
   overflow: hidden;
-  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+  box-shadow: ${shadow.sm};
+  ${({ mb }) => mb ? `margin-bottom: ${mb};` : ''}
 `;
 
 export const PanelHead = styled.div`
-  padding: 14px 18px 10px;
+  padding: ${spacing[3]} ${spacing[5]} ${spacing[2]};
   border-bottom: 1px solid ${colors.border};
   display: flex;
   align-items: baseline;

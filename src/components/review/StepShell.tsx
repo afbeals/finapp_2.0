@@ -59,7 +59,6 @@ interface StepShellProps {
   saving?: boolean;
   readOnly?: boolean;
   extraActions?: React.ReactNode;
-  hideFooter?: boolean; // kept for backwards compat, ignored
 }
 
 export function StepShell({

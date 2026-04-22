@@ -1,30 +1,17 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import styled from 'styled-components';
 import {
   LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
 } from 'recharts';
-import { formatDollarsWhole, toCents, toDollars } from '@/lib/money';
-import { buildProjection, MONTH_NAMES_SHORT } from '@/lib/fire';
+import { formatDollarsWhole, toCents, toDollars, toNumber } from '@/lib/money';
+import { MONTH_NAMES_SHORT } from '@/lib/fire';
 import { colors, semanticColors, font, spacing, radius } from '@/styles/tokens';
 import { PanelCard, PanelHead, PanelTitle, PanelSubtitle } from '@/components/ui/Card';
 
 // ─── Styled components ────────────────────────────────────────────────────────
 
-const ProjectionWrap = styled.div`
-  background: ${colors.surface};
-  border: 1px solid ${colors.border};
-  border-radius: ${radius.lg};
-  overflow: hidden;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.04);
-  margin-bottom: ${spacing[6]};
-`;
-const ProjectionHead = styled.div`
-  padding: 14px 18px;
-  border-bottom: 1px solid ${colors.border};
-  display: flex; align-items: center; justify-content: space-between;
-`;
 const ProjectionInputsBar = styled.div`
   background: ${semanticColors.surfaceMuted};
   border-bottom: 1px solid ${colors.border};
@@ -88,21 +75,11 @@ export function WealthProjection({ totalPortfolioValue }: WealthProjectionProps)
   const [projData, setProjData] = useState<{ month: string; value: number }[]>([]);
   const [projEndYear, setProjEndYear] = useState(new Date().getFullYear() + 2);
 
-  // Init projection starting amount from portfolio total once loaded
-  useEffect(() => {
-    if (totalPortfolioValue > 0 && projStarting === '') {
-      const startStr = toDollars(totalPortfolioValue).toFixed(2);
-      setProjStarting(startStr);
-      computeProjection(startStr, projMonthly, projRate, projMonths);
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [totalPortfolioValue]);
-
-  function computeProjection(starting: string, monthly: string, rate: string, months: string) {
-    const startCents = toCents(parseFloat(starting) || 0);
-    const monthlyCents = toCents(parseFloat(monthly) || 0);
-    const annualRate = (parseFloat(rate) || 0) / 100;
-    const numMonths = parseInt(months) || 12;
+  const computeProjection = useCallback((starting: string, monthly: string, rate: string, months: string) => {
+    const startCents = toCents(toNumber(starting));
+    const monthlyCents = toCents(toNumber(monthly));
+    const annualRate = toNumber(rate) / 100;
+    const numMonths = Math.floor(toNumber(months, 12));
     const r = annualRate / 12;
     const rows: { month: string; value: number }[] = [];
     let balance = startCents;
@@ -117,44 +94,59 @@ export function WealthProjection({ totalPortfolioValue }: WealthProjectionProps)
       const lastDate = new Date(now.getFullYear(), now.getMonth() + numMonths, 1);
       setProjEndYear(lastDate.getFullYear());
     }
-  }
+  }, []);
+
+  // Init projection starting amount from portfolio total once loaded
+  useEffect(() => {
+    if (totalPortfolioValue > 0 && projStarting === '') {
+      setProjStarting(toDollars(totalPortfolioValue).toFixed(2));
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [totalPortfolioValue]);
+
+  // Recompute whenever inputs change
+  useEffect(() => {
+    if (projStarting !== '') {
+      computeProjection(projStarting, projMonthly, projRate, projMonths);
+    }
+  }, [projStarting, projMonthly, projRate, projMonths, computeProjection]);
 
   return (
-    <ProjectionWrap>
-      <ProjectionHead>
+    <PanelCard mb={spacing[6]}>
+      <PanelHead>
         <div>
           <PanelTitle>Wealth Projections</PanelTitle>
           <PanelSubtitle>Compound growth calculator</PanelSubtitle>
         </div>
-      </ProjectionHead>
+      </PanelHead>
 
       <ProjectionInputsBar>
         <ProjInputGroup>
           <ProjLabel>Starting Amount</ProjLabel>
           <ProjInput
             type="number" value={projStarting}
-            onChange={(e) => { setProjStarting(e.target.value); computeProjection(e.target.value, projMonthly, projRate, projMonths); }}
+            onChange={(e) => setProjStarting(e.target.value)}
           />
         </ProjInputGroup>
         <ProjInputGroup>
           <ProjLabel>Monthly Contribution</ProjLabel>
           <ProjInput
             type="number" value={projMonthly}
-            onChange={(e) => { setProjMonthly(e.target.value); computeProjection(projStarting, e.target.value, projRate, projMonths); }}
+            onChange={(e) => setProjMonthly(e.target.value)}
           />
         </ProjInputGroup>
         <ProjInputGroup>
           <ProjLabel>Interest Rate (%)</ProjLabel>
           <ProjInput
             type="number" step="0.01" value={projRate}
-            onChange={(e) => { setProjRate(e.target.value); computeProjection(projStarting, projMonthly, e.target.value, projMonths); }}
+            onChange={(e) => setProjRate(e.target.value)}
           />
         </ProjInputGroup>
         <ProjInputGroup>
           <ProjLabel>Timespan (months)</ProjLabel>
           <ProjInput
             type="number" value={projMonths}
-            onChange={(e) => { setProjMonths(e.target.value); computeProjection(projStarting, projMonthly, projRate, e.target.value); }}
+            onChange={(e) => setProjMonths(e.target.value)}
           />
         </ProjInputGroup>
         <EndYearBadge>{projEndYear}</EndYearBadge>
@@ -168,10 +160,7 @@ export function WealthProjection({ totalPortfolioValue }: WealthProjectionProps)
               <XAxis
                 dataKey="month"
                 tick={{ fontSize: 10 }}
-                tickFormatter={(v) => {
-                  const parts = v.split(' ');
-                  return parts[0];
-                }}
+                tickFormatter={(v) => v.split(' ')[0]}
                 interval={Math.max(0, Math.floor(projData.length / 8) - 1)}
               />
               <YAxis tickFormatter={(v) => `$${(v / 100000).toFixed(0)}k`} tick={{ fontSize: 10 }} width={48} />
@@ -199,6 +188,6 @@ export function WealthProjection({ totalPortfolioValue }: WealthProjectionProps)
           )}
         </MonthlyValuesPanel>
       </ProjectionChartArea>
-    </ProjectionWrap>
+    </PanelCard>
   );
 }

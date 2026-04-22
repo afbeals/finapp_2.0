@@ -48,6 +48,7 @@ export const font = {
   family: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
   size: {
     micro: '9px',
+    xxs: '10px',
     xs: '11px',
     sm: '13px',
     base: '14px',
@@ -162,6 +163,10 @@ export const semanticColors = {
 
   // Dark navy (extends colors.navbar for hover states)
   navyHover: '#1E293B', // slate-800
+
+  // Navbar overlay tints (rgba white on dark bg)
+  navbarOverlayLight: 'rgba(255,255,255,0.08)',
+  navbarOverlayMid:   'rgba(255,255,255,0.15)',
 
   // Pink (investment badge palette)
   pinkBg:       '#FCE7F3', // pink-100

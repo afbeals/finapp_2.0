@@ -45,7 +45,7 @@ const SummaryBar = styled.div`
 `;
 
 const SummaryTotal = styled.div`flex: 1; min-width: 160px;`;
-const SummaryTotalLabel = styled.p`font-size: 11px; font-weight: 600; color: ${colors.textMuted}; text-transform: uppercase; letter-spacing: 0.06em; margin: 0 0 4px;`;
+const SummaryTotalLabel = styled.p`font-size: ${font.size.xs}; font-weight: 600; color: ${colors.textMuted}; text-transform: uppercase; letter-spacing: 0.06em; margin: 0 0 4px;`;
 const SummaryTotalValue = styled.p`font-size: 28px; font-weight: 700; color: ${colors.textPrimary}; margin: 0; line-height: 1;`;
 const SummaryDivider = styled.div`width: 1px; height: 50px; background: ${colors.border}; margin: 0 12px;`;
 
@@ -84,7 +84,7 @@ const RawNameCell = styled.span`
   text-overflow: ellipsis;
   white-space: nowrap;
   font-family: ui-monospace, monospace;
-  font-size: 11px;
+  font-size: ${font.size.xs};
   color: ${colors.textMuted};
   cursor: default;
   vertical-align: middle;
@@ -114,7 +114,7 @@ const TrAmountBox = styled.div`
   display: flex; align-items: center; gap: 16px; padding: 14px 20px;
   background: ${semanticColors.amberBg}; border-bottom: 1px solid ${semanticColors.amberBorder};
 `;
-const TrAmountLabel = styled.span`font-size: 11px; font-weight: 600; color: ${semanticColors.amberText}; text-transform: uppercase; letter-spacing: 0.05em;`;
+const TrAmountLabel = styled.span`font-size: ${font.size.xs}; font-weight: 600; color: ${semanticColors.amberText}; text-transform: uppercase; letter-spacing: 0.05em;`;
 const TrAmountInput = styled.input`
   height: 36px; width: 140px; padding: 0 10px;
   border: 1px solid ${semanticColors.amberStrong}; border-radius: ${radius.md};

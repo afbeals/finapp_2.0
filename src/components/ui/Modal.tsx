@@ -36,7 +36,7 @@ const ModalHeader = styled.div`
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 24px 24px 0;
+  padding: ${spacing[6]} ${spacing[6]} 0;
 `;
 
 const ModalTitle = styled.h2`
@@ -55,7 +55,7 @@ const CloseButton = styled.button`
   background: transparent;
   color: ${colors.textMuted};
   border-radius: ${radius.md};
-  font-size: 18px;
+  font-size: ${font.size.xl};
   cursor: pointer;
 
   &:hover {
@@ -65,15 +65,15 @@ const CloseButton = styled.button`
 `;
 
 const ModalBody = styled.div`
-  padding: 20px 24px;
+  padding: ${spacing[5]} ${spacing[6]};
 `;
 
 const ModalFooter = styled.div`
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  gap: 8px;
-  padding: 0 24px 24px;
+  gap: ${spacing[2]};
+  padding: 0 ${spacing[6]} ${spacing[6]};
 `;
 
 interface ModalProps {

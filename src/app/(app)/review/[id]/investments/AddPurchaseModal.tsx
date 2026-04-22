@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/Input';
 import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
 import { formatDollars, toCents } from '@/lib/money';
-import { colors, font, radius } from '@/styles/tokens';
+import { colors, font, radius, spacing } from '@/styles/tokens';
 import { apiPost, getMarketPrices } from '@/lib/api';
 import type { Purchase, InvestmentAccount, InvestmentCategory } from '@/types/entities';
 import { AccountTypeLabel } from './investmentHelpers';
@@ -20,10 +20,10 @@ const FieldLabel = styled.label`
   color: ${colors.textMuted};
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  margin-bottom: 4px;
+  margin-bottom: ${spacing[1]};
 `;
 
-const FieldInput = styled(Input)`width: 100%; margin-bottom: 12px;`;
+const FieldInput = styled(Input)`width: 100%; margin-bottom: ${spacing[3]};`;
 
 const FieldSelect = styled.select`
   width: 100%;
@@ -34,7 +34,7 @@ const FieldSelect = styled.select`
   font-size: ${font.size.sm};
   color: ${colors.textPrimary};
   background: ${colors.surface};
-  margin-bottom: 12px;
+  margin-bottom: ${spacing[3]};
   &:focus { outline: none; border-color: ${colors.primary}; }
 `;
 

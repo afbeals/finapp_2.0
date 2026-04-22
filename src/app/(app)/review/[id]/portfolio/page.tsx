@@ -31,7 +31,7 @@ const KpiCard = styled.div`
   background: ${colors.surface};
   border: 1px solid ${colors.border};
   border-radius: ${radius.lg};
-  padding: 16px 20px;
+  padding: ${spacing[4]} ${spacing[5]};
   box-shadow: 0 1px 3px rgba(0,0,0,0.05);
   display: flex;
   align-items: flex-start;

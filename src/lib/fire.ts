@@ -23,22 +23,6 @@ export function monthlyPayment(principal: number, annualRate: number, termMonths
   return Math.round(payment);
 }
 
-/** Remaining balance after n payments on an amortizing loan (all values in cents) */
-export function remainingBalance(
-  principal: number,
-  annualRate: number,
-  termMonths: number,
-  paymentsMade: number
-): number {
-  if (annualRate === 0) {
-    return Math.max(0, principal - Math.round((principal / termMonths) * paymentsMade));
-  }
-  const r = annualRate / 12;
-  const balance = principal * Math.pow(1 + r, paymentsMade) -
-    monthlyPayment(principal, annualRate, termMonths) * ((Math.pow(1 + r, paymentsMade) - 1) / r);
-  return Math.max(0, Math.round(balance));
-}
-
 export interface AmortizationRow {
   month: number;
   payment: number;      // cents
@@ -80,17 +64,6 @@ export function totalInterest(
 ): number {
   return amortizationSchedule(principal, annualRate, termMonths, extraMonthly)
     .reduce((sum, row) => sum + row.interest, 0);
-}
-
-/** Payoff month index (1-based) with extra payments */
-export function payoffMonth(
-  principal: number,
-  annualRate: number,
-  termMonths: number,
-  extraMonthly = 0
-): number {
-  const schedule = amortizationSchedule(principal, annualRate, termMonths, extraMonthly);
-  return schedule.length;
 }
 
 /**

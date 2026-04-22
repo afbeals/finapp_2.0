@@ -175,3 +175,9 @@ export const createMember = (data: Partial<Member>): Promise<{ member: Member }>
 
 export const updateMember = (id: number, data: Partial<Member>): Promise<{ member: Member }> =>
   apiPatch(`/api/config/members/${id}`, data);
+
+// Market prices
+export const getMarketPrices = (tickers: string[]): Promise<{ prices: Record<string, number>; names?: Record<string, string> }> =>
+  apiGet<{ prices: Record<string, number>; names?: Record<string, string> }>(
+    `/api/market-prices?tickers=${tickers.join(',')}`
+  );

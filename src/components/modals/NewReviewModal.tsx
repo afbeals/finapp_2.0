@@ -5,15 +5,8 @@ import styled from 'styled-components';
 import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
 import { colors, font, radius, spacing } from '@/styles/tokens';
-
-const MONTH_NAMES = ['January','February','March','April','May','June','July','August','September','October','November','December'];
-
-interface ReviewStep {
-  id: number;
-  stepKey: string;
-  status: 'PENDING' | 'COMPLETE' | 'SKIPPED';
-  data: string;
-}
+import { MONTH_NAMES_LONG } from '@/lib/fire';
+import type { ReviewStep } from '@/lib/store';
 
 interface Review {
   id: number;
@@ -211,7 +204,7 @@ export function NewReviewModal({ isOpen, onClose, onCreated, existingMonths }: N
       <SelectRow>
         <div>
           <StyledSelect value={month} onChange={(e) => setMonth(Number(e.target.value))}>
-            {MONTH_NAMES.map((name, i) => {
+            {MONTH_NAMES_LONG.map((name, i) => {
               const taken = existingMonths.some((m) => m.year === year && m.month === i + 1);
               return (
                 <option key={i} value={i + 1} disabled={taken}>

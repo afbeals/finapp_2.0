@@ -12,18 +12,10 @@ import { Table, Thead, Th, Td, Tr } from '@/components/ui/Table';
 import { NewReviewModal } from '@/components/modals/NewReviewModal';
 import { ProgressBar } from '@/components/ui/ProgressBar';
 import { useReviewStore, useSessionStore } from '@/lib/store';
+import type { ReviewStep } from '@/lib/store';
 import { formatDollars } from '@/lib/money';
 import { apiGet } from '@/lib/api';
-
-const MONTH_NAMES = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-const MONTH_NAMES_FULL = ['January','February','March','April','May','June','July','August','September','October','November','December'];
-
-interface ReviewStep {
-  id: number;
-  stepKey: string;
-  status: 'PENDING' | 'COMPLETE' | 'SKIPPED';
-  data: string;
-}
+import { MONTH_NAMES_SHORT, MONTH_NAMES_LONG } from '@/lib/fire';
 
 interface Review {
   id: number;
@@ -260,7 +252,7 @@ export default function DashboardPage() {
               </Badge>
             </ActiveBadgeRow>
             <ReviewTitle>
-              {MONTH_NAMES_FULL[activeReview.periodMonth - 1]} {activeReview.periodYear}
+              {MONTH_NAMES_LONG[activeReview.periodMonth - 1]} {activeReview.periodYear}
             </ReviewTitle>
             <div style={{ marginBottom: spacing[4] }}>
               {(() => {
@@ -306,7 +298,7 @@ export default function DashboardPage() {
               >
                 {history.map((r) => (
                   <option key={r.id} value={r.id}>
-                    {MONTH_NAMES_FULL[r.periodMonth - 1]} {r.periodYear}
+                    {MONTH_NAMES_LONG[r.periodMonth - 1]} {r.periodYear}
                   </option>
                 ))}
               </PrevSelect>
@@ -348,7 +340,7 @@ export default function DashboardPage() {
                 return (
                   <ClickableRow key={review.id} onClick={() => router.push(`/history/${review.id}`)}>
                     <Td style={{ fontWeight: font.weight.medium }}>
-                      {MONTH_NAMES[review.periodMonth - 1]} {review.periodYear}
+                      {MONTH_NAMES_SHORT[review.periodMonth - 1]} {review.periodYear}
                     </Td>
                     <Td>
                       <Badge variant={review.type === 'QUARTERLY' ? 'quarterly' : 'default'}>

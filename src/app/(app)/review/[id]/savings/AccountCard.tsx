@@ -7,13 +7,12 @@ import { InlineEdit } from '@/components/shared/InlineEdit';
 import { colors, font, spacing, radius, semanticColors } from '@/styles/tokens';
 import { MONTH_NAMES_SHORT } from '@/lib/fire';
 import type { SavingsAccount, SavingsSnapshot, HistoricalSnapshot } from '@/types/entities';
+import type { ReviewPeriod } from '@/types/review';
 
 
 export interface HistoricalSnapshotWithBalance extends HistoricalSnapshot {
   computedEndBalance: number;
 }
-
-export interface ReviewPeriod { id: number; periodYear: number; periodMonth: number }
 
 const AccountRow = styled.div`
   background: ${colors.surface};

@@ -6,6 +6,7 @@ import { StepIndicator } from '@/components/review/StepIndicator';
 import { ReviewModeBanner } from '@/components/review/ReviewModeBanner';
 import { EnableEditModal } from '@/components/modals/EnableEditModal';
 import { useReviewStore } from '@/lib/store';
+import { apiGet } from '@/lib/api';
 import { LoadingState } from '@/components/shared/LoadingState';
 import { ErrorBoundary } from '@/components/shared/ErrorBoundary';
 
@@ -23,13 +24,8 @@ export default function ReviewLayout({ children }: { children: React.ReactNode }
       return;
     }
 
-    fetch(`/api/reviews/${reviewId}`)
-      .then((r) => {
-        if (!r.ok) { router.replace('/dashboard'); return null; }
-        return r.json();
-      })
+    apiGet<{ review: unknown }>(`/api/reviews/${reviewId}`)
       .then((data) => {
-        if (!data) return;
         actions.setActiveReview(data.review);
         setLoaded(true);
       })

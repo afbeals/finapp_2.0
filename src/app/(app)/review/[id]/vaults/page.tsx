@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState, useMemo, useRef } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { useParams } from 'next/navigation';
 import styled from 'styled-components';
 import { StepShell } from '@/components/review/StepShell';
@@ -9,70 +9,17 @@ import { useReviewStore } from '@/lib/store';
 import { formatDollars, toCents, toDollars } from '@/lib/money';
 import { colors, semanticColors, font, spacing, radius } from '@/styles/tokens';
 import { LoadingState } from '@/components/shared/LoadingState';
-import { getReviewVaults, getMembers, updateVault, deleteVault, createVault, putReviewVaults } from '@/lib/api';
-import type { Vault, VaultOwner, VaultSnapshot, Member } from '@/types/entities';
-
-// ─── Raw-name derivation ──────────────────────────────────────────────────────
-
-// Group order = position of category in CAT_ORDER (1-based)
-const CAT_ORDER = ['Bills', 'Personal', 'Pre-Pay', 'Replenish', 'Investments'];
-const CAT_GROUPS: Record<string, number> = Object.fromEntries(CAT_ORDER.map((c, i) => [c, i + 1]));
-
-// Frequency abbreviation: "MONTHLY" → "Monthly", "SEMI-ANN" → "SemiAnn", "1-YEAR" → "1Yr", etc.
-const FREQ_ABBR: Record<string, string> = {
-  'MONTHLY':  'Monthly',
-  '2-MONTH':  '2Mo',
-  '3-MONTH':  'Quarterly',
-  '4-MONTH':  '4Mo',
-  '6-MONTH':  'SemiAnn',
-  '1-YEAR':   '1Yr',
-  '2-YEAR':   '2Yr',
-  '3-YEAR':   '3Yr',
-  'GOAL':     'Goal',
-};
-
-const FREQ_MONTHS: Record<string, number> = {
-  'MONTHLY': 1, '2-MONTH': 2, '3-MONTH': 3, '4-MONTH': 4,
-  '6-MONTH': 6, '1-YEAR': 12, '2-YEAR': 24, '3-YEAR': 36, 'GOAL': 1,
-};
-
-const FREQUENCIES = ['MONTHLY', '2-MONTH', '3-MONTH', '4-MONTH', '6-MONTH', '1-YEAR', '2-YEAR', '3-YEAR', 'GOAL'];
-
-function buildFreqPart(frequency: string, dueMonths: string): string {
-  const abbr = FREQ_ABBR[frequency] ?? frequency;
-  const months = dueMonths.trim();
-  if (months) return `${abbr}(${months})`;
-  return abbr;
-}
-
-function buildRawName(vault: Vault, innerOrder: number, groupOrder: number): string {
-  const grp = String(groupOrder).padStart(2, '0');
-  const inner = String(innerOrder).padStart(2, '0');
-  const who = vault.owner?.name ? vault.owner.name.replace(/\s+/g, '') : 'All';
-  const freqPart = buildFreqPart(vault.frequency, vault.dueMonths);
-  const desc = vault.description.trim() || vault.name.replace(/\s+/g, '');
-  const goal = vault.target != null ? String(Math.round(toDollars(vault.target))) : '0';
-  const cat = (vault.category || 'Other').replace(/[\s-]+/g, '');
-  return `${grp}-${cat}-${inner}-${who}-${freqPart}-${desc}-${goal}`;
-}
-
-function buildTreasuryRawName(vault: Vault, innerOrder: number): string {
-  const inner = String(innerOrder).padStart(2, '0');
-  const who = vault.owner?.name ? vault.owner.name.replace(/\s+/g, '') : 'All';
-  const desc = vault.description.trim() || vault.name.replace(/\s+/g, '');
-  const goal = vault.target != null ? String(Math.round(toDollars(vault.target))) : 'Variable';
-  return `T-${inner}-${who}-${desc}-${goal}`;
-}
-
-// ─── Category palette ─────────────────────────────────────────────────────────
-
-const CAT_COLORS: Record<string, { bg: string; border: string; header: string; text: string; subtext: string }> = {
-  Bills:       { bg: semanticColors.warningBg, border: semanticColors.warningBorder, header: colors.warningLight, text: semanticColors.amberText, subtext: semanticColors.warningText },
-  Personal:    { bg: semanticColors.purpleBg, border: semanticColors.purpleBorder, header: semanticColors.purpleLight, text: semanticColors.purpleTextDark, subtext: semanticColors.purpleTextMedium },
-  'Pre-Pay':   { bg: semanticColors.primaryBg, border: semanticColors.primaryBorder, header: colors.primaryLight, text: semanticColors.primaryTextDark, subtext: colors.primaryHover },
-  Replenish:   { bg: semanticColors.successBg, border: semanticColors.successBorder, header: colors.successLight, text: semanticColors.successTextDark, subtext: semanticColors.successTextMedium },
-  Investments: { bg: semanticColors.tealBg, border: semanticColors.tealBorder, header: semanticColors.tealLight, text: semanticColors.tealText, subtext: semanticColors.tealTextMedium },
-};
+import { getReviewVaults, getMembers, deleteVault, createVault, putReviewVaults } from '@/lib/api';
+import type { Vault, VaultSnapshot, Member } from '@/types/entities';
+import { EditCell } from './EditCell';
+import { FixedSection } from './FixedSection';
+import {
+  CAT_ORDER,
+  CAT_GROUPS,
+  CAT_COLORS,
+  monthlyAmount,
+  patchApi,
+} from './vaultHelpers';
 
 // ─── Styled components ────────────────────────────────────────────────────────
 
@@ -109,33 +56,6 @@ const CatChip = styled.div.withConfig({ shouldForwardProp: (p) => !['bg', 'borde
 const CatChipLabel = styled.p.withConfig({ shouldForwardProp: (p) => p !== 'textColor' })<{ textColor: string }>`font-size: 10px; font-weight: 600; color: ${({ textColor }) => textColor}; text-transform: uppercase; letter-spacing: 0.05em; margin: 0 0 2px;`;
 const CatChipVal = styled.p.withConfig({ shouldForwardProp: (p) => p !== 'textColor' })<{ textColor: string }>`font-size: ${font.size.lg}; font-weight: 700; color: ${({ textColor }) => textColor}; margin: 0;`;
 
-const SectionWrap = styled.div`
-  background: ${colors.surface}; border: 1px solid ${colors.border};
-  border-radius: ${radius.lg}; margin-bottom: ${spacing[4]};
-  box-shadow: 0 1px 3px rgba(0,0,0,0.04); overflow: hidden;
-`;
-
-const SectionHeaderRow = styled.div.withConfig({ shouldForwardProp: (p) => !['bg', 'borderColor'].includes(p) })<{ bg: string; borderColor: string }>`
-  display: flex; align-items: center; gap: 10px; padding: 13px 18px;
-  cursor: pointer; user-select: none;
-  background: ${({ bg }) => bg}; border-bottom: 1px solid ${({ borderColor }) => borderColor};
-`;
-
-const Chevron = styled.span.withConfig({ shouldForwardProp: (p) => p !== 'open' })<{ open: boolean }>`
-  font-size: 10px; color: ${colors.textMuted};
-  transform: ${({ open }) => open ? 'rotate(90deg)' : 'none'}; transition: transform 0.15s;
-`;
-
-const SectionLabel = styled.span.withConfig({ shouldForwardProp: (p) => p !== 'textColor' })<{ textColor: string }>`
-  font-size: ${font.size.sm}; font-weight: 700; color: ${({ textColor }) => textColor}; min-width: 120px;
-`;
-
-const SubtotalBadge = styled.span.withConfig({ shouldForwardProp: (p) => !['bg', 'textColor'].includes(p) })<{ bg: string; textColor: string }>`
-  margin-left: auto; font-size: ${font.size.sm}; font-weight: 600;
-  color: ${({ textColor }) => textColor}; background: ${({ bg }) => bg};
-  padding: 3px 10px; border-radius: 99px;
-`;
-
 const AddRowBtn = styled.button`
   display: flex; align-items: center; gap: 5px;
   margin: 10px 18px; padding: 5px 12px;
@@ -145,12 +65,10 @@ const AddRowBtn = styled.button`
   &:hover { background: ${colors.bg}; color: ${colors.textPrimary}; border-color: ${colors.primary}; }
 `;
 
-// Table
+// Table (shared with TreasuryWrap section)
 const TableWrap = styled.div`overflow-x: auto;`;
-
 const FTable = styled.table`width: 100%; border-collapse: collapse; font-size: ${font.size.sm}; min-width: 860px;`;
 const FThead = styled.thead`background: ${colors.bg}; position: sticky; top: 0; z-index: 1;`;
-
 const FTh = styled.th.withConfig({ shouldForwardProp: (p) => !['right', 'w', 'center'].includes(p) })<{ right?: boolean; w?: number; center?: boolean }>`
   padding: 6px 8px; font-size: 10px; font-weight: 600; color: ${colors.textMuted};
   text-transform: uppercase; letter-spacing: 0.04em;
@@ -159,17 +77,6 @@ const FTh = styled.th.withConfig({ shouldForwardProp: (p) => !['right', 'w', 'ce
   ${({ w }) => w ? `width: ${w}px; min-width: ${w}px;` : ''}
 `;
 
-const FTr = styled.tr`&:not(:last-child) { border-bottom: 1px solid ${colors.border}; } &:hover { background: ${colors.bg}; }`;
-
-const FTd = styled.td.withConfig({ shouldForwardProp: (p) => !['right', 'bold', 'center', 'muted'].includes(p) })<{ right?: boolean; bold?: boolean; center?: boolean; muted?: boolean }>`
-  padding: 6px 8px;
-  text-align: ${({ right, center }) => right ? 'right' : center ? 'center' : 'left'};
-  font-weight: ${({ bold }) => bold ? 600 : 'normal'};
-  color: ${({ muted }) => muted ? colors.textMuted : colors.textPrimary};
-  white-space: nowrap;
-`;
-
-// Raw name cell — ellipsis + tooltip
 const RawNameCell = styled.span`
   display: inline-block;
   max-width: 220px;
@@ -183,47 +90,11 @@ const RawNameCell = styled.span`
   vertical-align: middle;
 `;
 
-// Inline editable elements
-const EditableWrap = styled.div`
-  display: inline-flex; align-items: center; gap: 3px; cursor: text;
-  &:hover .pencil { opacity: 1; }
-`;
-const EditSpan = styled.span`
-  display: inline-block; max-width: 130px; overflow: hidden;
-  text-overflow: ellipsis; white-space: nowrap; vertical-align: middle;
-`;
-const Pencil = styled.span`font-size: 10px; color: ${colors.textMuted}; opacity: 0.35; flex-shrink: 0; transition: opacity 0.1s;`;
 const CellInput = styled.input`
   height: 26px; padding: 0 6px; border: 1px solid ${colors.primary};
   border-radius: ${radius.sm}; font-size: ${font.size.sm};
   color: ${colors.textPrimary}; background: ${colors.surface}; width: 120px;
   &:focus { outline: none; }
-`;
-const CellSelect = styled.select`
-  height: 26px; padding: 0 4px; border: 1px solid ${colors.primary};
-  border-radius: ${radius.sm}; font-size: ${font.size.sm};
-  color: ${colors.textPrimary}; background: ${colors.surface}; cursor: pointer;
-  &:focus { outline: none; }
-`;
-const NumInput = styled.input`
-  width: 82px; height: 26px; padding: 0 6px; border: 1px solid ${colors.border};
-  border-radius: ${radius.sm}; font-size: ${font.size.sm};
-  text-align: right; color: ${colors.textPrimary}; background: ${colors.surface};
-  &:focus { outline: none; border-color: ${colors.primary}; }
-  &:disabled { background: ${colors.bg}; color: ${colors.textMuted}; }
-`;
-const OrderInput = styled.input`
-  width: 40px; height: 26px; padding: 0 4px; border: 1px solid ${colors.border};
-  border-radius: ${radius.sm}; font-size: ${font.size.sm};
-  text-align: center; color: ${colors.textPrimary}; background: ${colors.surface};
-  &:focus { outline: none; border-color: ${colors.primary}; }
-`;
-const DueInput = styled.input`
-  width: 70px; height: 26px; padding: 0 6px; border: 1px solid ${colors.border};
-  border-radius: ${radius.sm}; font-size: ${font.size.sm};
-  color: ${colors.textPrimary}; background: ${colors.surface};
-  &:focus { outline: none; border-color: ${colors.primary}; }
-  &:disabled { background: ${colors.bg}; color: ${colors.textMuted}; }
 `;
 const DeleteBtn = styled.button`
   display: flex; align-items: center; justify-content: center;
@@ -231,10 +102,6 @@ const DeleteBtn = styled.button`
   background: transparent; color: ${colors.textMuted}; cursor: pointer;
   font-size: 15px; opacity: 0.45; line-height: 1;
   &:hover { background: ${colors.dangerLight}; color: ${colors.danger}; opacity: 1; }
-`;
-const OwnerBadge = styled.span.withConfig({ shouldForwardProp: (p) => !['bg', 'fg'].includes(p) })<{ bg: string; fg: string }>`
-  display: inline-block; padding: 2px 8px; border-radius: 99px;
-  font-size: 10px; font-weight: 600; background: ${({ bg }) => bg}; color: ${({ fg }) => fg};
 `;
 
 // Treasury
@@ -282,217 +149,6 @@ const PctInput = styled.input.withConfig({ shouldForwardProp: (p) => p !== 'fund
   &:focus { outline: none; }
   &:disabled { background: ${colors.bg}; border-color: ${colors.border}; color: ${colors.textMuted}; }
 `;
-
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-
-function monthlyAmount(vault: Vault): number {
-  if (!vault.target || vault.rateMonths <= 0) return 0;
-  return Math.round(vault.target / vault.rateMonths);
-}
-
-function ownerBadgeColors(owner: VaultOwner | null): { bg: string; fg: string } {
-  if (!owner) return { bg: colors.bg, fg: semanticColors.neutralText };
-  return { bg: owner.color + '22', fg: owner.color };
-}
-
-function patchApi(id: number, data: Partial<Vault>) {
-  return updateVault(id, data);
-}
-
-// ─── Inline editable text cell ────────────────────────────────────────────────
-
-function EditCell({ value, onCommit, readOnly, width = 120 }: { value: string; onCommit: (v: string) => void; readOnly: boolean; width?: number }) {
-  const [editing, setEditing] = useState(false);
-  const [draft, setDraft] = useState(value);
-  const ref = useRef<HTMLInputElement>(null);
-  useEffect(() => { if (editing) ref.current?.select(); }, [editing]);
-
-  if (readOnly) return <EditSpan title={value} style={{ maxWidth: width }}>{value || '—'}</EditSpan>;
-
-  if (editing) {
-    return (
-      <CellInput
-        ref={ref}
-        value={draft}
-        style={{ width }}
-        onChange={(e) => setDraft(e.target.value)}
-        onBlur={() => { setEditing(false); if (draft !== value) onCommit(draft); }}
-        onKeyDown={(e) => {
-          if (e.key === 'Enter') { setEditing(false); if (draft !== value) onCommit(draft); }
-          if (e.key === 'Escape') { setDraft(value); setEditing(false); }
-        }}
-      />
-    );
-  }
-
-  return (
-    <EditableWrap onClick={() => { setDraft(value); setEditing(true); }}>
-      <EditSpan title={value} style={{ maxWidth: width }}>{value || <span style={{ fontStyle: 'italic', color: colors.textMuted }}>—</span>}</EditSpan>
-      <Pencil className="pencil">✎</Pencil>
-    </EditableWrap>
-  );
-}
-
-// ─── FixedSection ─────────────────────────────────────────────────────────────
-
-interface FixedSectionProps {
-  category: string;
-  groupOrder: number;
-  vaults: Vault[];
-  members: Member[];
-  readOnly: boolean;
-  onUpdate: (id: number, patch: Partial<Vault>, save?: boolean) => void;
-  onDelete: (id: number) => void;
-  onAdd: (category: string) => void;
-}
-
-function FixedSection({ category, groupOrder, vaults, members, readOnly, onUpdate, onDelete, onAdd }: FixedSectionProps) {
-  const [open, setOpen] = useState(true);
-  const pal = CAT_COLORS[category] ?? { bg: semanticColors.surfaceMuted, border: colors.border, header: colors.bg, text: semanticColors.neutralText, subtext: colors.textMuted };
-  const subtotal = vaults.reduce((s, v) => s + monthlyAmount(v), 0);
-
-  return (
-    <SectionWrap>
-      <SectionHeaderRow bg={pal.header} borderColor={pal.border} onClick={() => setOpen((v) => !v)}>
-        <Chevron open={open}>▶</Chevron>
-        <SectionLabel textColor={pal.text}>{category}</SectionLabel>
-        <SubtotalBadge bg={pal.bg} textColor={pal.text}>Subtotal: {formatDollars(subtotal)}</SubtotalBadge>
-      </SectionHeaderRow>
-
-      {open && (
-        <>
-          <TableWrap>
-            <FTable>
-              <FThead>
-                <tr>
-                  <FTh w={46} center>Order</FTh>
-                  <FTh w={130}>Name</FTh>
-                  <FTh w={110}>Description</FTh>
-                  <FTh w={90}>Who</FTh>
-                  <FTh w={120}>Frequency</FTh>
-                  <FTh w={70}>Due Months</FTh>
-                  <FTh w={90} right>Goal ($)</FTh>
-                  <FTh w={70} right>Monthly</FTh>
-                  <FTh>Raw Name</FTh>
-                  {!readOnly && <FTh w={28} />}
-                </tr>
-              </FThead>
-              <tbody>
-                {vaults.map((v, i) => {
-                  const rawName = buildRawName(v, v.sortOrder || i + 1, groupOrder);
-                  const ownerColors = ownerBadgeColors(v.owner);
-                  return (
-                    <FTr key={v.id}>
-                      {/* Order */}
-                      <FTd center>
-                        <OrderInput
-                          type="number" min="0"
-                          defaultValue={v.sortOrder}
-                          disabled={readOnly}
-                          onBlur={(e) => {
-                            const sortOrder = parseInt(e.target.value) || 0;
-                            onUpdate(v.id, { sortOrder }, true);
-                          }}
-                        />
-                      </FTd>
-
-                      {/* Name */}
-                      <FTd>
-                        <EditCell value={v.name} readOnly={readOnly} width={120}
-                          onCommit={(name) => onUpdate(v.id, { name }, true)} />
-                      </FTd>
-
-                      {/* Description */}
-                      <FTd>
-                        <EditCell value={v.description} readOnly={readOnly} width={100}
-                          onCommit={(description) => onUpdate(v.id, { description }, true)} />
-                      </FTd>
-
-                      {/* Who */}
-                      <FTd>
-                        {readOnly ? (
-                          <OwnerBadge bg={ownerColors.bg} fg={ownerColors.fg}>{v.owner?.name ?? 'All'}</OwnerBadge>
-                        ) : (
-                          <CellSelect value={v.ownerMemberId ?? ''}
-                            onChange={(e) => {
-                              const ownerMemberId = e.target.value === '' ? null : Number(e.target.value);
-                              const owner = ownerMemberId ? (members.find((m) => m.id === ownerMemberId) ?? null) : null;
-                              onUpdate(v.id, { ownerMemberId, owner }, true);
-                            }}>
-                            <option value="">All</option>
-                            {members.map((m) => <option key={m.id} value={m.id}>{m.name}</option>)}
-                          </CellSelect>
-                        )}
-                      </FTd>
-
-                      {/* Frequency */}
-                      <FTd>
-                        {readOnly ? (
-                          <span style={{ color: colors.textMuted }}>{v.frequency}</span>
-                        ) : (
-                          <CellSelect value={v.frequency}
-                            onChange={(e) => {
-                              const frequency = e.target.value;
-                              const rateMonths = FREQ_MONTHS[frequency] ?? 1;
-                              onUpdate(v.id, { frequency, rateMonths }, true);
-                            }}>
-                            {FREQUENCIES.map((f) => <option key={f} value={f}>{f}</option>)}
-                          </CellSelect>
-                        )}
-                      </FTd>
-
-                      {/* Due Months */}
-                      <FTd>
-                        <DueInput
-                          type="text"
-                          defaultValue={v.dueMonths}
-                          disabled={readOnly}
-                          placeholder="e.g. 5,11"
-                          title="Comma-separated months when payment is due (e.g. 5,11)"
-                          onBlur={(e) => onUpdate(v.id, { dueMonths: e.target.value.trim() }, true)}
-                        />
-                      </FTd>
-
-                      {/* Goal */}
-                      <FTd right>
-                        <NumInput
-                          type="number" step="1"
-                          defaultValue={v.target != null ? toDollars(v.target).toFixed(0) : ''}
-                          disabled={readOnly}
-                          onBlur={(e) => {
-                            const target = toCents(parseFloat(e.target.value) || 0);
-                            onUpdate(v.id, { target }, true);
-                          }}
-                        />
-                      </FTd>
-
-                      {/* Monthly (computed) */}
-                      <FTd right bold>{formatDollars(monthlyAmount(v))}</FTd>
-
-                      {/* Raw Name */}
-                      <FTd>
-                        <RawNameCell title={rawName}>{rawName}</RawNameCell>
-                      </FTd>
-
-                      {!readOnly && (
-                        <FTd center>
-                          <DeleteBtn onClick={() => onDelete(v.id)} title="Delete vault">×</DeleteBtn>
-                        </FTd>
-                      )}
-                    </FTr>
-                  );
-                })}
-              </tbody>
-            </FTable>
-          </TableWrap>
-          {!readOnly && (
-            <AddRowBtn onClick={() => onAdd(category)}>+ Add row</AddRowBtn>
-          )}
-        </>
-      )}
-    </SectionWrap>
-  );
-}
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 

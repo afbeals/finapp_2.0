@@ -13,8 +13,7 @@ import { formatDollars } from '@/lib/money';
 import { getReviewIncome, getReviewExpenses, getReviewSavings, getReviewInvestments, apiPatch } from '@/lib/api';
 import { colors, font, spacing, semanticColors } from '@/styles/tokens';
 import { LoadingState } from '@/components/shared/LoadingState';
-
-const MONTH_NAMES = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+import { MONTH_NAMES_LONG } from '@/lib/fire';
 
 const STEP_LABELS: Record<string, string> = {
   expense: 'Expense Entry', monthly: 'Monthly Summary', savings: 'Savings',
@@ -112,7 +111,7 @@ export default function FinalizePage() {
   if (loading) return <LoadingState centered />;
 
   if (isComplete) {
-    const period = activeReview ? `${MONTH_NAMES[activeReview.periodMonth - 1]} ${activeReview.periodYear}` : '';
+    const period = activeReview ? `${MONTH_NAMES_LONG[activeReview.periodMonth - 1]} ${activeReview.periodYear}` : '';
     return (
       <StepShell title="Finalize" stepName="Finalize" onBack={goBack} onNext={() => router.push('/dashboard')} nextLabel="Back to Dashboard" readOnly>
         <CompleteBox>

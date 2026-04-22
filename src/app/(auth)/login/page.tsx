@@ -5,12 +5,7 @@ import { useRouter } from 'next/navigation';
 import styled from 'styled-components';
 import { colors, font, radius, shadow, spacing } from '@/styles/tokens';
 import { Button } from '@/components/ui/Button';
-
-interface Member {
-  id: number;
-  name: string;
-  color: string;
-}
+import type { Member } from '@/types/entities';
 
 const Page = styled.div`
   min-height: 100vh;

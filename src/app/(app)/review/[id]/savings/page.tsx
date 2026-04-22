@@ -26,12 +26,12 @@ const FieldLabel = styled.label`
   color: ${colors.textMuted};
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  margin-bottom: 4px;
+  margin-bottom: ${spacing[1]};
 `;
 
 const FieldInput = styled.input`
   width: 100%;
-  padding: 8px 12px;
+  padding: ${spacing[2]} ${spacing[3]};
   font-size: ${font.size.sm};
   font-family: inherit;
   border: 1px solid ${colors.border};
@@ -45,7 +45,7 @@ const FieldInput = styled.input`
 
 const FieldSelect = styled.select`
   width: 100%;
-  padding: 8px 12px;
+  padding: ${spacing[2]} ${spacing[3]};
   font-size: ${font.size.sm};
   font-family: inherit;
   border: 1px solid ${colors.border};

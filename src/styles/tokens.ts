@@ -161,4 +161,11 @@ export const semanticColors = {
 
   // Dark navy (extends colors.navbar for hover states)
   navyHover: '#1E293B', // slate-800
+
+  // Pink (investment badge palette)
+  pinkBg:       '#FCE7F3', // pink-100
+  pinkTextDark: '#9D174D', // pink-800
+
+  // Orange (investment badge palette)
+  orangeTextDark: '#C2410C', // orange-700
 } as const;

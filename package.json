@@ -1,24 +1,60 @@
 {
-  "name": "temp",
+  "name": "financial-review",
   "version": "0.1.0",
   "private": true,
+  "type": "module",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "db:migrate": "prisma migrate dev",
+    "db:seed": "tsx prisma/seed.ts",
+    "db:reset": "prisma migrate reset --force && npm run db:seed",
+    "db:studio": "prisma studio",
+    "db:deploy": "prisma migrate deploy",
+    "db:backup": "mkdir -p data/backups && cp data/prod.db data/backups/prod-$(date +%Y-%m-%d-%H%M).db",
+    "test": "vitest",
+    "test:ci": "vitest run",
+    "test:ui": "vitest --ui",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui"
   },
   "dependencies": {
+    "@prisma/client": "^6.19.3",
+    "bcryptjs": "^3.0.3",
+    "better-sqlite3": "^12.9.0",
+    "immer": "^11.1.4",
+    "iron-session": "^8.0.4",
     "next": "16.2.4",
+    "prisma": "^6.19.3",
     "react": "19.2.4",
-    "react-dom": "19.2.4"
+    "react-dom": "19.2.4",
+    "recharts": "^3.8.1",
+    "styled-components": "^6.4.1",
+    "zod": "^4.3.6",
+    "zustand": "^5.0.12"
   },
   "devDependencies": {
+    "@playwright/test": "^1.59.1",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.2",
+    "@testing-library/user-event": "^14.6.1",
+    "@types/bcryptjs": "^2.4.6",
+    "@types/better-sqlite3": "^7.6.13",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@types/styled-components": "^5.1.36",
+    "@vitejs/plugin-react": "^4.7.0",
     "eslint": "^9",
     "eslint-config-next": "16.2.4",
-    "typescript": "^5"
+    "jsdom": "^27.0.1",
+    "tsx": "^4.21.0",
+    "typescript": "^5",
+    "vitest": "^4.1.5"
+  },
+  "prisma": {
+    "seed": "tsx prisma/seed.ts"
   }
 }

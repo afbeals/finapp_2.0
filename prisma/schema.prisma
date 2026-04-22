@@ -1,0 +1,334 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Enums ────────────────────────────────────────────────────────────────────
+
+enum ReviewType {
+  MONTHLY
+  QUARTERLY
+}
+
+enum ReviewStatus {
+  IN_PROGRESS
+  COMPLETE
+  SKIPPED
+}
+
+enum StepStatus {
+  PENDING
+  COMPLETE
+  SKIPPED
+}
+
+enum SavingsAccountType {
+  HYSA
+  CHECKING
+  SAVINGS
+}
+
+enum InvestmentAccountType {
+  TAXABLE
+  TRADITIONAL_401K
+  ROTH_401K
+  TRADITIONAL_IRA
+  ROTH_IRA
+  HSA
+  OTHER
+}
+
+enum VaultType {
+  FIXED
+  VARIABLE
+  GOAL
+}
+
+// ─── Core tables ──────────────────────────────────────────────────────────────
+
+model Household {
+  id        Int      @id @default(autoincrement())
+  name      String
+  pinHash   String
+  createdAt DateTime @default(now())
+
+  members               Member[]
+  reviews               Review[]
+  expenseCategories     ExpenseCategory[]
+  investmentCategories  InvestmentCategory[]
+  savingsAccounts       SavingsAccount[]
+  loans                 Loan[]
+  investmentAccounts    InvestmentAccount[]
+  vaults                Vault[]
+}
+
+model Member {
+  id          Int      @id @default(autoincrement())
+  householdId Int
+  name        String
+  email       String   @default("")
+  color       String   @default("#3B82F6")
+  createdAt   DateTime @default(now())
+
+  household      Household       @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  incomeEntries  IncomeEntry[]
+  expenseEntries ExpenseEntry[]
+  sessions       Session[]
+  reviewsEdited  Review[]        @relation("lastEditor")
+  accounts       InvestmentAccount[]
+  vaults         Vault[]
+}
+
+model Session {
+  id          Int      @id @default(autoincrement())
+  memberId    Int
+  householdId Int
+  token       String   @unique
+  expiresAt   DateTime
+
+  member Member @relation(fields: [memberId], references: [id], onDelete: Cascade)
+}
+
+// ─── Reviews ──────────────────────────────────────────────────────────────────
+
+model Review {
+  id            Int          @id @default(autoincrement())
+  householdId   Int
+  periodYear    Int
+  periodMonth   Int
+  type          ReviewType
+  status        ReviewStatus @default(IN_PROGRESS)
+  currentStep   String       @default("expense")
+  lastEditorId  Int?
+  lockedForEdit Boolean      @default(false)
+  createdAt     DateTime     @default(now())
+  completedAt   DateTime?
+
+  household      Household      @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  lastEditor     Member?        @relation("lastEditor", fields: [lastEditorId], references: [id])
+  steps          ReviewStep[]
+  incomeEntries  IncomeEntry[]
+  expenseEntries ExpenseEntry[]
+  savingsSnapshots SavingsSnapshot[]
+  loanSnapshots    LoanSnapshot[]
+  holdingSnapshots HoldingSnapshot[]
+  vaultSnapshots   VaultSnapshot[]
+}
+
+model ReviewStep {
+  id        Int        @id @default(autoincrement())
+  reviewId  Int
+  stepKey   String
+  status    StepStatus @default(PENDING)
+  data      String     @default("{}") // JSON stored as text (SQLite)
+  updatedAt DateTime   @updatedAt
+
+  review Review @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+
+  @@unique([reviewId, stepKey])
+}
+
+// ─── Income ───────────────────────────────────────────────────────────────────
+
+model IncomeEntry {
+  id       Int     @id @default(autoincrement())
+  reviewId Int
+  memberId Int
+  name     String
+  notes    String?
+  amount   Int     // cents
+
+  review Review @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+  member Member @relation(fields: [memberId], references: [id], onDelete: Cascade)
+}
+
+// ─── Expenses ─────────────────────────────────────────────────────────────────
+
+model ExpenseCategory {
+  id          Int    @id @default(autoincrement())
+  householdId Int
+  name        String
+  icon        String @default("💰")
+  color       String @default("#64748B")
+  sortOrder   Int    @default(0)
+
+  household      Household      @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  expenseEntries ExpenseEntry[]
+}
+
+model ExpenseEntry {
+  id         Int      @id @default(autoincrement())
+  reviewId   Int
+  categoryId Int
+  memberId   Int?
+  name       String
+  notes      String?
+  amount     Int      // cents
+  date       DateTime
+
+  review   Review          @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+  category ExpenseCategory @relation(fields: [categoryId], references: [id])
+  member   Member?         @relation(fields: [memberId], references: [id])
+}
+
+// ─── Savings ──────────────────────────────────────────────────────────────────
+
+model SavingsAccount {
+  id          Int                @id @default(autoincrement())
+  householdId Int
+  name        String
+  type        SavingsAccountType @default(HYSA)
+  institution String             @default("")
+  rate        Float              @default(0) // annual APY as decimal (e.g. 0.035 = 3.5%)
+  goal        Int                @default(0) // savings goal in cents
+
+  household        Household        @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  savingsSnapshots SavingsSnapshot[]
+}
+
+model SavingsSnapshot {
+  id              Int @id @default(autoincrement())
+  accountId       Int
+  reviewId        Int
+  startingBalance Int // cents
+  deposits        Int // cents
+  interest        Int // cents
+  endingBalance   Int // cents
+
+  account SavingsAccount @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  review  Review         @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+
+  @@unique([accountId, reviewId])
+}
+
+// ─── Loans ────────────────────────────────────────────────────────────────────
+
+model Loan {
+  id                Int      @id @default(autoincrement())
+  householdId       Int
+  name              String
+  category          String   @default("OTHER") // SCHOOL | MORTGAGE | AUTO | OTHER
+  principal         Int      // cents (original loan amount)
+  rate              Float    // annual interest rate as decimal (e.g. 0.065 = 6.5%)
+  termMonths        Int
+  startDate         DateTime
+  paidOff           Boolean  @default(false)
+  mortgageInsurance Int      @default(0) // cents/month
+  otherFees         Int      @default(0) // cents/month (HOA, taxes escrow, etc.)
+
+  household     Household      @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  loanSnapshots LoanSnapshot[]
+}
+
+model LoanSnapshot {
+  id              Int @id @default(autoincrement())
+  loanId          Int
+  reviewId        Int
+  balance         Int // cents
+  paymentsMade    Int // count
+  interestPaid    Int // cents (this period)
+  extraPayment    Int @default(0) // cents
+  paymentAmount   Int @default(0) // cents — total payment made this period
+  principalAmount Int @default(0) // cents — principal portion of this period's payment
+
+  loan   Loan   @relation(fields: [loanId], references: [id], onDelete: Cascade)
+  review Review @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+
+  @@unique([loanId, reviewId])
+}
+
+// ─── Investments ──────────────────────────────────────────────────────────────
+
+model InvestmentCategory {
+  id          Int    @id @default(autoincrement())
+  householdId Int
+  name        String
+  color       String @default("#6B7280") // hex — used for badge background derivation
+  sortOrder   Int    @default(0)
+
+  household Household @relation(fields: [householdId], references: [id], onDelete: Cascade)
+}
+
+model InvestmentAccount {
+  id            Int                   @id @default(autoincrement())
+  householdId   Int
+  name          String
+  type          InvestmentAccountType
+  institution   String                @default("")
+  ownerMemberId Int?
+
+  household Household  @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  owner     Member?    @relation(fields: [ownerMemberId], references: [id])
+  purchases Purchase[]
+}
+
+// Each row = one purchase lot (buy event). Multiple purchases of the same ticker
+// are aggregated into a position client-side for avg cost / total shares.
+model Purchase {
+  id            Int      @id @default(autoincrement())
+  accountId     Int
+  ticker        String
+  name          String
+  category      String   @default("")
+  purchaseDate  DateTime
+  pricePerShare Int      // cents paid per share at purchase time
+  shares        Float
+
+  account          InvestmentAccount @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  holdingSnapshots HoldingSnapshot[]
+}
+
+// One price record per ticker per review — shared across all purchase lots of that ticker.
+model HoldingSnapshot {
+  id         Int    @id @default(autoincrement())
+  purchaseId Int
+  reviewId   Int
+  price      Int    // cents per share at review time (from live API or manual)
+  value      Int    // cents total = price × shares
+  gainLoss   Int    // cents = value − (pricePerShare × shares)
+
+  purchase Purchase @relation(fields: [purchaseId], references: [id], onDelete: Cascade)
+  review   Review   @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+
+  @@unique([purchaseId, reviewId])
+}
+
+// ─── Vaults ───────────────────────────────────────────────────────────────────
+
+model Vault {
+  id              Int       @id @default(autoincrement())
+  householdId     Int
+  name            String
+  type            VaultType
+  category        String    @default("")   // "Bills" | "Personal" | "Pre-Pay" | "Replenish" | "Investments" | "Treasury"
+  ownerMemberId   Int?                     // null = shared ("All")
+  target          Int?                     // cents — goal amount per frequency
+  allocation      Float     @default(0)   // VARIABLE: fractional 0–1 (legacy)
+  frequency       String    @default("MONTHLY") // MONTHLY | 3-MONTH | SEMI-ANN | 1-YEAR | 2-YEAR | 3-YEAR
+  rateMonths      Int       @default(1)   // months to divide target by for monthly amount
+  currentBalance  Int       @default(0)   // cents — current balance for treasury display
+  treasuryPct     Float     @default(0)   // 0–100: percentage of treasury to allocate (VARIABLE vaults)
+  sortOrder       Int       @default(0)   // display order within type/category
+  description     String    @default("")  // short abbreviation used in raw name (e.g. "CarIns")
+  dueMonths       String    @default("")  // comma-separated months when payment is due (e.g. "5,11")
+
+  household      Household      @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  owner          Member?        @relation(fields: [ownerMemberId], references: [id])
+  vaultSnapshots VaultSnapshot[]
+}
+
+model VaultSnapshot {
+  id       Int @id @default(autoincrement())
+  vaultId  Int
+  reviewId Int
+  amount   Int // cents
+
+  vault  Vault  @relation(fields: [vaultId], references: [id], onDelete: Cascade)
+  review Review @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+
+  @@unique([vaultId, reviewId])
+}

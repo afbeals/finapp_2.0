@@ -2,7 +2,7 @@
 
 import React, { useEffect, useCallback } from 'react';
 import styled, { keyframes } from 'styled-components';
-import { colors, radius, shadow, font } from '@/styles/tokens';
+import { colors, radius, shadow, font, spacing } from '@/styles/tokens';
 
 const fadeIn = keyframes`from { opacity: 0; } to { opacity: 1; }`;
 const slideUp = keyframes`from { transform: translateY(16px); opacity: 0; } to { transform: translateY(0); opacity: 1; }`;

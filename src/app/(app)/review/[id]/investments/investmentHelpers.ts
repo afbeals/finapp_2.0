@@ -99,10 +99,10 @@ const BADGE_PALETTE = [
   { bg: colors.primaryLight, fg: semanticColors.primaryTextDark },
   { bg: colors.successLight, fg: semanticColors.successTextDark },
   { bg: colors.warningLight, fg: semanticColors.amberText },
-  { bg: '#FCE7F3', fg: '#9D174D' },
+  { bg: semanticColors.pinkBg, fg: semanticColors.pinkTextDark },
   { bg: semanticColors.purpleLight, fg: semanticColors.purpleTextDark },
   { bg: semanticColors.tealLight, fg: semanticColors.tealText },
-  { bg: semanticColors.amberBg, fg: '#C2410C' },
+  { bg: semanticColors.amberBg, fg: semanticColors.orangeTextDark },
 ];
 export function acctBadge(i: number) { return BADGE_PALETTE[i % BADGE_PALETTE.length]; }
 

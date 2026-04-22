@@ -83,7 +83,7 @@ const RawNameCell = styled.span`
   text-overflow: ellipsis;
   white-space: nowrap;
   font-family: ui-monospace, monospace;
-  font-size: 11px;
+  font-size: ${font.size.xs};
   color: ${colors.textMuted};
   cursor: default;
   vertical-align: middle;

@@ -30,7 +30,7 @@ const AccountRowHeader = styled.button.withConfig({
   display: flex;
   align-items: center;
   gap: ${spacing[4]};
-  padding: 16px ${spacing[5]};
+  padding: ${spacing[4]} ${spacing[5]};
   background: ${({ expanded }) => expanded ? colors.primaryLight : colors.surface};
   border: none;
   cursor: pointer;

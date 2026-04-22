@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/Button';
 import { EnableEditModal } from '@/components/modals/EnableEditModal';
 import { useReviewStore } from '@/lib/store';
 import { formatDollars } from '@/lib/money';
-import { colors, font, spacing, semanticColors } from '@/styles/tokens';
+import { colors, font, radius, spacing, semanticColors } from '@/styles/tokens';
 import { LoadingState } from '@/components/shared/LoadingState';
 import { apiGet, getReviewIncome, getReviewExpenses, getReviewSavings, getReviewInvestments } from '@/lib/api';
 import { MONTH_NAMES_LONG } from '@/lib/fire';
@@ -29,7 +29,7 @@ const Page = styled.div`
 const Banner = styled.div<{ $editing: boolean }>`
   background: ${({ $editing }) => $editing ? colors.warningLight : semanticColors.infoBg};
   border: 1px solid ${({ $editing }) => $editing ? semanticColors.warningBorderStrong : semanticColors.infoBorder};
-  border-radius: 8px;
+  border-radius: ${radius.md};
   padding: 12px ${spacing[4]};
   display: flex;
   align-items: center;
@@ -90,8 +90,8 @@ const StepRow = styled.div`
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 10px 16px;
-  border-radius: 8px;
+  padding: 10px ${spacing[4]};
+  border-radius: ${radius.md};
   background: ${colors.bg};
 `;
 

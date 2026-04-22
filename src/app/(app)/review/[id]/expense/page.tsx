@@ -45,7 +45,7 @@ const SummaryLabel = styled.span.withConfig({
   color: ${({ textColor }) => textColor};
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: ${spacing[2]};
 `;
 
 const SummaryValue = styled.span.withConfig({

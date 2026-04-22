@@ -48,7 +48,7 @@ const WelcomeBanner = styled.div`
   background: ${colors.surface};
   border: 1px solid ${colors.border};
   border-radius: ${radius.lg};
-  padding: 16px ${spacing[5]};
+  padding: ${spacing[4]} ${spacing[5]};
   margin-bottom: ${spacing[6]};
   box-shadow: ${shadow.sm};
 `;

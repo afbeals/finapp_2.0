@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useParams } from 'next/navigation';
 import styled from 'styled-components';
 import {
@@ -12,13 +12,17 @@ import { Card, CardTitle } from '@/components/ui/Card';
 import { useStepNav } from '@/lib/useStepNav';
 import { useReviewStore } from '@/lib/store';
 import { formatDollars, formatDollarsWhole } from '@/lib/money';
-import { colors, font, spacing, radius } from '@/styles/tokens';
+import { MONTH_NAMES_SHORT } from '@/lib/fire';
+import { getReviewIncome, getReviewExpenses, getExpenseCategories, apiGet } from '@/lib/api';
+import { colors, semanticColors, font, spacing, radius } from '@/styles/tokens';
+import { LoadingState } from '@/components/shared/LoadingState';
+import { SectionHeader } from '@/components/shared/SectionHeader';
+import { KpiGrid, KpiCard } from '@/components/shared/KpiGrid';
+import type { ExpenseCategory, ExpenseEntry, IncomeEntry } from '@/types/entities';
 
-const MONTH_NAMES = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 
-interface Category { id: number; name: string; icon: string; color: string }
-interface ExpenseEntry { id: number; name: string; notes?: string | null; amount: number; category: Category }
-interface IncomeEntry { id: number; name: string; notes?: string | null; amount: number; member: { id: number; name: string; color: string } | null }
+type Category = ExpenseCategory;
+
 interface ReviewSummary {
   id: number;
   periodYear: number;
@@ -28,76 +32,7 @@ interface ReviewSummary {
 }
 interface CategoryHistoryRow { id: number; periodYear: number; periodMonth: number; totals: Record<number, number> }
 
-// ─── KPI cards ────────────────────────────────────────────────────────────────
-
-const KpiGrid = styled.div`
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: ${spacing[4]};
-  margin-bottom: ${spacing[6]};
-  @media (max-width: 900px) { grid-template-columns: repeat(2, 1fr); }
-`;
-
-const KpiCard = styled.div.withConfig({
-  shouldForwardProp: (p) => !['bg', 'borderColor'].includes(p),
-})<{ bg: string; borderColor: string }>`
-  background: ${({ bg }) => bg};
-  border: 1.5px solid ${({ borderColor }) => borderColor};
-  border-radius: ${radius.lg};
-  padding: 14px 16px;
-`;
-
-const KpiLabel = styled.p.withConfig({
-  shouldForwardProp: (p) => p !== 'textColor',
-})<{ textColor: string }>`
-  font-size: ${font.size.xs};
-  font-weight: ${font.weight.semibold};
-  color: ${({ textColor }) => textColor};
-  opacity: 0.8;
-  margin-bottom: 4px;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-`;
-
-const KpiValue = styled.p.withConfig({
-  shouldForwardProp: (p) => p !== 'textColor',
-})<{ textColor: string }>`
-  font-size: ${font.size['2xl']};
-  font-weight: ${font.weight.bold};
-  color: ${({ textColor }) => textColor};
-  line-height: 1;
-  margin-bottom: 4px;
-`;
-
-const KpiSub = styled.p.withConfig({
-  shouldForwardProp: (p) => p !== 'textColor',
-})<{ textColor: string }>`
-  font-size: ${font.size.xs};
-  color: ${({ textColor }) => textColor};
-  opacity: 0.75;
-`;
-
-// ─── Section header ───────────────────────────────────────────────────────────
-
-const SectionHeader = styled.div`
-  display: flex;
-  align-items: center;
-  gap: ${spacing[3]};
-  margin-bottom: ${spacing[4]};
-`;
-
-const SectionTitle = styled.h2`
-  font-size: ${font.size.base};
-  font-weight: ${font.weight.bold};
-  color: ${colors.textPrimary};
-  white-space: nowrap;
-`;
-
-const SectionLine = styled.div`
-  flex: 1;
-  height: 1px;
-  background: ${colors.border};
-`;
+// (KpiGrid/KpiCard and SectionHeader imported from shared)
 
 // ─── Charts row ───────────────────────────────────────────────────────────────
 
@@ -149,7 +84,7 @@ const MonthActionBtn = styled.button.withConfig({
   border-radius: ${radius.full};
   cursor: pointer;
   border: 1px solid ${({ primary }) => primary ? colors.primary : colors.border};
-  background: ${({ primary }) => primary ? '#EFF6FF' : colors.surface};
+  background: ${({ primary }) => primary ? colors.primaryLight : colors.surface};
   color: ${({ primary }) => primary ? colors.primary : colors.textMuted};
   &:hover { opacity: 0.8; }
 `;
@@ -168,9 +103,9 @@ const MonthPill = styled.button.withConfig({
   padding: 5px 12px;
   border-radius: ${radius.full};
   cursor: pointer;
-  border: 1px solid ${({ selected }) => selected ? colors.primary : '#CBD5E1'};
+  border: 1px solid ${({ selected }) => selected ? colors.primary : colors.borderStrong};
   background: ${({ selected }) => selected ? colors.primary : colors.surface};
-  color: ${({ selected }) => selected ? '#fff' : colors.textMuted};
+  color: ${({ selected }) => selected ? colors.surface : colors.textMuted};
   transition: all 100ms ease;
   &:hover { opacity: 0.85; }
 `;
@@ -303,7 +238,7 @@ const CatChevron = styled.span.withConfig({
 
 const LineItemRow = styled.tr`
   background: ${colors.bg};
-  &:hover { background: #F1F5F9; }
+  &:hover { background: ${colors.bg}; }
 `;
 
 const LineItemTd = styled.td`
@@ -324,9 +259,9 @@ const TrendBadge = styled.span.withConfig({
   border-radius: ${radius.full};
   margin-left: 6px;
   vertical-align: middle;
-  background: ${({ dir }) => dir === 'up' ? '#FEF2F2' : dir === 'down' ? '#F0FDF4' : '#F1F5F9'};
+  background: ${({ dir }) => dir === 'up' ? colors.dangerLight : dir === 'down' ? semanticColors.successBg : colors.bg};
   color: ${({ dir }) => dir === 'up' ? colors.danger : dir === 'down' ? colors.success : colors.textMuted};
-  border: 1px solid ${({ dir }) => dir === 'up' ? '#FECACA' : dir === 'down' ? '#BBF7D0' : colors.border};
+  border: 1px solid ${({ dir }) => dir === 'up' ? semanticColors.dangerBorder : dir === 'down' ? semanticColors.successLightBorder : colors.border};
 `;
 
 const SummaryTr = styled.tr.withConfig({
@@ -357,11 +292,11 @@ export default function MonthlySummaryPage() {
 
   useEffect(() => {
     Promise.all([
-      fetch(`/api/reviews/${reviewId}/income`).then((r) => r.json()),
-      fetch(`/api/reviews/${reviewId}/expenses`).then((r) => r.json()),
-      fetch('/api/reviews').then((r) => r.json()),
-      fetch('/api/reviews/category-totals').then((r) => r.json()),
-      fetch('/api/config/categories').then((r) => r.json()),
+      getReviewIncome(reviewId),
+      getReviewExpenses(reviewId),
+      apiGet<{ reviews: ReviewSummary[] }>('/api/reviews'),
+      apiGet<{ byReview: CategoryHistoryRow[] }>('/api/reviews/category-totals'),
+      getExpenseCategories(),
     ]).then(([inc, exp, allData, catData, catConfig]) => {
       setIncome(inc.entries ?? []);
       setExpenses(exp.entries ?? []);
@@ -406,7 +341,7 @@ export default function MonthlySummaryPage() {
   const annualPace = avgNet * 12;
 
   const trendData = completedReviews.map((r) => ({
-    month: MONTH_NAMES[r.periodMonth - 1],
+    month: MONTH_NAMES_SHORT[r.periodMonth - 1],
     income: r.totalIncome / 100,
     expenses: r.totalExpenses / 100,
     net: (r.totalIncome - r.totalExpenses) / 100,
@@ -436,7 +371,7 @@ export default function MonthlySummaryPage() {
     });
   }
 
-  if (loading) return <p style={{ color: colors.textMuted }}>Loading…</p>;
+  if (loading) return <LoadingState centered />;
 
   const currentYear = reviewState.activeReview?.periodYear ?? new Date().getFullYear();
 
@@ -452,44 +387,36 @@ export default function MonthlySummaryPage() {
       readOnly={readOnly}
     >
       {/* ── Yearly KPI cards ── */}
-      <SectionHeader>
-        <SectionTitle>{currentYear} Yearly Summary</SectionTitle>
-        <SectionLine />
-      </SectionHeader>
+      <SectionHeader title={`${currentYear} Yearly Summary`} />
 
-      <KpiGrid>
-        <KpiCard bg="#F0FDF4" borderColor="#22C55E">
-          <KpiLabel textColor="#166534">Total Income</KpiLabel>
-          <KpiValue textColor="#166534">{formatDollarsWhole(totalIncomeAll)}</KpiValue>
-          <KpiSub textColor="#166634">▲ {monthsCount} month{monthsCount !== 1 ? 's' : ''} data</KpiSub>
-        </KpiCard>
-
-        <KpiCard bg="#FEF2F2" borderColor="#EF4444">
-          <KpiLabel textColor="#991B1B">Total Expenses</KpiLabel>
-          <KpiValue textColor="#991B1B">{formatDollarsWhole(totalExpensesAll)}</KpiValue>
-          <KpiSub textColor="#991B1B">~{formatDollarsWhole(avgExpenses)}/mo avg</KpiSub>
-        </KpiCard>
-
-        <KpiCard bg="#EFF6FF" borderColor={colors.primary}>
-          <KpiLabel textColor="#1E40AF">Net Savings</KpiLabel>
-          <KpiValue textColor="#1E40AF">{formatDollarsWhole(totalIncomeAll - totalExpensesAll)}</KpiValue>
-          <KpiSub textColor="#1E40AF">
-            {totalIncomeAll > 0 ? `✓ ${((1 - totalExpensesAll / totalIncomeAll) * 100).toFixed(0)}% savings rate` : '—'}
-          </KpiSub>
-        </KpiCard>
-
-        <KpiCard bg="#F8FAFC" borderColor="#CBD5E1">
-          <KpiLabel textColor="#64748B">Avg Net / Month</KpiLabel>
-          <KpiValue textColor="#475569">{formatDollarsWhole(avgNet)}/mo</KpiValue>
-          <KpiSub textColor="#64748B">→ {formatDollarsWhole(annualPace)}/yr pace</KpiSub>
-        </KpiCard>
+      <KpiGrid cols={4}>
+        <KpiCard
+          tone="success"
+          label="Total Income"
+          value={formatDollarsWhole(totalIncomeAll)}
+          sub={`▲ ${monthsCount} month${monthsCount !== 1 ? 's' : ''} data`}
+        />
+        <KpiCard
+          tone="danger"
+          label="Total Expenses"
+          value={formatDollarsWhole(totalExpensesAll)}
+          sub={`~${formatDollarsWhole(avgExpenses)}/mo avg`}
+        />
+        <KpiCard
+          tone="primary"
+          label="Net Savings"
+          value={formatDollarsWhole(totalIncomeAll - totalExpensesAll)}
+          sub={totalIncomeAll > 0 ? `✓ ${((1 - totalExpensesAll / totalIncomeAll) * 100).toFixed(0)}% savings rate` : '—'}
+        />
+        <KpiCard
+          label="Avg Net / Month"
+          value={`${formatDollarsWhole(avgNet)}/mo`}
+          sub={`→ ${formatDollarsWhole(annualPace)}/yr pace`}
+        />
       </KpiGrid>
 
       {/* ── Trend charts ── */}
-      <SectionHeader>
-        <SectionTitle>Yearly Trends</SectionTitle>
-        <SectionLine />
-      </SectionHeader>
+      <SectionHeader title="Yearly Trends" />
 
       <ChartsRow>
         <Card padding="md">
@@ -545,7 +472,7 @@ export default function MonthlySummaryPage() {
               selected={selectedMonths.includes(r.id)}
               onClick={() => toggleMonth(r.id)}
             >
-              {selectedMonths.includes(r.id) ? '✓ ' : ''}{MONTH_NAMES[r.periodMonth - 1]}{r.periodYear !== currentYear ? ` ${r.periodYear}` : ''}
+              {selectedMonths.includes(r.id) ? '✓ ' : ''}{MONTH_NAMES_SHORT[r.periodMonth - 1]}{r.periodYear !== currentYear ? ` ${r.periodYear}` : ''}
             </MonthPill>
           ))}
           {allReviews.length === 0 && (
@@ -557,10 +484,7 @@ export default function MonthlySummaryPage() {
       {/* ── Pie charts — horizontal scroll ── */}
       {selectedReviews.length > 0 && (
         <>
-          <SectionHeader>
-            <SectionTitle>Expense Breakdown by Month</SectionTitle>
-            <SectionLine />
-          </SectionHeader>
+          <SectionHeader title="Expense Breakdown by Month" />
           <PieScrollTrack>
             {selectedReviews.map((r) => {
               const histRow = categoryHistory.find((ch) => ch.id === r.id);
@@ -574,7 +498,7 @@ export default function MonthlySummaryPage() {
                 .filter((d) => d.value > 0);
               return (
                 <PieCardFixed key={r.id}>
-                  <PieCardTitle>{MONTH_NAMES[r.periodMonth - 1]}{r.periodYear !== currentYear ? ` ${r.periodYear}` : ''}</PieCardTitle>
+                  <PieCardTitle>{MONTH_NAMES_SHORT[r.periodMonth - 1]}{r.periodYear !== currentYear ? ` ${r.periodYear}` : ''}</PieCardTitle>
                   <PieChart width={212} height={150}>
                     <Pie data={pieData} dataKey="value" cx="50%" cy="50%" outerRadius={65} label={false}>
                       {pieData.map((entry, i) => <Cell key={i} fill={entry.fill} />)}
@@ -597,10 +521,7 @@ export default function MonthlySummaryPage() {
       )}
 
       {/* ── Expandable category breakdown ── */}
-      <SectionHeader>
-        <SectionTitle>Transactions by Category</SectionTitle>
-        <SectionLine />
-      </SectionHeader>
+      <SectionHeader title="Transactions by Category" />
 
       <Card padding="sm">
         <CatTable>
@@ -613,18 +534,18 @@ export default function MonthlySummaryPage() {
           </thead>
           <tbody>
             {/* ── Income row (expandable) ── */}
-            <CatHeaderRow rowBg="#F0FDF4" onClick={() => setIncomeExpanded((v) => !v)}>
+            <CatHeaderRow rowBg={semanticColors.successBg} onClick={() => setIncomeExpanded((v) => !v)}>
               <CatTd>
                 <CatNameCell>
-                  <CatColorBar barColor="#22C55E" />
+                  <CatColorBar barColor={colors.success} />
                   💰 Income
                   <CatChevron open={incomeExpanded}>▶</CatChevron>
                 </CatNameCell>
               </CatTd>
-              <CatTd style={{ textAlign: 'right', fontWeight: font.weight.semibold, color: '#166534' }}>
+              <CatTd style={{ textAlign: 'right', fontWeight: font.weight.semibold, color: semanticColors.successTextDark }}>
                 {formatDollars(totalIncome)}
               </CatTd>
-              <CatTd style={{ textAlign: 'right', color: '#166534' }}>—</CatTd>
+              <CatTd style={{ textAlign: 'right', color: semanticColors.successTextDark }}>—</CatTd>
             </CatHeaderRow>
             {incomeExpanded && income.map((item) => (
               <LineItemRow key={item.id}>
@@ -645,7 +566,7 @@ export default function MonthlySummaryPage() {
                     <div style={{ fontSize: '10px', color: colors.textMuted, fontStyle: 'italic', marginTop: 2, paddingLeft: 14 }}>{item.notes}</div>
                   )}
                 </LineItemTd>
-                <LineItemTd style={{ color: '#166534', fontWeight: 500 }}>{formatDollars(item.amount)}</LineItemTd>
+                <LineItemTd style={{ color: semanticColors.successTextDark, fontWeight: 500 }}>{formatDollars(item.amount)}</LineItemTd>
                 <LineItemTd style={{ color: colors.textMuted }}>
                   {totalIncome > 0 ? `${((item.amount / totalIncome) * 100).toFixed(1)}%` : '—'}
                 </LineItemTd>
@@ -701,12 +622,12 @@ export default function MonthlySummaryPage() {
             )}
           </tbody>
           <tfoot>
-            <SummaryTr bg="#0F172A" textColor="#fff">
+            <SummaryTr bg={colors.navbar} textColor={colors.surface}>
               <CatTd>💸 Total Expenses</CatTd>
               <CatTd>{formatDollars(totalExpenses)}</CatTd>
               <CatTd>100%</CatTd>
             </SummaryTr>
-            <SummaryTr bg="#EFF6FF" textColor={netFlow >= 0 ? '#166534' : colors.danger}>
+            <SummaryTr bg={colors.primaryLight} textColor={netFlow >= 0 ? semanticColors.successTextDark : colors.danger}>
               <CatTd>📈 Net Savings</CatTd>
               <CatTd>{formatDollars(netFlow)}</CatTd>
               <CatTd>{totalIncome > 0 ? `${(savingsRate * 100).toFixed(1)}%` : '—'}</CatTd>

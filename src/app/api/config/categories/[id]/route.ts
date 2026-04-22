@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { prisma } from '@/lib/db';
-import { getSession } from '@/lib/auth';
+import { requireHouseholdResource, badRequest } from '@/lib/apiGuards';
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -13,36 +13,28 @@ const updateSchema = z.object({
 });
 
 export async function PATCH(req: NextRequest, { params }: Params) {
-  const session = await getSession();
-  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-
   const { id } = await params;
+  const { resource: existing } = await requireHouseholdResource(
+    (id) => prisma.expenseCategory.findUnique({ where: { id } }),
+    Number(id),
+  ).catch(() => ({ resource: null as ReturnType<typeof prisma.expenseCategory.findUnique> extends Promise<infer T> ? T : never }));
+  if (!existing) return NextResponse.json({ error: 'Not found' }, { status: 404 });
+
   const body = await req.json().catch(() => null);
   const parsed = updateSchema.safeParse(body);
-  if (!parsed.success) return NextResponse.json({ error: 'Invalid request' }, { status: 400 });
+  if (!parsed.success) return badRequest('Invalid request');
 
-  const existing = await prisma.expenseCategory.findUnique({ where: { id: Number(id) } });
-  if (!existing || existing.householdId !== session.householdId) {
-    return NextResponse.json({ error: 'Not found' }, { status: 404 });
-  }
-
-  const updated = await prisma.expenseCategory.update({
-    where: { id: Number(id) },
-    data: parsed.data,
-  });
-
+  const updated = await prisma.expenseCategory.update({ where: { id: Number(id) }, data: parsed.data });
   return NextResponse.json({ category: updated });
 }
 
 export async function DELETE(_req: NextRequest, { params }: Params) {
-  const session = await getSession();
-  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-
   const { id } = await params;
-  const existing = await prisma.expenseCategory.findUnique({ where: { id: Number(id) } });
-  if (!existing || existing.householdId !== session.householdId) {
-    return NextResponse.json({ error: 'Not found' }, { status: 404 });
-  }
+  const result = await requireHouseholdResource(
+    (id) => prisma.expenseCategory.findUnique({ where: { id } }),
+    Number(id),
+  ).catch(() => null);
+  if (!result) return NextResponse.json({ error: 'Not found' }, { status: 404 });
 
   await prisma.expenseCategory.delete({ where: { id: Number(id) } });
   return NextResponse.json({ ok: true });

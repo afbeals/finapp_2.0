@@ -4,6 +4,7 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import styled from 'styled-components';
 import { colors, font, radius, spacing, shadow } from '@/styles/tokens';
+import { LoadingState } from '@/components/shared/LoadingState';
 import { Card, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
@@ -12,6 +13,7 @@ import { NewReviewModal } from '@/components/modals/NewReviewModal';
 import { ProgressBar } from '@/components/ui/ProgressBar';
 import { useReviewStore, useSessionStore } from '@/lib/store';
 import { formatDollars } from '@/lib/money';
+import { apiGet } from '@/lib/api';
 
 const MONTH_NAMES = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 const MONTH_NAMES_FULL = ['January','February','March','April','May','June','July','August','September','October','November','December'];
@@ -192,12 +194,12 @@ export default function DashboardPage() {
 
   const load = useCallback(async () => {
     try {
-      const res = await fetch('/api/reviews');
-      if (!res.ok) { setLoading(false); return; }
-      const { reviews: data } = await res.json();
+      const { reviews: data } = await apiGet<{ reviews: Review[] }>('/api/reviews');
       setReviews(data);
       const active = data.find((r: Review) => r.status === 'IN_PROGRESS');
       reviewActions.setActiveReview(active ?? null);
+    } catch {
+      // ignore fetch errors on load
     } finally {
       setLoading(false);
     }
@@ -228,7 +230,7 @@ export default function DashboardPage() {
   }
 
   if (loading) {
-    return <Page><p style={{ color: colors.textMuted }}>Loading…</p></Page>;
+    return <Page><LoadingState centered /></Page>;
   }
 
   const greeting = `Welcome back, ${activeMemberName}`;

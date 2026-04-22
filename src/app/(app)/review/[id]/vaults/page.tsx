@@ -7,31 +7,10 @@ import { StepShell } from '@/components/review/StepShell';
 import { useStepNav } from '@/lib/useStepNav';
 import { useReviewStore } from '@/lib/store';
 import { formatDollars, toCents, toDollars } from '@/lib/money';
-import { colors, font, spacing, radius } from '@/styles/tokens';
-
-// ─── Types ────────────────────────────────────────────────────────────────────
-
-interface VaultOwner { id: number; name: string; color: string }
-
-interface Vault {
-  id: number;
-  name: string;
-  type: 'FIXED' | 'VARIABLE';
-  category: string;
-  owner: VaultOwner | null;
-  ownerMemberId: number | null;
-  target: number | null;
-  frequency: string;
-  rateMonths: number;
-  currentBalance: number;
-  treasuryPct: number;
-  sortOrder: number;
-  description: string;
-  dueMonths: string;
-}
-
-interface VaultSnapshot { vaultId: number; amount: number }
-interface Member { id: number; name: string; color: string }
+import { colors, semanticColors, font, spacing, radius } from '@/styles/tokens';
+import { LoadingState } from '@/components/shared/LoadingState';
+import { getReviewVaults, getMembers, updateVault, deleteVault, createVault, putReviewVaults } from '@/lib/api';
+import type { Vault, VaultOwner, VaultSnapshot, Member } from '@/types/entities';
 
 // ─── Raw-name derivation ──────────────────────────────────────────────────────
 
@@ -88,11 +67,11 @@ function buildTreasuryRawName(vault: Vault, innerOrder: number): string {
 // ─── Category palette ─────────────────────────────────────────────────────────
 
 const CAT_COLORS: Record<string, { bg: string; border: string; header: string; text: string; subtext: string }> = {
-  Bills:       { bg: '#FFFBEB', border: '#FCD34D', header: '#FEF3C7', text: '#92400E', subtext: '#B45309' },
-  Personal:    { bg: '#FAF5FF', border: '#C4B5FD', header: '#EDE9FE', text: '#5B21B6', subtext: '#7C3AED' },
-  'Pre-Pay':   { bg: '#EFF6FF', border: '#93C5FD', header: '#DBEAFE', text: '#1E40AF', subtext: '#2563EB' },
-  Replenish:   { bg: '#F0FDF4', border: '#86EFAC', header: '#DCFCE7', text: '#166534', subtext: '#16A34A' },
-  Investments: { bg: '#F0FDFA', border: '#5EEAD4', header: '#CCFBF1', text: '#0F766E', subtext: '#0D9488' },
+  Bills:       { bg: semanticColors.warningBg, border: semanticColors.warningBorder, header: colors.warningLight, text: semanticColors.amberText, subtext: semanticColors.warningText },
+  Personal:    { bg: semanticColors.purpleBg, border: semanticColors.purpleBorder, header: semanticColors.purpleLight, text: semanticColors.purpleTextDark, subtext: semanticColors.purpleTextMedium },
+  'Pre-Pay':   { bg: semanticColors.primaryBg, border: semanticColors.primaryBorder, header: colors.primaryLight, text: semanticColors.primaryTextDark, subtext: colors.primaryHover },
+  Replenish:   { bg: semanticColors.successBg, border: semanticColors.successBorder, header: colors.successLight, text: semanticColors.successTextDark, subtext: semanticColors.successTextMedium },
+  Investments: { bg: semanticColors.tealBg, border: semanticColors.tealBorder, header: semanticColors.tealLight, text: semanticColors.tealText, subtext: semanticColors.tealTextMedium },
 };
 
 // ─── Styled components ────────────────────────────────────────────────────────
@@ -170,7 +149,7 @@ const AddRowBtn = styled.button`
 const TableWrap = styled.div`overflow-x: auto;`;
 
 const FTable = styled.table`width: 100%; border-collapse: collapse; font-size: ${font.size.sm}; min-width: 860px;`;
-const FThead = styled.thead`background: #F8FAFC; position: sticky; top: 0; z-index: 1;`;
+const FThead = styled.thead`background: ${colors.bg}; position: sticky; top: 0; z-index: 1;`;
 
 const FTh = styled.th.withConfig({ shouldForwardProp: (p) => !['right', 'w', 'center'].includes(p) })<{ right?: boolean; w?: number; center?: boolean }>`
   padding: 6px 8px; font-size: 10px; font-weight: 600; color: ${colors.textMuted};
@@ -180,7 +159,7 @@ const FTh = styled.th.withConfig({ shouldForwardProp: (p) => !['right', 'w', 'ce
   ${({ w }) => w ? `width: ${w}px; min-width: ${w}px;` : ''}
 `;
 
-const FTr = styled.tr`&:not(:last-child) { border-bottom: 1px solid ${colors.border}; } &:hover { background: #FAFAFA; }`;
+const FTr = styled.tr`&:not(:last-child) { border-bottom: 1px solid ${colors.border}; } &:hover { background: ${colors.bg}; }`;
 
 const FTd = styled.td.withConfig({ shouldForwardProp: (p) => !['right', 'bold', 'center', 'muted'].includes(p) })<{ right?: boolean; bold?: boolean; center?: boolean; muted?: boolean }>`
   padding: 6px 8px;
@@ -251,7 +230,7 @@ const DeleteBtn = styled.button`
   width: 20px; height: 20px; border: none; border-radius: ${radius.sm};
   background: transparent; color: ${colors.textMuted}; cursor: pointer;
   font-size: 15px; opacity: 0.45; line-height: 1;
-  &:hover { background: #FEE2E2; color: ${colors.danger}; opacity: 1; }
+  &:hover { background: ${colors.dangerLight}; color: ${colors.danger}; opacity: 1; }
 `;
 const OwnerBadge = styled.span.withConfig({ shouldForwardProp: (p) => !['bg', 'fg'].includes(p) })<{ bg: string; fg: string }>`
   display: inline-block; padding: 2px 8px; border-radius: 99px;
@@ -266,40 +245,40 @@ const TreasuryWrap = styled.div`
 `;
 const TrAmountBox = styled.div`
   display: flex; align-items: center; gap: 16px; padding: 14px 20px;
-  background: #FFF7ED; border-bottom: 1px solid #FED7AA;
+  background: ${semanticColors.amberBg}; border-bottom: 1px solid ${semanticColors.amberBorder};
 `;
-const TrAmountLabel = styled.span`font-size: 11px; font-weight: 600; color: #92400E; text-transform: uppercase; letter-spacing: 0.05em;`;
+const TrAmountLabel = styled.span`font-size: 11px; font-weight: 600; color: ${semanticColors.amberText}; text-transform: uppercase; letter-spacing: 0.05em;`;
 const TrAmountInput = styled.input`
   height: 36px; width: 140px; padding: 0 10px;
-  border: 1px solid #F97316; border-radius: ${radius.md};
-  font-size: ${font.size.base}; font-weight: 700; color: #92400E;
+  border: 1px solid ${semanticColors.amberStrong}; border-radius: ${radius.md};
+  font-size: ${font.size.base}; font-weight: 700; color: ${semanticColors.amberText};
   background: ${colors.surface}; text-align: right;
-  &:focus { outline: none; border-color: #EA580C; }
+  &:focus { outline: none; border-color: ${semanticColors.amberHover}; }
 `;
 const TrAllocationBadge = styled.div.withConfig({ shouldForwardProp: (p) => p !== 'valid' })<{ valid: boolean }>`
   margin-left: auto; font-size: ${font.size.sm}; font-weight: 600;
-  color: ${({ valid }) => valid ? '#15803D' : colors.danger};
-  background: ${({ valid }) => valid ? '#DCFCE7' : '#FEE2E2'};
+  color: ${({ valid }) => valid ? semanticColors.successText : colors.danger};
+  background: ${({ valid }) => valid ? colors.successLight : colors.dangerLight};
   padding: 4px 12px; border-radius: 99px;
 `;
 const TTr = styled.tr.withConfig({ shouldForwardProp: (p) => p !== 'funded' })<{ funded?: boolean }>`
-  background: ${({ funded }) => funded ? '#F0FDF4' : 'transparent'};
+  background: ${({ funded }) => funded ? semanticColors.successBg : 'transparent'};
   &:not(:last-child) { border-bottom: 1px solid ${colors.border}; }
-  &:hover { background: ${({ funded }) => funded ? '#DCFCE7' : '#FAFAFA'}; }
+  &:hover { background: ${({ funded }) => funded ? colors.successLight : colors.bg}; }
 `;
 const TTd = styled.td.withConfig({ shouldForwardProp: (p) => !['right', 'bold', 'green', 'muted', 'center'].includes(p) })<{ right?: boolean; bold?: boolean; green?: boolean; muted?: boolean; center?: boolean }>`
   padding: 6px 8px;
   text-align: ${({ right, center }) => right ? 'right' : center ? 'center' : 'left'};
   font-weight: ${({ bold }) => bold ? 600 : 'normal'};
-  color: ${({ green, muted }) => green ? '#15803D' : muted ? colors.textMuted : colors.textPrimary};
+  color: ${({ green, muted }) => green ? semanticColors.successText : muted ? colors.textMuted : colors.textPrimary};
   white-space: nowrap;
 `;
 const PctInput = styled.input.withConfig({ shouldForwardProp: (p) => p !== 'funded' })<{ funded?: boolean }>`
   width: 52px; height: 26px; padding: 0 6px;
-  border: 1px solid ${({ funded }) => funded ? '#86EFAC' : '#F97316'};
+  border: 1px solid ${({ funded }) => funded ? semanticColors.successBorder : semanticColors.amberStrong};
   border-radius: ${radius.sm}; font-size: ${font.size.sm}; font-weight: 600; text-align: center;
-  color: ${({ funded }) => funded ? '#15803D' : '#92400E'};
-  background: ${({ funded }) => funded ? '#F0FDF4' : '#FFF7ED'};
+  color: ${({ funded }) => funded ? semanticColors.successText : semanticColors.amberText};
+  background: ${({ funded }) => funded ? semanticColors.successBg : semanticColors.amberBg};
   &:focus { outline: none; }
   &:disabled { background: ${colors.bg}; border-color: ${colors.border}; color: ${colors.textMuted}; }
 `;
@@ -312,16 +291,12 @@ function monthlyAmount(vault: Vault): number {
 }
 
 function ownerBadgeColors(owner: VaultOwner | null): { bg: string; fg: string } {
-  if (!owner) return { bg: '#F1F5F9', fg: '#475569' };
+  if (!owner) return { bg: colors.bg, fg: semanticColors.neutralText };
   return { bg: owner.color + '22', fg: owner.color };
 }
 
-function patchApi(id: number, data: Record<string, unknown>) {
-  return fetch(`/api/vaults/${id}`, {
-    method: 'PATCH',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(data),
-  });
+function patchApi(id: number, data: Partial<Vault>) {
+  return updateVault(id, data);
 }
 
 // ─── Inline editable text cell ────────────────────────────────────────────────
@@ -373,7 +348,7 @@ interface FixedSectionProps {
 
 function FixedSection({ category, groupOrder, vaults, members, readOnly, onUpdate, onDelete, onAdd }: FixedSectionProps) {
   const [open, setOpen] = useState(true);
-  const pal = CAT_COLORS[category] ?? { bg: '#F8FAFC', border: '#E2E8F0', header: '#F1F5F9', text: '#475569', subtext: '#64748B' };
+  const pal = CAT_COLORS[category] ?? { bg: semanticColors.surfaceMuted, border: colors.border, header: colors.bg, text: semanticColors.neutralText, subtext: colors.textMuted };
   const subtotal = vaults.reduce((s, v) => s + monthlyAmount(v), 0);
 
   return (
@@ -536,9 +511,9 @@ export default function VaultsPage() {
 
   useEffect(() => {
     Promise.all([
-      fetch(`/api/reviews/${reviewId}/vaults`).then((r) => r.json()),
-      fetch('/api/config/members').then((r) => r.json()),
-    ]).then(([{ vaults: vs, snapshots: _snaps }, { members: ms }]) => {
+      getReviewVaults(reviewId),
+      getMembers(),
+    ]).then(([{ vaults: vs }, { members: ms }]) => {
       setVaults(vs ?? []);
       setMembers(ms ?? []);
       const pcts: Record<number, number> = {};
@@ -550,36 +525,29 @@ export default function VaultsPage() {
   function patchVault(id: number, patch: Partial<Vault>, save = false) {
     setVaults((prev) => prev.map((v) => v.id === id ? { ...v, ...patch } : v));
     if (save) {
-      const saveData: Record<string, unknown> = { ...patch };
-      if (patch.owner !== undefined) delete saveData.owner; // owner is a relation, not directly patchable
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { owner: _owner, ...saveData } = patch;
       patchApi(id, saveData);
     }
   }
 
   async function handleDeleteVault(id: number) {
     setVaults((prev) => prev.filter((v) => v.id !== id));
-    await fetch(`/api/vaults/${id}`, { method: 'DELETE' });
+    await deleteVault(id);
   }
 
   async function handleAddVault(type: 'FIXED' | 'VARIABLE', category: string) {
     const siblings = vaults.filter((v) => v.type === type && v.category === category);
     const maxOrder = siblings.reduce((m, v) => Math.max(m, v.sortOrder), 0);
-    const res = await fetch('/api/vaults', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        name: 'New Vault', type, category,
-        ownerMemberId: null, target: 0,
-        frequency: type === 'VARIABLE' ? 'GOAL' : 'MONTHLY',
-        rateMonths: 1, currentBalance: 0, treasuryPct: 0,
-        sortOrder: maxOrder + 1, description: '', dueMonths: '',
-      }),
+    const { vault } = await createVault({
+      name: 'New Vault', type, category,
+      ownerMemberId: null, target: 0,
+      frequency: type === 'VARIABLE' ? 'GOAL' : 'MONTHLY',
+      rateMonths: 1, currentBalance: 0, treasuryPct: 0,
+      sortOrder: maxOrder + 1, description: '', dueMonths: '',
     });
-    if (res.ok) {
-      const { vault } = await res.json();
-      setVaults((prev) => [...prev, vault]);
-      if (type === 'VARIABLE') setTreasuryPcts((prev) => ({ ...prev, [vault.id]: 0 }));
-    }
+    setVaults((prev) => [...prev, vault]);
+    if (type === 'VARIABLE') setTreasuryPcts((prev) => ({ ...prev, [vault.id]: 0 }));
   }
 
   const fixedVaults = useMemo(() => vaults.filter((v) => v.type === 'FIXED'), [vaults]);
@@ -628,20 +596,16 @@ export default function VaultsPage() {
   }
 
   async function handleSave() {
-    const snapshotData = [
+    const snapshots: VaultSnapshot[] = [
       ...fixedVaults.map((v) => ({ vaultId: v.id, amount: monthlyAmount(v) })),
       ...variableVaults.map((v) => ({ vaultId: v.id, amount: treasuryAmounts[v.id] ?? 0 })),
     ];
     const pctUpdates = variableVaults.map((v) => ({ id: v.id, treasuryPct: treasuryPcts[v.id] ?? 0 }));
-    await fetch(`/api/reviews/${reviewId}/vaults`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ snapshots: snapshotData, pctUpdates }),
-    });
+    await putReviewVaults(reviewId, { snapshots, pctUpdates });
     await goNext();
   }
 
-  if (loading) return <p style={{ color: colors.textMuted }}>Loading…</p>;
+  if (loading) return <LoadingState centered />;
 
   const allCategories = [
     ...CAT_ORDER.filter((c) => fixedByCategory[c]),
@@ -728,7 +692,7 @@ export default function VaultsPage() {
             onChange={(e) => setTreasuryAmount(toCents(parseFloat(e.target.value) || 0))}
             disabled={readOnly}
           />
-          <span style={{ fontSize: font.size.sm, color: '#92400E' }}>Enter amount to distribute</span>
+          <span style={{ fontSize: font.size.sm, color: semanticColors.amberText }}>Enter amount to distribute</span>
           <TrAllocationBadge valid={Math.abs(totalTreasuryPct - 100) < 0.1 || totalTreasuryPct === 0}>
             Total: {totalTreasuryPct.toFixed(0)}%
           </TrAllocationBadge>

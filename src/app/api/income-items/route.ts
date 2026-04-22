@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { getSession } from '@/lib/auth';
+import { requireAuth } from '@/lib/apiGuards';
 
 export async function GET(req: NextRequest) {
-  const session = await getSession();
+  const session = await requireAuth().catch(() => null);
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   const q = req.nextUrl.searchParams.get('q')?.trim() ?? '';

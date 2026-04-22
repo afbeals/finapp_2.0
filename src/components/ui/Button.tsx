@@ -1,7 +1,7 @@
 'use client';
 
 import styled, { css } from 'styled-components';
-import { colors, font, radius, transition } from '@/styles/tokens';
+import { colors, font, radius, transition, semanticColors } from '@/styles/tokens';
 
 type Variant = 'primary' | 'secondary' | 'ghost' | 'danger';
 type Size = 'sm' | 'md' | 'lg';
@@ -34,7 +34,7 @@ const sizeStyles = {
 const variantStyles = {
   primary: css`
     background: ${colors.primary};
-    color: #fff;
+    color: ${colors.surface};
     border: 1px solid ${colors.primary};
 
     &:hover:not(:disabled) {
@@ -64,12 +64,12 @@ const variantStyles = {
   `,
   danger: css`
     background: ${colors.danger};
-    color: #fff;
+    color: ${colors.surface};
     border: 1px solid ${colors.danger};
 
     &:hover:not(:disabled) {
-      background: #DC2626;
-      border-color: #DC2626;
+      background: ${semanticColors.dangerHover};
+      border-color: ${semanticColors.dangerHover};
     }
   `,
 };

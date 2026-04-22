@@ -1,11 +1,9 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { getSession } from '@/lib/auth';
+import { requireAuth } from '@/lib/apiGuards';
 
-// Returns per-category totals across all reviews for the household.
-// Used to compute trend badges on the expense entry page.
-export async function GET(_req: NextRequest) {
-  const session = await getSession();
+export async function GET() {
+  const session = await requireAuth().catch(() => null);
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   const reviews = await prisma.review.findMany({
@@ -21,7 +19,6 @@ export async function GET(_req: NextRequest) {
     orderBy: [{ periodYear: 'asc' }, { periodMonth: 'asc' }],
   });
 
-  // Shape: { [reviewId]: { [categoryId]: totalCents } }
   const byReview = reviews.map((r) => {
     const totals: Record<number, number> = {};
     for (const e of r.expenseEntries) {

@@ -1,31 +1,25 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { prisma } from '@/lib/db';
-import { getSession } from '@/lib/auth';
+import { requireReviewAccess, badRequest } from '@/lib/apiGuards';
 
 type Params = { params: Promise<{ id: string }> };
 
 export async function GET(_req: NextRequest, { params }: Params) {
-  const session = await getSession();
-  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-
   const { id } = await params;
-  const review = await prisma.review.findUnique({ where: { id: Number(id) } });
-  if (!review || review.householdId !== session.householdId) {
-    return NextResponse.json({ error: 'Not found' }, { status: 404 });
-  }
+  const result = await requireReviewAccess(Number(id)).catch(() => null);
+  if (!result) return NextResponse.json({ error: 'Not found' }, { status: 404 });
 
   const [accounts, snapshots, allSnapshots, allReviews] = await Promise.all([
-    prisma.savingsAccount.findMany({ where: { householdId: session.householdId }, orderBy: { id: 'asc' } }),
+    prisma.savingsAccount.findMany({ where: { householdId: result.session.householdId }, orderBy: { id: 'asc' } }),
     prisma.savingsSnapshot.findMany({ where: { reviewId: Number(id) } }),
-    // All historical snapshots for sparkline/history table in expanded rows
     prisma.savingsSnapshot.findMany({
-      where: { account: { householdId: session.householdId } },
+      where: { account: { householdId: result.session.householdId } },
       include: { review: { select: { id: true, periodYear: true, periodMonth: true } } },
       orderBy: [{ review: { periodYear: 'asc' } }, { review: { periodMonth: 'asc' } }],
     }),
     prisma.review.findMany({
-      where: { householdId: session.householdId },
+      where: { householdId: result.session.householdId },
       select: { id: true, periodYear: true, periodMonth: true },
       orderBy: [{ periodYear: 'asc' }, { periodMonth: 'asc' }],
     }),
@@ -43,18 +37,13 @@ const snapshotSchema = z.object({
 });
 
 export async function PUT(req: NextRequest, { params }: Params) {
-  const session = await getSession();
-  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-
   const { id } = await params;
-  const review = await prisma.review.findUnique({ where: { id: Number(id) } });
-  if (!review || review.householdId !== session.householdId) {
-    return NextResponse.json({ error: 'Not found' }, { status: 404 });
-  }
+  const result = await requireReviewAccess(Number(id)).catch(() => null);
+  if (!result) return NextResponse.json({ error: 'Not found' }, { status: 404 });
 
   const body = await req.json().catch(() => null);
   const parsed = z.array(snapshotSchema).safeParse(body?.snapshots);
-  if (!parsed.success) return NextResponse.json({ error: 'Invalid' }, { status: 400 });
+  if (!parsed.success) return badRequest('Invalid');
 
   const snapshots = await Promise.all(
     parsed.data.map((s) =>
@@ -65,11 +54,9 @@ export async function PUT(req: NextRequest, { params }: Params) {
       })
     )
   );
-
   return NextResponse.json({ snapshots });
 }
 
-// PATCH — save a single snapshot field immediately (inline edit)
 const patchSchema = z.object({
   accountId: z.number().int().positive(),
   startingBalance: z.number().int().optional(),
@@ -78,22 +65,16 @@ const patchSchema = z.object({
 });
 
 export async function PATCH(req: NextRequest, { params }: Params) {
-  const session = await getSession();
-  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-
   const { id } = await params;
-  const review = await prisma.review.findUnique({ where: { id: Number(id) } });
-  if (!review || review.householdId !== session.householdId) {
-    return NextResponse.json({ error: 'Not found' }, { status: 404 });
-  }
+  const result = await requireReviewAccess(Number(id)).catch(() => null);
+  if (!result) return NextResponse.json({ error: 'Not found' }, { status: 404 });
 
   const body = await req.json().catch(() => null);
   const parsed = patchSchema.safeParse(body);
-  if (!parsed.success) return NextResponse.json({ error: 'Invalid' }, { status: 400 });
+  if (!parsed.success) return badRequest('Invalid');
 
   const { accountId, ...fields } = parsed.data;
 
-  // Fetch current or default snapshot
   const existing = await prisma.savingsSnapshot.findUnique({
     where: { accountId_reviewId: { accountId, reviewId: Number(id) } },
   }) ?? { startingBalance: 0, deposits: 0, interest: 0, endingBalance: 0 };
@@ -110,6 +91,5 @@ export async function PATCH(req: NextRequest, { params }: Params) {
     create: { accountId, reviewId: Number(id), ...next, endingBalance },
     update: { ...next, endingBalance },
   });
-
   return NextResponse.json({ snapshot });
 }

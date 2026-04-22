@@ -7,18 +7,19 @@ import { Button } from '@/components/ui/Button';
 import { Input, Label, FormGroup } from '@/components/ui/Input';
 import { Modal } from '@/components/ui/Modal';
 import { colors, font, spacing, radius } from '@/styles/tokens';
+import { LoadingState } from '@/components/shared/LoadingState';
+import {
+  getMembers, getExpenseCategories, getInvestmentCategories, getInvestmentAccounts,
+  createMember, updateMember,
+  createExpenseCategory, updateExpenseCategory, deleteExpenseCategory,
+  createInvestmentCategory, updateInvestmentCategory, deleteInvestmentCategory,
+  createInvestmentAccount, updateInvestmentAccount, deleteInvestmentAccount,
+} from '@/lib/api';
+import type { Member, ExpenseCategory, InvestmentCategory, InvestmentAccount } from '@/types/entities';
 
-interface Member { id: number; name: string; color: string; email: string | null }
-interface ExpenseCategory { id: number; name: string; icon: string; color: string; sortOrder: number }
-interface InvCategory { id: number; name: string; color: string; sortOrder: number }
-interface InvestmentAccount {
-  id: number;
-  name: string;
-  type: string;
-  institution: string;
-  ownerMemberId: number | null;
-  owner: { id: number; name: string; color: string } | null;
-}
+type InvCategory = InvestmentCategory;
+
+interface MemberWithEmail extends Member { email: string | null }
 
 const ACCOUNT_TYPES = [
   { value: 'TAXABLE', label: 'Taxable Brokerage' },
@@ -180,8 +181,8 @@ const TypeBadge = styled.span`
   font-weight: 600;
   padding: 2px 8px;
   border-radius: 20px;
-  background: #EFF6FF;
-  color: #2563EB;
+  background: ${colors.primaryLight};
+  color: ${colors.primaryHover};
   letter-spacing: 0.02em;
 `;
 
@@ -224,7 +225,7 @@ const SelectInput = styled.select`
 // ─── Page component ───────────────────────────────────────────────────────────
 
 export default function ConfigPage() {
-  const [members, setMembers] = useState<Member[]>([]);
+  const [members, setMembers] = useState<MemberWithEmail[]>([]);
   const [expenseCategories, setExpenseCategories] = useState<ExpenseCategory[]>([]);
   const [invCategories, setInvCategories] = useState<InvCategory[]>([]);
   const [accounts, setAccounts] = useState<InvestmentAccount[]>([]);
@@ -287,12 +288,12 @@ export default function ConfigPage() {
 
   useEffect(() => {
     Promise.all([
-      fetch('/api/config/members').then((r) => r.json()),
-      fetch('/api/config/categories').then((r) => r.json()),
-      fetch('/api/config/investment-categories').then((r) => r.json()),
-      fetch('/api/config/investment-accounts').then((r) => r.json()),
+      getMembers(),
+      getExpenseCategories(),
+      getInvestmentCategories(),
+      getInvestmentAccounts(),
     ]).then(([m, c, ic, a]) => {
-      setMembers(m.members ?? []);
+      setMembers((m.members ?? []) as MemberWithEmail[]);
       setExpenseCategories(c.categories ?? []);
       setInvCategories(ic.categories ?? []);
       setAccounts(a.accounts ?? []);
@@ -304,14 +305,9 @@ export default function ConfigPage() {
   async function handleAddMember() {
     if (!newMemberName.trim()) return;
     setAddingMember(true);
-    const res = await fetch('/api/config/members', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name: newMemberName.trim(), color: newMemberColor, email: newMemberEmail.trim() || undefined }),
-    });
-    const data = await res.json();
-    if (res.ok) {
-      setMembers((prev) => [...prev, data.member]);
+    const data = await createMember({ name: newMemberName.trim(), color: newMemberColor }).catch(() => null);
+    if (data) {
+      setMembers((prev) => [...prev, data.member as MemberWithEmail]);
       setNewMemberName(''); setNewMemberEmail(''); setNewMemberColor('#6B7280');
       setShowAddMember(false);
     }
@@ -323,13 +319,8 @@ export default function ConfigPage() {
   async function handleAddExpCat() {
     if (!newExpCatName.trim()) return;
     setAddingExpCat(true);
-    const res = await fetch('/api/config/categories', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name: newExpCatName.trim(), icon: newExpCatIcon.trim() || '📦', color: newExpCatColor }),
-    });
-    const data = await res.json();
-    if (res.ok) {
+    const data = await createExpenseCategory({ name: newExpCatName.trim(), icon: newExpCatIcon.trim() || '📦', color: newExpCatColor }).catch(() => null);
+    if (data) {
       setExpenseCategories((prev) => [...prev, data.category]);
       setNewExpCatName(''); setNewExpCatIcon('📦'); setNewExpCatColor('#6B7280');
       setShowAddExpCat(false);
@@ -347,13 +338,8 @@ export default function ConfigPage() {
   async function handleSaveExpCat() {
     if (!editExpCat) return;
     setSavingExpCat(true);
-    const res = await fetch(`/api/config/categories/${editExpCat.id}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name: editExpCatName.trim(), icon: editExpCatIcon.trim(), color: editExpCatColor }),
-    });
-    const data = await res.json();
-    if (res.ok) {
+    const data = await updateExpenseCategory(editExpCat.id, { name: editExpCatName.trim(), icon: editExpCatIcon.trim(), color: editExpCatColor }).catch(() => null);
+    if (data) {
       setExpenseCategories((prev) => prev.map((c) => c.id === editExpCat.id ? data.category : c));
       setEditExpCat(null);
     }
@@ -362,8 +348,8 @@ export default function ConfigPage() {
 
   async function handleDeleteExpCat(id: number) {
     if (!confirm('Delete this category? Expenses using it will be unaffected.')) return;
-    const res = await fetch(`/api/config/categories/${id}`, { method: 'DELETE' });
-    if (res.ok) setExpenseCategories((prev) => prev.filter((c) => c.id !== id));
+    const data = await deleteExpenseCategory(id).catch(() => null);
+    if (data?.ok) setExpenseCategories((prev) => prev.filter((c) => c.id !== id));
   }
 
   // ── Investment Categories ─────────────────────────────────────────────────
@@ -371,13 +357,8 @@ export default function ConfigPage() {
   async function handleAddInvCat() {
     if (!newInvCatName.trim()) return;
     setAddingInvCat(true);
-    const res = await fetch('/api/config/investment-categories', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name: newInvCatName.trim(), color: newInvCatColor }),
-    });
-    const data = await res.json();
-    if (res.ok) {
+    const data = await createInvestmentCategory({ name: newInvCatName.trim(), color: newInvCatColor }).catch(() => null);
+    if (data) {
       setInvCategories((prev) => [...prev, data.category]);
       setNewInvCatName(''); setNewInvCatColor('#6B7280');
       setShowAddInvCat(false);
@@ -394,13 +375,8 @@ export default function ConfigPage() {
   async function handleSaveInvCat() {
     if (!editInvCat) return;
     setSavingInvCat(true);
-    const res = await fetch(`/api/config/investment-categories/${editInvCat.id}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name: editInvCatName.trim(), color: editInvCatColor }),
-    });
-    const data = await res.json();
-    if (res.ok) {
+    const data = await updateInvestmentCategory(editInvCat.id, { name: editInvCatName.trim(), color: editInvCatColor }).catch(() => null);
+    if (data) {
       setInvCategories((prev) => prev.map((c) => c.id === editInvCat.id ? data.category : c));
       setEditInvCat(null);
     }
@@ -408,13 +384,12 @@ export default function ConfigPage() {
   }
 
   async function initiateDeleteInvCat(cat: InvCategory) {
-    const res = await fetch(`/api/config/investment-categories/${cat.id}`, { method: 'DELETE' });
-    if (res.status === 409) {
-      const data = await res.json();
+    const result = await deleteInvestmentCategory(cat.id).catch((e) => e);
+    if (result?.inUse) {
       setDeleteInvCat(cat);
-      setDeleteInvCatCount(data.purchaseCount ?? 0);
+      setDeleteInvCatCount(result.purchaseCount ?? 0);
       setTransferCatName('');
-    } else if (res.ok) {
+    } else if (result?.ok) {
       setInvCategories((prev) => prev.filter((c) => c.id !== cat.id));
     }
   }
@@ -422,12 +397,8 @@ export default function ConfigPage() {
   async function handleConfirmDeleteInvCat() {
     if (!deleteInvCat) return;
     setDeletingInvCat(true);
-    const res = await fetch(`/api/config/investment-categories/${deleteInvCat.id}`, {
-      method: 'DELETE',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ transferToName: transferCatName || undefined }),
-    });
-    if (res.ok) {
+    const data = await deleteInvestmentCategory(deleteInvCat.id, transferCatName || undefined).catch(() => null);
+    if (data?.ok) {
       setInvCategories((prev) => prev.filter((c) => c.id !== deleteInvCat.id));
       setDeleteInvCat(null);
     }
@@ -439,13 +410,8 @@ export default function ConfigPage() {
   async function handleAddAccount() {
     if (!newAccName.trim()) return;
     setAddingAccount(true);
-    const res = await fetch('/api/config/investment-accounts', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name: newAccName.trim(), type: newAccType, institution: newAccInstitution.trim(), ownerMemberId: newAccOwner }),
-    });
-    const data = await res.json();
-    if (res.ok) {
+    const data = await createInvestmentAccount({ name: newAccName.trim(), type: newAccType, institution: newAccInstitution.trim(), ownerMemberId: newAccOwner }).catch(() => null);
+    if (data) {
       setAccounts((prev) => [...prev, data.account]);
       setNewAccName(''); setNewAccType('TAXABLE'); setNewAccInstitution(''); setNewAccOwner(null);
       setShowAddAccount(false);
@@ -464,13 +430,8 @@ export default function ConfigPage() {
   async function handleSaveAccount() {
     if (!editAccount) return;
     setSavingAccount(true);
-    const res = await fetch(`/api/config/investment-accounts/${editAccount.id}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name: editAccName.trim(), type: editAccType, institution: editAccInstitution.trim(), ownerMemberId: editAccOwner }),
-    });
-    const data = await res.json();
-    if (res.ok) {
+    const data = await updateInvestmentAccount(editAccount.id, { name: editAccName.trim(), type: editAccType, institution: editAccInstitution.trim(), ownerMemberId: editAccOwner }).catch(() => null);
+    if (data) {
       setAccounts((prev) => prev.map((a) => a.id === editAccount.id ? data.account : a));
       setEditAccount(null);
     }
@@ -478,13 +439,12 @@ export default function ConfigPage() {
   }
 
   async function initiateDeleteAccount(acc: InvestmentAccount) {
-    const res = await fetch(`/api/config/investment-accounts/${acc.id}`, { method: 'DELETE' });
-    if (res.status === 409) {
-      const data = await res.json();
+    const result = await deleteInvestmentAccount(acc.id).catch((e) => e);
+    if (result?.inUse) {
       setDeleteAccount(acc);
-      setDeleteAccountPurchaseCount(data.purchaseCount ?? 0);
+      setDeleteAccountPurchaseCount(result.purchaseCount ?? 0);
       setTransferToId('');
-    } else if (res.ok) {
+    } else if (result?.ok) {
       setAccounts((prev) => prev.filter((a) => a.id !== acc.id));
     }
   }
@@ -492,12 +452,8 @@ export default function ConfigPage() {
   async function handleConfirmDeleteAccount() {
     if (!deleteAccount) return;
     setDeletingAccount(true);
-    const res = await fetch(`/api/config/investment-accounts/${deleteAccount.id}`, {
-      method: 'DELETE',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ transferToId: transferToId === '' ? undefined : Number(transferToId) }),
-    });
-    if (res.ok) {
+    const data = await deleteInvestmentAccount(deleteAccount.id, transferToId === '' ? undefined : Number(transferToId)).catch(() => null);
+    if (data?.ok) {
       setAccounts((prev) => prev.filter((a) => a.id !== deleteAccount.id));
       setDeleteAccount(null);
     }
@@ -508,7 +464,7 @@ export default function ConfigPage() {
     window.open('/api/config/export', '_blank');
   }
 
-  if (loading) return <p style={{ color: colors.textMuted, padding: spacing[8] }}>Loading…</p>;
+  if (loading) return <LoadingState centered />;
 
   const transferAccOptions = accounts.filter((a) => a.id !== deleteAccount?.id);
   const transferCatOptions = invCategories.filter((c) => c.id !== deleteInvCat?.id);

@@ -3,7 +3,8 @@
 import React, { useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import styled from 'styled-components';
-import { colors, font, radius, spacing } from '@/styles/tokens';
+import { colors, font, radius, spacing, semanticColors } from '@/styles/tokens';
+import { MONTH_NAMES_SHORT } from '@/lib/fire';
 import { useReviewStore } from '@/lib/store';
 import { SkipStepModal } from '@/components/modals/SkipStepModal';
 import { useStepNav } from '@/lib/useStepNav';
@@ -23,8 +24,6 @@ const STEP_LINE2: Record<string, string> = {
 const QUARTERLY_KEYS = new Set(['loans', 'portfolio']);
 const MONTHLY_STEPS = ['expense', 'monthly', 'savings', 'investments', 'vaults', 'finalize'];
 const QUARTERLY_STEPS = ['expense', 'monthly', 'savings', 'loans', 'investments', 'portfolio', 'vaults', 'finalize'];
-
-const MONTH_NAMES = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 
 // ─── Wrapper ─────────────────────────────────────────────────────────────────
 
@@ -93,7 +92,7 @@ const BadgeArea = styled.div`
 
 const QuarterlyBadge = styled.div`
   background: ${colors.warning};
-  color: #fff;
+  color: ${colors.surface};
   font-size: 8px;
   font-weight: ${font.weight.bold};
   letter-spacing: 0.04em;
@@ -121,23 +120,23 @@ const Circle = styled.button.withConfig({
   background: ${({ status }) =>
     status === 'current' ? colors.primary :
     status === 'complete' ? colors.success :
-    status === 'skipped' ? '#94A3B8' :
-    status === 'quarterly' ? '#FFFBEB' :
+    status === 'skipped' ? colors.textDisabled :
+    status === 'quarterly' ? semanticColors.warningBg :
     colors.surface};
 
   border: 2px solid ${({ status }) =>
     status === 'current' ? colors.primary :
     status === 'complete' ? colors.success :
-    status === 'skipped' ? '#94A3B8' :
+    status === 'skipped' ? colors.textDisabled :
     status === 'quarterly' ? colors.warning :
-    '#CBD5E1'};
+    colors.borderStrong};
 
   color: ${({ status }) =>
-    status === 'current' ? '#fff' :
-    status === 'complete' ? '#fff' :
-    status === 'skipped' ? '#fff' :
+    status === 'current' ? colors.surface :
+    status === 'complete' ? colors.surface :
+    status === 'skipped' ? colors.surface :
     status === 'quarterly' ? colors.warning :
-    '#64748B'};
+    colors.textMuted};
 
   &:hover {
     opacity: ${({ clickable }) => clickable ? 0.85 : 1};
@@ -174,7 +173,7 @@ const ConnectorLine = styled.div.withConfig({
   height: 2px;
   width: 100%;
   background: ${({ dashed }) => dashed
-    ? `repeating-linear-gradient(to right, #E2E8F0 0, #E2E8F0 4px, transparent 4px, transparent 8px)`
+    ? `repeating-linear-gradient(to right, ${colors.border} 0, ${colors.border} 4px, transparent 4px, transparent 8px)`
     : colors.border};
 `;
 
@@ -182,7 +181,7 @@ const ConnectorLine = styled.div.withConfig({
 
 const Legend = styled.div`
   flex-shrink: 0;
-  background: #F8FAFC;
+  background: ${semanticColors.surfaceMuted};
   border: 1px solid ${colors.border};
   border-radius: ${radius.lg};
   padding: 8px 12px;
@@ -233,7 +232,7 @@ const LegendSkipBtn = styled.button`
   padding: 6px 12px;
   cursor: pointer;
   white-space: nowrap;
-  &:hover { background: #FEF2F2; }
+  &:hover { background: ${colors.dangerLight}; }
 `;
 
 // ─── Component ────────────────────────────────────────────────────────────────
@@ -259,7 +258,7 @@ export function StepIndicator() {
   const doneCount = stepObjects.filter((s) => s.status !== 'PENDING').length;
   const pct = Math.round((doneCount / steps.length) * 100);
   const stepNum = currentIndex >= 0 ? currentIndex + 1 : doneCount + 1;
-  const periodLabel = `${MONTH_NAMES[activeReview.periodMonth - 1]} ${activeReview.periodYear} ${activeReview.type === 'QUARTERLY' ? 'Quarterly' : 'Monthly'} Review Progress`;
+  const periodLabel = `${MONTH_NAMES_SHORT[activeReview.periodMonth - 1]} ${activeReview.periodYear} ${activeReview.type === 'QUARTERLY' ? 'Quarterly' : 'Monthly'} Review Progress`;
 
   function handleClick(key: string, idx: number) {
     const step = stepObjects[idx];
@@ -334,11 +333,11 @@ export function StepIndicator() {
               <LegendLabel>Complete</LegendLabel>
             </LegendRow>
             <LegendRow>
-              <LegendDot fill={colors.surface} stroke="#CBD5E1" />
+              <LegendDot fill={colors.surface} stroke={colors.borderStrong} />
               <LegendLabel>Pending</LegendLabel>
             </LegendRow>
             <LegendRow>
-              <LegendDot fill="#FFFBEB" stroke={colors.warning} />
+              <LegendDot fill={semanticColors.warningBg} stroke={colors.warning} />
               <LegendLabel>Quarterly</LegendLabel>
             </LegendRow>
           </Legend>

@@ -6,7 +6,8 @@ import { StepIndicator } from '@/components/review/StepIndicator';
 import { ReviewModeBanner } from '@/components/review/ReviewModeBanner';
 import { EnableEditModal } from '@/components/modals/EnableEditModal';
 import { useReviewStore } from '@/lib/store';
-import { colors } from '@/styles/tokens';
+import { LoadingState } from '@/components/shared/LoadingState';
+import { ErrorBoundary } from '@/components/shared/ErrorBoundary';
 
 export default function ReviewLayout({ children }: { children: React.ReactNode }) {
   const params = useParams();
@@ -36,18 +37,14 @@ export default function ReviewLayout({ children }: { children: React.ReactNode }
   }, [reviewId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (!loaded) {
-    return (
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '60vh', color: colors.textMuted }}>
-        Loading…
-      </div>
-    );
+    return <LoadingState centered />;
   }
 
   return (
     <>
       <ReviewModeBanner onEnableEdit={() => setShowEnableEdit(true)} />
       <StepIndicator />
-      {children}
+      <ErrorBoundary>{children}</ErrorBoundary>
 
       <EnableEditModal
         isOpen={showEnableEdit}

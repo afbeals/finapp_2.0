@@ -104,7 +104,7 @@ const Avatar = styled.div.withConfig({
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #fff;
+  color: ${colors.surface};
   font-size: ${font.size.lg};
   font-weight: ${font.weight.semibold};
 `;
@@ -284,7 +284,7 @@ export default function LoginPage() {
           <KeyButton onClick={() => handleKey('0')}>0</KeyButton>
           <KeyButton
             onClick={handleSubmit}
-            style={{ background: pin.length === PIN_LENGTH ? colors.primary : undefined, color: pin.length === PIN_LENGTH ? '#fff' : undefined }}
+            style={{ background: pin.length === PIN_LENGTH ? colors.primary : undefined, color: pin.length === PIN_LENGTH ? colors.surface : undefined }}
           >
             {loading ? '...' : '→'}
           </KeyButton>

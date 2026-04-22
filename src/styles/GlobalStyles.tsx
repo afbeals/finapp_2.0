@@ -59,11 +59,11 @@ const GlobalStyles = createGlobalStyle`
     background: transparent;
   }
   ::-webkit-scrollbar-thumb {
-    background: #CBD5E1;
+    background: ${colors.borderStrong};
     border-radius: 3px;
 
     &:hover {
-      background: #94A3B8;
+      background: ${colors.textDisabled};
     }
   }
 `;

@@ -5,6 +5,16 @@
  * - FIRE projections
  */
 
+export const MONTH_NAMES_SHORT = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'] as const;
+export const MONTH_NAMES_LONG = ['January','February','March','April','May','June','July','August','September','October','November','December'] as const;
+
+/** Format a date as "Mon YYYY" given a start date + payments made + remaining months */
+export function payoffDateStr(startDate: string, paymentsMade: number, remMonths: number): string {
+  const d = new Date(startDate);
+  d.setMonth(d.getMonth() + paymentsMade + remMonths);
+  return `${MONTH_NAMES_SHORT[d.getMonth()]} ${d.getFullYear()}`;
+}
+
 /** Monthly payment for a standard amortizing loan */
 export function monthlyPayment(principal: number, annualRate: number, termMonths: number): number {
   if (annualRate === 0) return Math.round(principal / termMonths);

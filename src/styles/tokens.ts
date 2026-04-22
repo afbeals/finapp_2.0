@@ -90,3 +90,75 @@ export const bp = {
   lg: '1024px',
   xl: '1280px',
 } as const;
+
+export const semanticColors = {
+  // Success
+  successText:     '#15803D', // green-700
+  successTextDark: '#166534', // green-800
+  successTextDeep: '#065F46', // green-900
+  successBg:       '#F0FDF4', // green-50
+  successBorder:   '#86EFAC', // green-300
+
+  // Warning
+  warningText:         '#B45309', // amber-700
+  warningBg:           '#FFFBEB', // amber-50
+  warningBorder:       '#FCD34D', // yellow-300
+  warningBorderStrong: '#FDE68A', // amber-200
+
+  // Danger
+  dangerText:     '#B91C1C', // red-700
+  dangerTextDark: '#991B1B', // red-800
+  dangerBg:       '#FEF2F2', // red-50
+  dangerBorder:   '#FECACA', // red-200
+  dangerHover:    '#DC2626', // red-600
+
+  // Primary
+  primaryText:     '#1D4ED8', // blue-700
+  primaryTextDark: '#1E40AF', // blue-800
+  primaryBg:       '#EFF6FF', // blue-50
+  primaryBorder:   '#93C5FD', // blue-300
+
+  // Purple
+  purpleBg:       '#FAF5FF', // violet-50
+  purpleLight:    '#EDE9FE', // violet-100
+  purpleBorder:   '#C4B5FD', // violet-300
+  purpleText:     '#6D28D9', // violet-700
+  purpleTextDark: '#5B21B6', // violet-800
+  purpleMedium:   '#8B5CF6', // violet-500
+
+  // Info (sky)
+  infoBg:     '#F0F9FF', // sky-50
+  infoBorder: '#BAE6FD', // sky-200
+
+  // Neutral
+  surfaceMuted: '#F8FAFC', // slate-50
+  neutralText:  '#475569', // slate-600
+
+  // Purple (extended)
+  purpleTextMedium: '#7C3AED', // violet-600
+
+  // Success (extended)
+  successTextMedium:  '#16A34A', // green-600
+  successBright:      '#4ADE80', // green-400 (dark-bg contexts)
+  successLightBorder: '#BBF7D0', // green-200
+
+  // Danger (extended)
+  dangerBright: '#F87171', // red-400 (dark-bg contexts)
+
+  // Amber (orange-adjacent, distinct from warning/amber-700)
+  amberText:   '#92400E', // amber-800
+  amberBg:     '#FFF7ED', // orange-50
+  amberBorder: '#FED7AA', // orange-200
+  amberStrong: '#F97316', // orange-500
+  amberHover:  '#EA580C', // orange-600
+
+  // Teal (investments/vaults category palette)
+  tealBg:         '#F0FDFA', // teal-50
+  tealBorder:     '#5EEAD4', // teal-300
+  tealLight:      '#CCFBF1', // teal-100
+  tealText:       '#0F766E', // teal-700
+  tealTextMedium: '#0D9488', // teal-600
+
+  // Dark navy (extends colors.navbar for hover states)
+  navyHover: '#1E293B', // slate-800
+} as const;

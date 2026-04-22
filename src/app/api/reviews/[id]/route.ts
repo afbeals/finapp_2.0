@@ -1,24 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { prisma } from '@/lib/db';
-import { getSession } from '@/lib/auth';
+import { requireReviewAccess, badRequest } from '@/lib/apiGuards';
 
 type Params = { params: Promise<{ id: string }> };
 
 export async function GET(_req: NextRequest, { params }: Params) {
-  const session = await getSession();
-  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-
   const { id } = await params;
+  const result = await requireReviewAccess(Number(id)).catch(() => null);
+  if (!result) return NextResponse.json({ error: 'Not found' }, { status: 404 });
+
   const review = await prisma.review.findUnique({
     where: { id: Number(id) },
     include: { steps: { orderBy: { id: 'asc' } } },
   });
-
-  if (!review || review.householdId !== session.householdId) {
-    return NextResponse.json({ error: 'Not found' }, { status: 404 });
-  }
-
   return NextResponse.json({ review });
 }
 
@@ -29,28 +24,22 @@ const patchSchema = z.object({
 });
 
 export async function PATCH(req: NextRequest, { params }: Params) {
-  const session = await getSession();
-  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-
   const { id } = await params;
+  const result = await requireReviewAccess(Number(id)).catch(() => null);
+  if (!result) return NextResponse.json({ error: 'Not found' }, { status: 404 });
+
   const body = await req.json().catch(() => null);
   const parsed = patchSchema.safeParse(body);
-  if (!parsed.success) return NextResponse.json({ error: 'Invalid request' }, { status: 400 });
-
-  const review = await prisma.review.findUnique({ where: { id: Number(id) } });
-  if (!review || review.householdId !== session.householdId) {
-    return NextResponse.json({ error: 'Not found' }, { status: 404 });
-  }
+  if (!parsed.success) return badRequest('Invalid request');
 
   const updated = await prisma.review.update({
     where: { id: Number(id) },
     data: {
       ...parsed.data,
-      lastEditorId: session.memberId,
+      lastEditorId: result.session.memberId,
       ...(parsed.data.status === 'COMPLETE' ? { completedAt: new Date() } : {}),
     },
     include: { steps: { orderBy: { id: 'asc' } } },
   });
-
   return NextResponse.json({ review: updated });
 }

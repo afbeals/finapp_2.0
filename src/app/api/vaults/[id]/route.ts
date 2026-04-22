@@ -1,13 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { prisma } from '@/lib/db';
-import { getSession } from '@/lib/auth';
+import { requireHouseholdResource, badRequest } from '@/lib/apiGuards';
 
-async function getVaultOrFail(id: number, householdId: number) {
-  const vault = await prisma.vault.findUnique({ where: { id } });
-  if (!vault || vault.householdId !== householdId) return null;
-  return vault;
-}
+type Params = { params: Promise<{ id: string }> };
 
 const patchSchema = z.object({
   name: z.string().min(1).max(128).optional(),
@@ -23,36 +19,35 @@ const patchSchema = z.object({
   dueMonths: z.string().max(32).optional(),
 });
 
-export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const session = await getSession();
-  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-
+export async function PATCH(req: NextRequest, { params }: Params) {
   const { id: idStr } = await params;
   const id = Number(idStr);
-  const vault = await getVaultOrFail(id, session.householdId);
-  if (!vault) return NextResponse.json({ error: 'Not found' }, { status: 404 });
+  const result = await requireHouseholdResource(
+    (id) => prisma.vault.findUnique({ where: { id } }),
+    id,
+  ).catch(() => null);
+  if (!result) return NextResponse.json({ error: 'Not found' }, { status: 404 });
 
   const body = await req.json().catch(() => null);
   const parsed = patchSchema.safeParse(body);
-  if (!parsed.success) return NextResponse.json({ error: 'Invalid request', issues: parsed.error.issues }, { status: 400 });
+  if (!parsed.success) return badRequest('Invalid request', parsed.error.issues);
 
   const updated = await prisma.vault.update({
     where: { id },
     data: parsed.data,
     include: { owner: { select: { id: true, name: true, color: true } } },
   });
-
   return NextResponse.json({ vault: updated });
 }
 
-export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const session = await getSession();
-  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-
+export async function DELETE(_req: NextRequest, { params }: Params) {
   const { id: idStr } = await params;
   const id = Number(idStr);
-  const vault = await getVaultOrFail(id, session.householdId);
-  if (!vault) return NextResponse.json({ error: 'Not found' }, { status: 404 });
+  const result = await requireHouseholdResource(
+    (id) => prisma.vault.findUnique({ where: { id } }),
+    id,
+  ).catch(() => null);
+  if (!result) return NextResponse.json({ error: 'Not found' }, { status: 404 });
 
   await prisma.vault.delete({ where: { id } });
   return NextResponse.json({ ok: true });

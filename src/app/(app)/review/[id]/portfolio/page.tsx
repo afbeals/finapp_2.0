@@ -11,11 +11,11 @@ import { StepShell } from '@/components/review/StepShell';
 import { useStepNav } from '@/lib/useStepNav';
 import { useReviewStore } from '@/lib/store';
 import { formatDollars, formatDollarsWhole, toCents, toDollars } from '@/lib/money';
-import { buildProjection, fireNumber, yearsToFire, futureValue } from '@/lib/fire';
-import { colors, font, spacing, radius } from '@/styles/tokens';
+import { buildProjection, fireNumber, yearsToFire, futureValue, MONTH_NAMES_SHORT } from '@/lib/fire';
+import { getReviewIncome, getReviewExpenses, getReviewInvestments, getReviewSavings, apiGet } from '@/lib/api';
+import { colors, semanticColors, font, spacing, radius } from '@/styles/tokens';
+import { LoadingState } from '@/components/shared/LoadingState';
 
-const MONTH_NAMES = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-const FULL_MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
 
 // ─── Top KPI banner ───────────────────────────────────────────────────────────
 
@@ -49,7 +49,7 @@ const KpiValue = styled.p.withConfig({ shouldForwardProp: (p) => p !== 'tc' })<{
 `;
 const KpiSub = styled.p`font-size: ${font.size.xs}; color: ${colors.textMuted};`;
 
-const KpiProgressTrack = styled.div`height: 6px; background: #E2E8F0; border-radius: ${radius.full}; overflow: hidden; margin-top: 8px;`;
+const KpiProgressTrack = styled.div`height: 6px; background: ${colors.border}; border-radius: ${radius.full}; overflow: hidden; margin-top: 8px;`;
 const KpiProgressFill = styled.div.withConfig({ shouldForwardProp: (p) => p !== 'pct' })<{ pct: number; color?: string }>`
   height: 100%; width: ${({ pct }) => Math.min(100, pct)}%;
   background: ${({ color }) => color ?? colors.primary};
@@ -95,7 +95,7 @@ const CardBody = styled.div`padding: 16px 18px;`;
 const AllocationRow = styled.div`display: flex; align-items: center; gap: 12px; margin-bottom: 10px; &:last-child { margin-bottom: 0; }`;
 const AllocationLabel = styled.span`flex: 1; font-size: ${font.size.sm}; font-weight: ${font.weight.medium}; color: ${colors.textPrimary};`;
 const AllocationBar = styled.div.withConfig({ shouldForwardProp: (p) => !['pct','barColor'].includes(p) })<{ pct: number; barColor: string }>`
-  flex: 2; height: 6px; background: #E2E8F0; border-radius: ${radius.full}; overflow: hidden;
+  flex: 2; height: 6px; background: ${colors.border}; border-radius: ${radius.full}; overflow: hidden;
   &::after { content: ''; display: block; height: 100%; width: ${({ pct }) => pct}%; background: ${({ barColor }) => barColor}; border-radius: ${radius.full}; }
 `;
 const AllocationValue = styled.span`font-size: ${font.size.sm}; font-weight: ${font.weight.semibold}; color: ${colors.textPrimary}; min-width: 80px; text-align: right;`;
@@ -111,7 +111,7 @@ const FireLeft = styled.div`padding: 0 18px 0 0;`;
 const FireRight = styled.div`padding: 0 0 0 18px;`;
 
 const ToggleGroup = styled.div`
-  display: flex; background: #F1F5F9; border-radius: ${radius.md}; padding: 3px; margin-bottom: 14px;
+  display: flex; background: ${colors.bg}; border-radius: ${radius.md}; padding: 3px; margin-bottom: 14px;
 `;
 const ToggleBtn = styled.button.withConfig({ shouldForwardProp: (p) => p !== 'active' })<{ active: boolean }>`
   flex: 1; padding: 6px; font-size: ${font.size.xs}; font-weight: ${font.weight.semibold};
@@ -128,7 +128,7 @@ const FireInput = styled.input`
   border: 1.5px solid ${colors.primary}; border-radius: ${radius.md};
   background: ${colors.surface}; color: ${colors.textPrimary}; outline: none;
   &:disabled { border-color: ${colors.border}; color: ${colors.textMuted}; background: ${colors.bg}; }
-  &:focus { box-shadow: 0 0 0 3px #BFDBFE; }
+  &:focus { box-shadow: 0 0 0 3px ${colors.primaryLight}; }
 `;
 
 const FireResultsTitle = styled.p`font-size: ${font.size.xs}; font-weight: ${font.weight.bold}; color: ${colors.textMuted}; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 14px;`;
@@ -137,7 +137,7 @@ const FireTargetLabel = styled.p`font-size: ${font.size.xs}; color: ${colors.tex
 const FireTargetValue = styled.p`font-size: ${font.size['2xl']}; font-weight: ${font.weight.bold}; color: ${colors.warning};`;
 
 const ProgressBox = styled.div`
-  background: #F0FDF4; border: 1px solid #BBF7D0; border-radius: ${radius.md};
+  background: ${semanticColors.successBg}; border: 1px solid ${colors.successLight}; border-radius: ${radius.md};
   padding: 10px 12px; margin-bottom: 12px;
 `;
 const ProgressBoxValue = styled.p`font-size: ${font.size.lg}; font-weight: ${font.weight.bold}; color: ${colors.textPrimary}; margin-bottom: 3px;`;
@@ -148,8 +148,8 @@ const YearsToFireBox = styled.div`
   border: 1px solid ${colors.border}; border-radius: ${radius.md};
 `;
 const YearsIcon = styled.span`font-size: 20px;`;
-const YearsValue = styled.p`font-size: ${font.size['2xl']}; font-weight: ${font.weight.bold}; color: #166534;`;
-const YearsSub = styled.p`font-size: ${font.size.xs}; color: #4ADE80;`;
+const YearsValue = styled.p`font-size: ${font.size['2xl']}; font-weight: ${font.weight.bold}; color: ${semanticColors.successTextDark};`;
+const YearsSub = styled.p`font-size: ${font.size.xs}; color: ${semanticColors.successBright};`;
 
 // ─── Wealth Projections ───────────────────────────────────────────────────────
 
@@ -167,7 +167,7 @@ const ProjectionHead = styled.div`
   display: flex; align-items: center; justify-content: space-between;
 `;
 const ProjectionInputsBar = styled.div`
-  background: #F8FAFC;
+  background: ${semanticColors.surfaceMuted};
   border-bottom: 1px solid ${colors.border};
   padding: 14px 18px;
   display: flex; gap: ${spacing[4]}; flex-wrap: wrap; align-items: flex-end;
@@ -181,15 +181,15 @@ const ProjInput = styled.input`
   &:focus { border-color: ${colors.primary}; box-shadow: 0 0 0 2px #BFDBFE; }
 `;
 const EndYearBadge = styled.div`
-  padding: 6px 16px; background: ${colors.primary}; color: #fff;
+  padding: 6px 16px; background: ${colors.primary}; color: ${colors.surface};
   border-radius: ${radius.md}; font-size: ${font.size.sm}; font-weight: ${font.weight.bold};
   align-self: flex-end; line-height: 1.5;
 `;
 const RecalcBtn = styled.button`
-  padding: 8px 22px; background: #0F172A; color: #fff;
+  padding: 8px 22px; background: ${colors.navbar}; color: ${colors.surface};
   border: none; border-radius: ${radius.md}; font-size: ${font.size.sm};
   font-weight: ${font.weight.bold}; cursor: pointer; align-self: flex-end;
-  &:hover { background: #1E293B; }
+  &:hover { background: ${semanticColors.navyHover}; }
 `;
 const ProjectionChartArea = styled.div`
   display: grid;
@@ -210,7 +210,7 @@ const MonthlyValuesHeader = styled.div`
 `;
 const MonthlyValueRow = styled.div.withConfig({ shouldForwardProp: (p) => p !== 'highlight' })<{ highlight?: boolean }>`
   padding: 7px 14px;
-  background: ${({ highlight }) => highlight ? '#F0F9FF' : colors.surface};
+  background: ${({ highlight }) => highlight ? semanticColors.infoBg : colors.surface};
   border-bottom: 1px solid ${colors.border};
   display: flex; justify-content: space-between; align-items: center;
   &:last-child { border-bottom: none; }
@@ -249,41 +249,39 @@ export default function PortfolioPage() {
   const [projData, setProjData] = useState<{ month: string; value: number }[]>([]);
   const [projEndYear, setProjEndYear] = useState(new Date().getFullYear() + 2);
 
-  // Persisted FIRE settings from step data
   useEffect(() => {
-    fetch(`/api/reviews/${reviewId}/investments`).then((r) => r.json()).then(({ snapshots }) => {
-      const total = (snapshots ?? []).reduce((s: number, snap: { value: number }) => s + snap.value, 0);
-      setTotalPortfolio(total);
-    });
-    fetch(`/api/reviews/${reviewId}/income`).then((r) => r.json()).then(({ entries }) => {
-      setTotalIncome((entries ?? []).reduce((s: number, e: { amount: number }) => s + e.amount, 0));
-    });
-    fetch(`/api/reviews/${reviewId}/expenses`).then((r) => r.json()).then(({ entries }) => {
-      setTotalExpenses((entries ?? []).reduce((s: number, e: { amount: number }) => s + e.amount, 0));
-    });
-    fetch(`/api/reviews/${reviewId}/savings`).then((r) => r.json()).then(({ accounts, allSnapshots, allReviews: revs }) => {
-      // Current balance = sum of last rolling snapshot per account
-      const currentYear = revs?.find((r: { id: number }) => r.id === Number(reviewId))?.periodYear ?? new Date().getFullYear();
-      const ytdSnaps = (allSnapshots ?? []).filter((s: { review: { periodYear: number } }) => s.review.periodYear === currentYear);
-      const hysaTotal = (accounts ?? []).reduce((sum: number, acc: { id: number }) => {
-        const acctSnaps = ytdSnaps.filter((s: { accountId: number }) => s.accountId === acc.id)
-          .sort((a: { review: { periodMonth: number } }, b: { review: { periodMonth: number } }) => a.review.periodMonth - b.review.periodMonth);
+    Promise.all([
+      getReviewInvestments(reviewId),
+      getReviewIncome(reviewId),
+      getReviewExpenses(reviewId),
+      getReviewSavings(reviewId),
+      apiGet<{ reviews: { periodYear: number; totalIncome: number }[] }>('/api/reviews'),
+    ]).then(([inv, inc, exp, sav, allReviews]) => {
+      const snapArr = Object.values((inv as { snapshots: Record<number, { value: number }> }).snapshots ?? {});
+      setTotalPortfolio(snapArr.reduce((s, sn) => s + sn.value, 0));
+      setTotalIncome((inc.entries ?? []).reduce((s, e) => s + e.amount, 0));
+      setTotalExpenses((exp.entries ?? []).reduce((s, e) => s + e.amount, 0));
+
+      const savData = sav as unknown as {
+        accounts: { id: number }[];
+        allSnapshots: { accountId: number; deposits: number; interest: number; endingBalance: number; review: { id: number; periodYear: number; periodMonth: number } }[];
+        allReviews: { id: number; periodYear: number }[];
+      };
+      const currentYear = savData.allReviews?.find((r) => r.id === Number(reviewId))?.periodYear ?? new Date().getFullYear();
+      const ytdSnaps = (savData.allSnapshots ?? []).filter((s) => s.review.periodYear === currentYear);
+      const hysaTotal = (savData.accounts ?? []).reduce((sum, acc) => {
+        const acctSnaps = ytdSnaps.filter((s) => s.accountId === acc.id)
+          .sort((a, b) => a.review.periodMonth - b.review.periodMonth);
         if (acctSnaps.length === 0) return sum;
-        const last = acctSnaps[acctSnaps.length - 1];
-        return sum + last.endingBalance;
+        return sum + acctSnaps[acctSnaps.length - 1].endingBalance;
       }, 0);
       setHysa(hysaTotal);
-      const ytdDep = ytdSnaps.reduce((s: number, snap: { deposits: number }) => s + snap.deposits, 0);
-      const ytdInt = ytdSnaps.reduce((s: number, snap: { interest: number }) => s + snap.interest, 0);
-      setYtdSaved(ytdDep + ytdInt);
-    });
-    // Load reviews for YTD income
-    fetch('/api/reviews').then((r) => r.json()).then(({ reviews }) => {
-      const currentYear = new Date().getFullYear();
-      const ytd = (reviews ?? [])
-        .filter((r: { periodYear: number }) => r.periodYear === currentYear)
-        .reduce((s: number, r: { totalIncome: number }) => s + r.totalIncome, 0);
-      setYtdIncome(ytd);
+      setYtdSaved(ytdSnaps.reduce((s, sn) => s + sn.deposits + sn.interest, 0));
+
+      const yr = new Date().getFullYear();
+      setYtdIncome((allReviews.reviews ?? [])
+        .filter((r) => r.periodYear === yr)
+        .reduce((s, r) => s + r.totalIncome, 0));
     }).finally(() => setLoading(false));
   }, [reviewId]);
 
@@ -308,7 +306,7 @@ export default function PortfolioPage() {
     for (let i = 1; i <= numMonths; i++) {
       balance = Math.round(balance * (1 + r) + monthlyCents);
       const d = new Date(now.getFullYear(), now.getMonth() + i, 1);
-      rows.push({ month: `${MONTH_NAMES[d.getMonth()]} ${d.getFullYear()}`, value: balance });
+      rows.push({ month: `${MONTH_NAMES_SHORT[d.getMonth()]} ${d.getFullYear()}`, value: balance });
     }
     setProjData(rows);
     if (rows.length > 0) {
@@ -345,7 +343,7 @@ export default function PortfolioPage() {
   // FIRE progress pct for banner
   const fireProgressPct = Math.min(100, (totalPortfolio / Math.max(1, fireTarget)) * 100);
 
-  if (loading) return <p style={{ color: colors.textMuted }}>Loading…</p>;
+  if (loading) return <LoadingState centered />;
 
   return (
     <StepShell
@@ -400,7 +398,7 @@ export default function PortfolioPage() {
           </KpiBody>
           <CircleWrap>
             <CircleSvg width={52} height={52} viewBox="0 0 52 52">
-              <circle cx="26" cy="26" r="22" fill="none" stroke="#E2E8F0" strokeWidth="5" />
+              <circle cx="26" cy="26" r="22" fill="none" stroke={colors.border} strokeWidth="5" />
               <circle
                 cx="26" cy="26" r="22" fill="none"
                 stroke={colors.success} strokeWidth="5"
@@ -487,7 +485,7 @@ export default function PortfolioPage() {
                 <FireInputGroup>
                   <FireLabel style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                     Current Yearly Expenses (from Monthly)
-                    {useActual && <span style={{ background: '#DBEAFE', color: '#1D4ED8', fontSize: '9px', fontWeight: 700, padding: '1px 5px', borderRadius: 4 }}>ACTIVE</span>}
+                    {useActual && <span style={{ background: colors.primaryLight, color: semanticColors.primaryText, fontSize: '9px', fontWeight: 700, padding: '1px 5px', borderRadius: 4 }}>ACTIVE</span>}
                   </FireLabel>
                   <FireInput
                     disabled
@@ -499,7 +497,7 @@ export default function PortfolioPage() {
                 <FireInputGroup>
                   <FireLabel style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                     Estimated Yearly Expense
-                    {!useActual && <span style={{ background: '#DBEAFE', color: '#1D4ED8', fontSize: '9px', fontWeight: 700, padding: '1px 5px', borderRadius: 4 }}>ACTIVE</span>}
+                    {!useActual && <span style={{ background: colors.primaryLight, color: semanticColors.primaryText, fontSize: '9px', fontWeight: 700, padding: '1px 5px', borderRadius: 4 }}>ACTIVE</span>}
                   </FireLabel>
                   <FireInput
                     type="number"

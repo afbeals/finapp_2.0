@@ -43,6 +43,6 @@ export const Tr = styled.tr`
   }
 
   &:hover td {
-    background: #FAFAFA;
+    background: ${colors.bg};
   }
 `;

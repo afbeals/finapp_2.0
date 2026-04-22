@@ -1,15 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { getSession } from '@/lib/auth';
+import { requireAuth } from '@/lib/apiGuards';
 
 export async function GET(req: NextRequest) {
-  const session = await getSession();
+  const session = await requireAuth().catch(() => null);
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   const q = req.nextUrl.searchParams.get('q')?.trim() ?? '';
   const categoryId = req.nextUrl.searchParams.get('categoryId');
 
-  // Fetch distinct names from past expense entries for this household
   const entries = await prisma.expenseEntry.findMany({
     where: {
       review: { householdId: session.householdId },
@@ -22,6 +21,5 @@ export async function GET(req: NextRequest) {
     take: 10,
   });
 
-  const names = entries.map((e) => e.name);
-  return NextResponse.json({ names });
+  return NextResponse.json({ names: entries.map((e) => e.name) });
 }

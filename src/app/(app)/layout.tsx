@@ -4,8 +4,12 @@ import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import styled from 'styled-components';
 import { Navbar } from '@/components/layout/Navbar';
+import { apiGet } from '@/lib/api';
 import { useSessionStore } from '@/lib/store';
+import type { Member } from '@/lib/store/sessionSlice';
 import { colors } from '@/styles/tokens';
+import { LoadingState } from '@/components/shared/LoadingState';
+import { ErrorBoundary } from '@/components/shared/ErrorBoundary';
 
 const Main = styled.main`
   min-height: calc(100vh - 56px);
@@ -18,8 +22,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    fetch('/api/auth/session')
-      .then((r) => r.json())
+    apiGet<{ session: { memberId: number; memberName: string; memberColor: string; householdId: number; householdName: string } | null; members: Member[] }>('/api/auth/session')
       .then(({ session, members }) => {
         if (!session) {
           router.replace('/login');
@@ -34,8 +37,8 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
   if (!ready) {
     return (
-      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: colors.bg }}>
-        <span style={{ color: colors.textMuted }}>Loading…</span>
+      <div style={{ minHeight: '100vh', background: colors.bg }}>
+        <LoadingState centered />
       </div>
     );
   }
@@ -43,7 +46,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
     <>
       <Navbar />
-      <Main>{children}</Main>
+      <Main><ErrorBoundary>{children}</ErrorBoundary></Main>
     </>
   );
 }

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import styled from 'styled-components';
 import { StepShell } from '@/components/review/StepShell';
@@ -10,7 +10,9 @@ import { Button } from '@/components/ui/Button';
 import { useReviewStore } from '@/lib/store';
 import { useStepNav } from '@/lib/useStepNav';
 import { formatDollars } from '@/lib/money';
-import { colors, font, spacing } from '@/styles/tokens';
+import { getReviewIncome, getReviewExpenses, getReviewSavings, getReviewInvestments, apiPatch } from '@/lib/api';
+import { colors, font, spacing, semanticColors } from '@/styles/tokens';
+import { LoadingState } from '@/components/shared/LoadingState';
 
 const MONTH_NAMES = ['January','February','March','April','May','June','July','August','September','October','November','December'];
 
@@ -79,33 +81,22 @@ export default function FinalizePage() {
 
   useEffect(() => {
     Promise.all([
-      fetch(`/api/reviews/${reviewId}/income`).then((r) => r.json()),
-      fetch(`/api/reviews/${reviewId}/expenses`).then((r) => r.json()),
-      fetch(`/api/reviews/${reviewId}/savings`).then((r) => r.json()),
-      fetch(`/api/reviews/${reviewId}/investments`).then((r) => r.json()),
+      getReviewIncome(reviewId),
+      getReviewExpenses(reviewId),
+      getReviewSavings(reviewId),
+      getReviewInvestments(reviewId),
     ]).then(([inc, exp, sav, inv]) => {
-      setIncome((inc.entries ?? []).reduce((s: number, e: { amount: number }) => s + e.amount, 0));
-      setExpenses((exp.entries ?? []).reduce((s: number, e: { amount: number }) => s + e.amount, 0));
-      setSavings((sav.snapshots ?? []).reduce((s: number, e: { endingBalance: number }) => s + e.endingBalance, 0));
-      setPortfolio((inv.snapshots ?? []).reduce((s: number, e: { value: number }) => s + e.value, 0));
+      setIncome((inc.entries ?? []).reduce((s, e) => s + e.amount, 0));
+      setExpenses((exp.entries ?? []).reduce((s, e) => s + e.amount, 0));
+      setSavings(((sav as unknown as { snapshots: { endingBalance: number }[] }).snapshots ?? []).reduce((s, e) => s + e.endingBalance, 0));
+      setPortfolio(Object.values((inv as { snapshots: Record<number, { value: number }> }).snapshots ?? {}).reduce((s, e) => s + e.value, 0));
     }).finally(() => setLoading(false));
   }, [reviewId]);
 
   async function handleComplete() {
     setCompleting(true);
-    // Mark finalize step complete
-    await fetch(`/api/reviews/${reviewId}/steps/finalize`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ status: 'COMPLETE' }),
-    });
-    // Mark review complete
-    const res = await fetch(`/api/reviews/${reviewId}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ status: 'COMPLETE', currentStep: 'finalize' }),
-    });
-    const data = await res.json();
+    await apiPatch(`/api/reviews/${reviewId}/steps/finalize`, { status: 'COMPLETE' }).catch(() => null);
+    const data = await apiPatch<{ review: typeof reviewState.activeReview }>(`/api/reviews/${reviewId}`, { status: 'COMPLETE', currentStep: 'finalize' });
     actions.setActiveReview(data.review);
     setCompleting(false);
     router.push('/dashboard');
@@ -118,7 +109,7 @@ export default function FinalizePage() {
   const hasSkipped = nonFinalSteps.some((s) => s.status === 'SKIPPED');
   const isComplete = activeReview?.status === 'COMPLETE';
 
-  if (loading) return <p style={{ color: colors.textMuted }}>Loading…</p>;
+  if (loading) return <LoadingState centered />;
 
   if (isComplete) {
     const period = activeReview ? `${MONTH_NAMES[activeReview.periodMonth - 1]} ${activeReview.periodYear}` : '';
@@ -148,7 +139,7 @@ export default function FinalizePage() {
       <SummaryGrid>
         <SummaryCard accent={colors.success} padding="md">
           <Label>Total Income</Label>
-          <Value style={{ color: '#15803D' }}>{formatDollars(income)}</Value>
+          <Value style={{ color: semanticColors.successText }}>{formatDollars(income)}</Value>
         </SummaryCard>
         <SummaryCard accent={colors.danger} padding="md">
           <Label>Total Expenses</Label>

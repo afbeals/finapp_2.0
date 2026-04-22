@@ -1,7 +1,7 @@
 'use client';
 
 import styled, { css } from 'styled-components';
-import { colors, radius, shadow, spacing } from '@/styles/tokens';
+import { colors, font, radius, shadow, spacing } from '@/styles/tokens';
 
 interface CardProps {
   padding?: 'sm' | 'md' | 'lg';
@@ -28,7 +28,7 @@ export const Card = styled.div.withConfig({
       cursor: pointer;
       &:hover {
         box-shadow: 0 4px 12px rgba(15, 23, 42, 0.10);
-        border-color: #CBD5E1;
+        border-color: ${colors.borderStrong};
       }
     `
   }
@@ -38,17 +38,17 @@ export const CardHeader = styled.div`
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 16px;
+  margin-bottom: ${spacing[4]};
 `;
 
 export const CardTitle = styled.h3`
-  font-size: 15px;
-  font-weight: 600;
+  font-size: ${font.size.md};
+  font-weight: ${font.weight.semibold};
   color: ${colors.textPrimary};
 `;
 
 export const CardSubtitle = styled.p`
-  font-size: 13px;
+  font-size: ${font.size.sm};
   color: ${colors.textMuted};
   margin-top: 2px;
 `;

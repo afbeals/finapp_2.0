@@ -6,6 +6,7 @@ import Link from 'next/link';
 import styled from 'styled-components';
 import { colors, font, radius, spacing } from '@/styles/tokens';
 import { useSessionStore } from '@/lib/store';
+import { apiPost } from '@/lib/api';
 
 const Nav = styled.nav`
   height: 56px;
@@ -78,7 +79,7 @@ const Avatar = styled.div.withConfig({
   justify-content: center;
   font-size: 11px;
   font-weight: ${font.weight.semibold};
-  color: #fff;
+  color: ${colors.surface};
   flex-shrink: 0;
 `;
 
@@ -155,22 +156,14 @@ export function Navbar() {
   const [open, setOpen] = useState(false);
 
   async function handleLogout() {
-    await fetch('/api/auth/logout', { method: 'POST' });
+    await apiPost('/api/auth/logout', {}).catch(() => null);
     actions.clearSession();
     router.push('/login');
   }
 
   async function handleSwitchMember(member: { id: number; name: string; color: string }) {
-    // Re-use current session but swap active member (PIN already verified for this household)
-    const res = await fetch('/api/auth/login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      // PIN not required for switching within same session — handled server-side by re-issuing
-      body: JSON.stringify({ memberId: member.id, pin: '__switch__' }),
-    });
-    if (res.ok) {
-      actions.setActiveMember(member);
-    }
+    const ok = await apiPost('/api/auth/login', { memberId: member.id, pin: '__switch__' }).then(() => true).catch(() => false);
+    if (ok) actions.setActiveMember(member);
     setOpen(false);
   }
 

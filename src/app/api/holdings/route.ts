@@ -1,26 +1,25 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { prisma } from '@/lib/db';
-import { getSession } from '@/lib/auth';
+import { requireAuth, badRequest } from '@/lib/apiGuards';
 
 const createSchema = z.object({
   accountId: z.number().int().positive(),
   ticker: z.string().min(1).max(10),
   name: z.string().min(1),
   category: z.string().default(''),
-  purchaseDate: z.string(), // ISO date string
-  pricePerShare: z.number().int().nonnegative(), // cents
+  purchaseDate: z.string(),
+  pricePerShare: z.number().int().nonnegative(),
   shares: z.number().positive(),
 });
 
-// POST — add a new purchase lot
 export async function POST(req: NextRequest) {
-  const session = await getSession();
+  const session = await requireAuth().catch(() => null);
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   const body = await req.json().catch(() => null);
   const parsed = createSchema.safeParse(body);
-  if (!parsed.success) return NextResponse.json({ error: 'Invalid', details: parsed.error.flatten() }, { status: 400 });
+  if (!parsed.success) return badRequest('Invalid', parsed.error.issues);
 
   const account = await prisma.investmentAccount.findUnique({ where: { id: parsed.data.accountId } });
   if (!account || account.householdId !== session.householdId) {

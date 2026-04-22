@@ -1,10 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { prisma } from '@/lib/db';
-import { getSession } from '@/lib/auth';
+import { requireAuth, badRequest } from '@/lib/apiGuards';
 
-// Upsert a single savings snapshot for any review (not just the current one).
-// Used by the history table inline edit to save any row.
 const schema = z.object({
   accountId: z.number().int().positive(),
   reviewId: z.number().int().positive(),
@@ -14,24 +12,21 @@ const schema = z.object({
 });
 
 export async function PUT(req: NextRequest) {
-  const session = await getSession();
+  const session = await requireAuth().catch(() => null);
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   const body = await req.json().catch(() => null);
   const parsed = schema.safeParse(body);
-  if (!parsed.success) return NextResponse.json({ error: 'Invalid' }, { status: 400 });
+  if (!parsed.success) return badRequest('Invalid');
 
   const { accountId, reviewId, ...fields } = parsed.data;
 
-  // Verify ownership
-  const account = await prisma.savingsAccount.findUnique({ where: { id: accountId } });
-  if (!account || account.householdId !== session.householdId) {
-    return NextResponse.json({ error: 'Not found' }, { status: 404 });
-  }
-  const review = await prisma.review.findUnique({ where: { id: reviewId } });
-  if (!review || review.householdId !== session.householdId) {
-    return NextResponse.json({ error: 'Not found' }, { status: 404 });
-  }
+  const [account, review] = await Promise.all([
+    prisma.savingsAccount.findUnique({ where: { id: accountId } }),
+    prisma.review.findUnique({ where: { id: reviewId } }),
+  ]);
+  if (!account || account.householdId !== session.householdId) return NextResponse.json({ error: 'Not found' }, { status: 404 });
+  if (!review || review.householdId !== session.householdId) return NextResponse.json({ error: 'Not found' }, { status: 404 });
 
   const existing = await prisma.savingsSnapshot.findUnique({
     where: { accountId_reviewId: { accountId, reviewId } },
@@ -50,6 +45,5 @@ export async function PUT(req: NextRequest) {
     update: { ...next, endingBalance },
     include: { review: { select: { id: true, periodYear: true, periodMonth: true } } },
   });
-
   return NextResponse.json({ snapshot });
 }

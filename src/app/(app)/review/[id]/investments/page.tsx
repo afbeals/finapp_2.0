@@ -5,32 +5,16 @@ import { useParams } from 'next/navigation';
 import styled from 'styled-components';
 import { StepShell } from '@/components/review/StepShell';
 import { Input } from '@/components/ui/Input';
+import { Modal } from '@/components/ui/Modal';
 import { useStepNav } from '@/lib/useStepNav';
 import { useReviewStore } from '@/lib/store';
 import { formatDollars, toCents, toDollars } from '@/lib/money';
-import { colors, font, spacing, radius } from '@/styles/tokens';
-
-// ─── Types ────────────────────────────────────────────────────────────────────
-
-interface Purchase {
-  id: number;
-  accountId: number;
-  ticker: string;
-  name: string;
-  category: string;
-  purchaseDate: string;
-  pricePerShare: number; // cents
-  shares: number;
-}
-
-interface InvestmentAccount {
-  id: number;
-  name: string;
-  type: string;
-  institution: string;
-  owner: { id: number; name: string; color: string } | null;
-  purchases: Purchase[];
-}
+import { colors, semanticColors, font, spacing, radius } from '@/styles/tokens';
+import { LoadingState } from '@/components/shared/LoadingState';
+import { KpiGrid, KpiCard } from '@/components/shared/KpiGrid';
+import { SectionHeader } from '@/components/shared/SectionHeader';
+import { getReviewInvestments, getInvestmentCategories, apiPut, apiPost } from '@/lib/api';
+import type { Purchase, InvestmentAccount, InvestmentCategory } from '@/types/entities';
 
 // A position = all purchase lots for one ticker within a section, aggregated
 interface Position {
@@ -115,53 +99,6 @@ function buildPositions(
 
 // ─── Styled components ────────────────────────────────────────────────────────
 
-const SectionTitle = styled.h2`
-  font-size: ${font.size.base};
-  font-weight: 700;
-  color: ${colors.textPrimary};
-  margin: 0 0 ${spacing[4]};
-  letter-spacing: -0.01em;
-`;
-
-const KpiGrid = styled.div`
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: ${spacing[3]};
-  margin-bottom: ${spacing[4]};
-  @media (max-width: 900px) { grid-template-columns: repeat(2, 1fr); }
-`;
-
-const KpiCard = styled.div`
-  background: ${colors.surface};
-  border: 1px solid ${colors.border};
-  border-radius: ${radius.lg};
-  padding: 14px 16px;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.04);
-`;
-
-const KpiLabel = styled.p`
-  font-size: 10px;
-  font-weight: ${font.weight.semibold};
-  color: ${colors.textMuted};
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  margin: 0 0 4px;
-`;
-
-const KpiValue = styled.p.withConfig({ shouldForwardProp: (p) => p !== 'textColor' })<{ textColor?: string }>`
-  font-size: ${font.size.xl};
-  font-weight: 700;
-  color: ${({ textColor }) => textColor ?? colors.textPrimary};
-  margin: 0 0 2px;
-  line-height: 1.2;
-`;
-
-const KpiSub = styled.p`
-  font-size: 10px;
-  color: ${colors.textMuted};
-  margin: 0;
-`;
-
 const SplitBarWrap = styled.div`
   background: ${colors.surface};
   border: 1px solid ${colors.border};
@@ -200,7 +137,7 @@ const LegendDot = styled.span.withConfig({ shouldForwardProp: (p) => p !== 'bg' 
 `;
 
 const MarketStrip = styled.div`
-  background: #0F172A;
+  background: ${colors.navbar};
   border-radius: ${radius.lg};
   padding: 12px 20px;
   display: flex;
@@ -213,18 +150,18 @@ const MarketStrip = styled.div`
 
 const MarketTag = styled.span`
   font-size: 10px;
-  color: #94A3B8;
+  color: ${colors.textDisabled};
   text-transform: uppercase;
   letter-spacing: 0.06em;
   margin-right: 4px;
 `;
 
 const MarketItem = styled.div`display: flex; flex-direction: column; gap: 1px;`;
-const MarketName = styled.span`font-size: 10px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.04em;`;
+const MarketName = styled.span`font-size: 10px; color: ${colors.textDisabled}; text-transform: uppercase; letter-spacing: 0.04em;`;
 const MarketVal = styled.span.withConfig({ shouldForwardProp: (p) => p !== 'up' })<{ up?: boolean }>`
   font-size: ${font.size.sm};
   font-weight: 600;
-  color: ${({ up }) => up === undefined ? '#F1F5F9' : up ? '#4ADE80' : '#F87171'};
+  color: ${({ up }) => up === undefined ? colors.bg : up ? semanticColors.successBright : semanticColors.dangerBright};
 `;
 
 // Collapsible section
@@ -244,14 +181,14 @@ const SectionHeaderRow = styled.div.withConfig({ shouldForwardProp: (p) => p !==
   padding: 14px 18px;
   cursor: pointer;
   user-select: none;
-  background: ${({ green }) => green ? '#F0FDF4' : colors.surface};
-  border-bottom: 1px solid ${({ green }) => green ? '#DCFCE7' : colors.border};
-  &:hover { background: ${({ green }) => green ? '#DCFCE7' : colors.bg}; }
+  background: ${({ green }) => green ? semanticColors.successBg : colors.surface};
+  border-bottom: 1px solid ${({ green }) => green ? colors.successLight : colors.border};
+  &:hover { background: ${({ green }) => green ? colors.successLight : colors.bg}; }
 `;
 
 const Chevron = styled.span.withConfig({ shouldForwardProp: (p) => p !== 'open' && p !== 'green' })<{ open: boolean; green?: boolean }>`
   font-size: 11px;
-  color: ${({ green }) => green ? '#16A34A' : colors.primary};
+  color: ${({ green }) => green ? semanticColors.successTextMedium : colors.primary};
   transform: ${({ open }) => open ? 'rotate(90deg)' : 'none'};
   transition: transform 0.15s;
   flex-shrink: 0;
@@ -260,7 +197,7 @@ const Chevron = styled.span.withConfig({ shouldForwardProp: (p) => p !== 'open' 
 const SectionName = styled.span.withConfig({ shouldForwardProp: (p) => p !== 'green' })<{ green?: boolean }>`
   font-size: ${font.size.sm};
   font-weight: ${font.weight.semibold};
-  color: ${({ green }) => green ? '#15803D' : colors.textPrimary};
+  color: ${({ green }) => green ? semanticColors.successText : colors.textPrimary};
   min-width: 220px;
 `;
 
@@ -284,7 +221,7 @@ const ExpandLink = styled.span.withConfig({ shouldForwardProp: (p) => p !== 'gre
   margin-left: auto;
   font-size: 11px;
   font-weight: 600;
-  color: ${({ green }) => green ? '#16A34A' : colors.primary};
+  color: ${({ green }) => green ? semanticColors.successTextMedium : colors.primary};
   white-space: nowrap;
   padding: 0 4px;
 `;
@@ -352,7 +289,7 @@ const HTable = styled.table`
   min-width: 860px;
 `;
 
-const HThead = styled.thead`background: #F8FAFC; position: sticky; top: 0; z-index: 1;`;
+const HThead = styled.thead`background: ${semanticColors.surfaceMuted}; position: sticky; top: 0; z-index: 1;`;
 
 const HTh = styled.th.withConfig({ shouldForwardProp: (p) => p !== 'right' })<{ right?: boolean }>`
   padding: 7px 10px;
@@ -408,36 +345,13 @@ const PriceSpinner = styled.span`
 
 const AddPurchaseBtn = styled.button`
   height: 32px; padding: 0 14px;
-  background: ${colors.primary}; color: #fff;
+  background: ${colors.primary}; color: ${colors.surface};
   border: none; border-radius: ${radius.md};
   font-size: ${font.size.sm}; font-weight: ${font.weight.semibold};
   cursor: pointer;
-  &:hover { background: #2563EB; }
+  &:hover { background: ${colors.primaryHover}; }
 `;
 
-// Modal
-const ModalOverlay = styled.div`
-  position: fixed; inset: 0;
-  background: rgba(0,0,0,0.45);
-  display: flex; align-items: center; justify-content: center;
-  z-index: 100;
-`;
-
-const ModalBox = styled.div`
-  background: ${colors.surface};
-  border-radius: ${radius.lg};
-  padding: 28px;
-  width: 460px;
-  max-width: 95vw;
-  box-shadow: 0 20px 60px rgba(0,0,0,0.25);
-`;
-
-const ModalTitle = styled.h2`
-  font-size: ${font.size.lg};
-  font-weight: 700;
-  color: ${colors.textPrimary};
-  margin: 0 0 20px;
-`;
 
 const FieldLabel = styled.label`
   display: block;
@@ -479,11 +393,11 @@ const ModalFooter = styled.div`display: flex; justify-content: flex-end; gap: 10
 
 const BtnPrimary = styled.button`
   height: 38px; padding: 0 20px;
-  background: ${colors.primary}; color: #fff;
+  background: ${colors.primary}; color: ${colors.surface};
   border: none; border-radius: ${radius.md};
   font-size: ${font.size.sm}; font-weight: ${font.weight.semibold};
   cursor: pointer;
-  &:hover { background: #2563EB; }
+  &:hover { background: ${colors.primaryHover}; }
   &:disabled { opacity: 0.5; cursor: default; }
 `;
 
@@ -497,26 +411,24 @@ const BtnGhost = styled.button`
 
 // ─── Category color map ───────────────────────────────────────────────────────
 
-interface InvCategoryDef { id: number; name: string; color: string }
-
-function buildCategoryColorMap(cats: InvCategoryDef[]): Record<string, { bg: string; fg: string }> {
+function buildCategoryColorMap(cats: InvestmentCategory[]): Record<string, { bg: string; fg: string }> {
   const map: Record<string, { bg: string; fg: string }> = {};
   for (const c of cats) map[c.name] = { bg: c.color + '22', fg: c.color };
   return map;
 }
 
 function categoryColorFromMap(map: Record<string, { bg: string; fg: string }>, cat: string): { bg: string; fg: string } {
-  return map[cat] ?? { bg: '#F1F5F9', fg: '#475569' };
+  return map[cat] ?? { bg: colors.bg, fg: semanticColors.neutralText };
 }
 
 const BADGE_PALETTE = [
-  { bg: '#DBEAFE', fg: '#1E40AF' },
-  { bg: '#DCFCE7', fg: '#166534' },
-  { bg: '#FEF3C7', fg: '#92400E' },
+  { bg: colors.primaryLight, fg: semanticColors.primaryTextDark },
+  { bg: colors.successLight, fg: semanticColors.successTextDark },
+  { bg: colors.warningLight, fg: semanticColors.amberText },
   { bg: '#FCE7F3', fg: '#9D174D' },
-  { bg: '#EDE9FE', fg: '#5B21B6' },
-  { bg: '#CCFBF1', fg: '#0F766E' },
-  { bg: '#FFF7ED', fg: '#C2410C' },
+  { bg: semanticColors.purpleLight, fg: semanticColors.purpleTextDark },
+  { bg: semanticColors.tealLight, fg: semanticColors.tealText },
+  { bg: semanticColors.amberBg, fg: '#C2410C' },
 ];
 function acctBadge(i: number) { return BADGE_PALETTE[i % BADGE_PALETTE.length]; }
 
@@ -542,6 +454,8 @@ interface SectionProps {
   categoryColorMap: Record<string, { bg: string; fg: string }>;
   onAddPurchase: (defaultAccountId: number) => void;
 }
+
+type InvCategoryDef = InvestmentCategory;
 
 function InvestmentSection({
   title,
@@ -587,11 +501,11 @@ function InvestmentSection({
           </HStat>
           <HStat>
             <HStatLabel>Gain / Loss</HStatLabel>
-            <HStatVal textColor={sectionGainLoss >= 0 ? '#15803D' : colors.danger}>{fmtGain(sectionGainLoss)}</HStatVal>
+            <HStatVal textColor={sectionGainLoss >= 0 ? semanticColors.successText : colors.danger}>{fmtGain(sectionGainLoss)}</HStatVal>
           </HStat>
           <HStat>
             <HStatLabel>Growth</HStatLabel>
-            <HStatVal textColor={sectionGainLoss >= 0 ? '#15803D' : colors.danger}>{fmtPct(sectionGrowthPct)}</HStatVal>
+            <HStatVal textColor={sectionGainLoss >= 0 ? semanticColors.successText : colors.danger}>{fmtPct(sectionGrowthPct)}</HStatVal>
           </HStat>
           <HStat>
             <HStatLabel>Cost Basis</HStatLabel>
@@ -694,10 +608,10 @@ function InvestmentSection({
                         )}
                       </HTd>
                       <HTd right bold>{pos.currentPrice > 0 ? formatDollars(pos.currentValue) : <span style={{ color: colors.textMuted }}>—</span>}</HTd>
-                      <HTd right style={{ color: pos.gainLoss >= 0 ? '#15803D' : colors.danger, fontWeight: 600 }}>
+                      <HTd right style={{ color: pos.gainLoss >= 0 ? semanticColors.successText : colors.danger, fontWeight: 600 }}>
                         {pos.currentPrice > 0 ? fmtGain(pos.gainLoss) : '—'}
                       </HTd>
-                      <HTd right style={{ color: pos.gainLoss >= 0 ? '#15803D' : colors.danger, fontWeight: 600 }}>
+                      <HTd right style={{ color: pos.gainLoss >= 0 ? semanticColors.successText : colors.danger, fontWeight: 600 }}>
                         {pos.currentPrice > 0 ? fmtPct(pos.growthPct) : '—'}
                       </HTd>
                       <HTd right style={{ color: colors.textMuted }}>
@@ -782,21 +696,16 @@ function AddPurchaseModal({
   async function handleSubmit() {
     if (!ticker.trim() || !accountId || !sharePrice || !shares || !purchaseDate) return;
     setSaving(true);
-    const res = await fetch('/api/holdings', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        accountId: Number(accountId),
-        ticker: ticker.trim().toUpperCase(),
-        name: name.trim() || ticker.trim().toUpperCase(),
-        category: category.trim(),
-        purchaseDate,
-        pricePerShare: toCents(parseFloat(sharePrice) || 0),
-        shares: parseFloat(shares),
-      }),
-    });
-    if (res.ok) {
-      const data = await res.json();
+    const data = await apiPost<{ purchase: Purchase }>('/api/holdings', {
+      accountId: Number(accountId),
+      ticker: ticker.trim().toUpperCase(),
+      name: name.trim() || ticker.trim().toUpperCase(),
+      category: category.trim(),
+      purchaseDate,
+      pricePerShare: toCents(parseFloat(sharePrice) || 0),
+      shares: parseFloat(shares),
+    }).catch(() => null);
+    if (data) {
       onAdded(data.purchase);
       onClose();
     }
@@ -804,76 +713,74 @@ function AddPurchaseModal({
   }
 
   return (
-    <ModalOverlay onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
-      <ModalBox>
-        <ModalTitle>Add New Purchase</ModalTitle>
-
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-          <div>
-            <FieldLabel>Ticker Symbol *</FieldLabel>
-            <FieldInput
-              autoFocus
-              placeholder="e.g. AAPL"
-              value={ticker}
-              onChange={(e) => setTicker(e.target.value.toUpperCase())}
-              onBlur={handleTickerBlur}
-            />
-          </div>
-          <div>
-            <FieldLabel>Category</FieldLabel>
-            <FieldSelect value={category} onChange={(e) => setCategory(e.target.value)} style={{ marginBottom: 12 }}>
-              <option value="">— None —</option>
-              {categories.map((c) => <option key={c.id} value={c.name}>{c.name}</option>)}
-            </FieldSelect>
-          </div>
-        </div>
-
-        <FieldLabel>Company / Fund Name {nameFetching && <span style={{ fontWeight: 400, textTransform: 'none', letterSpacing: 0 }}>— looking up…</span>}</FieldLabel>
-        <FieldInput placeholder={nameFetching ? 'Fetching from ticker…' : 'Auto-filled from ticker or enter manually'} value={name} onChange={(e) => setName(e.target.value)} />
-
-        <FieldLabel>Account *</FieldLabel>
-        <FieldSelect value={accountId} onChange={(e) => setAccountId(e.target.value)}>
-          {accounts.map((a) => (
-            <option key={a.id} value={String(a.id)}>
-              {a.name} ({AccountTypeLabel[a.type] ?? a.type})
-            </option>
-          ))}
-        </FieldSelect>
-
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12 }}>
-          <div>
-            <FieldLabel>Purchase Date *</FieldLabel>
-            <FieldInput type="date" value={purchaseDate} onChange={(e) => setPurchaseDate(e.target.value)} />
-          </div>
-          <div>
-            <FieldLabel>Price per Share *</FieldLabel>
-            <FieldInput type="number" step="0.01" placeholder="$0.00" value={sharePrice} onChange={(e) => setSharePrice(e.target.value)} />
-          </div>
-          <div>
-            <FieldLabel># of Shares *</FieldLabel>
-            <FieldInput type="number" step="0.0001" placeholder="0.00" value={shares} onChange={(e) => setShares(e.target.value)} />
-          </div>
-        </div>
-
-        <TotalLine>
-          <span style={{ fontSize: font.size.sm, color: colors.textMuted }}>Total Cost:</span>
-          <span style={{ fontSize: font.size.base, fontWeight: 700, color: colors.textPrimary }}>
-            {formatDollars(toCents(totalCost))}
-          </span>
-        </TotalLine>
-
+    <Modal isOpen onClose={onClose} title="Add New Purchase" width="460px"
+      footer={
         <ModalFooter>
           <BtnGhost onClick={onClose}>Cancel</BtnGhost>
           <BtnPrimary onClick={handleSubmit} disabled={saving || !ticker || !accountId || !sharePrice || !shares}>
             {saving ? 'Adding…' : 'Add Purchase'}
           </BtnPrimary>
         </ModalFooter>
+      }
+    >
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+        <div>
+          <FieldLabel>Ticker Symbol *</FieldLabel>
+          <FieldInput
+            autoFocus
+            placeholder="e.g. AAPL"
+            value={ticker}
+            onChange={(e) => setTicker(e.target.value.toUpperCase())}
+            onBlur={handleTickerBlur}
+          />
+        </div>
+        <div>
+          <FieldLabel>Category</FieldLabel>
+          <FieldSelect value={category} onChange={(e) => setCategory(e.target.value)} style={{ marginBottom: 12 }}>
+            <option value="">— None —</option>
+            {categories.map((c) => <option key={c.id} value={c.name}>{c.name}</option>)}
+          </FieldSelect>
+        </div>
+      </div>
 
-        <p style={{ fontSize: 11, color: colors.textMuted, marginTop: 10, marginBottom: 0 }}>
-          * Required. This purchase lot will be combined with existing lots for the same ticker.
-        </p>
-      </ModalBox>
-    </ModalOverlay>
+      <FieldLabel>Company / Fund Name {nameFetching && <span style={{ fontWeight: 400, textTransform: 'none', letterSpacing: 0 }}>— looking up…</span>}</FieldLabel>
+      <FieldInput placeholder={nameFetching ? 'Fetching from ticker…' : 'Auto-filled from ticker or enter manually'} value={name} onChange={(e) => setName(e.target.value)} />
+
+      <FieldLabel>Account *</FieldLabel>
+      <FieldSelect value={accountId} onChange={(e) => setAccountId(e.target.value)}>
+        {accounts.map((a) => (
+          <option key={a.id} value={String(a.id)}>
+            {a.name} ({AccountTypeLabel[a.type] ?? a.type})
+          </option>
+        ))}
+      </FieldSelect>
+
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12 }}>
+        <div>
+          <FieldLabel>Purchase Date *</FieldLabel>
+          <FieldInput type="date" value={purchaseDate} onChange={(e) => setPurchaseDate(e.target.value)} />
+        </div>
+        <div>
+          <FieldLabel>Price per Share *</FieldLabel>
+          <FieldInput type="number" step="0.01" placeholder="$0.00" value={sharePrice} onChange={(e) => setSharePrice(e.target.value)} />
+        </div>
+        <div>
+          <FieldLabel># of Shares *</FieldLabel>
+          <FieldInput type="number" step="0.0001" placeholder="0.00" value={shares} onChange={(e) => setShares(e.target.value)} />
+        </div>
+      </div>
+
+      <TotalLine>
+        <span style={{ fontSize: font.size.sm, color: colors.textMuted }}>Total Cost:</span>
+        <span style={{ fontSize: font.size.base, fontWeight: 700, color: colors.textPrimary }}>
+          {formatDollars(toCents(totalCost))}
+        </span>
+      </TotalLine>
+
+      <p style={{ fontSize: 11, color: colors.textMuted, marginTop: 10, marginBottom: 0 }}>
+        * Required. This purchase lot will be combined with existing lots for the same ticker.
+      </p>
+    </Modal>
   );
 }
 
@@ -897,8 +804,8 @@ export default function InvestmentsPage() {
 
   useEffect(() => {
     Promise.all([
-      fetch(`/api/reviews/${reviewId}/investments`).then((r) => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); }),
-      fetch('/api/config/investment-categories').then((r) => r.json()),
+      getReviewInvestments(reviewId),
+      getInvestmentCategories(),
     ])
       .then(([{ accounts: accs }, { categories: cats }]) => {
         setAccounts(accs ?? []);
@@ -955,7 +862,6 @@ export default function InvestmentsPage() {
   }
 
   async function handleSave() {
-    // Build snapshots from current live prices + computed values per purchase lot
     const snapshots = accounts.flatMap((a) =>
       a.purchases.map((p) => {
         const price = livePrices[p.ticker] ?? 0;
@@ -964,11 +870,7 @@ export default function InvestmentsPage() {
         return { purchaseId: p.id, price, value, gainLoss: value - lotCostBasis };
       })
     );
-    await fetch(`/api/reviews/${reviewId}/investments`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ snapshots }),
-    });
+    await apiPut(`/api/reviews/${reviewId}/investments`, { snapshots });
     await goNext();
   }
 
@@ -994,7 +896,7 @@ export default function InvestmentsPage() {
   const nasdaq = marketIndices['QQQ'];
   const djia = marketIndices['DIA'];
 
-  if (loading) return <p style={{ color: colors.textMuted }}>Loading…</p>;
+  if (loading) return <LoadingState centered />;
 
   return (
     <StepShell
@@ -1008,46 +910,36 @@ export default function InvestmentsPage() {
       readOnly={readOnly}
     >
       {/* ── Combined Portfolio Summary ── */}
-      <SectionTitle>Combined Portfolio Summary</SectionTitle>
+      <SectionHeader title="Combined Portfolio Summary" />
 
-      <KpiGrid>
-        <KpiCard>
-          <KpiLabel>Total Value</KpiLabel>
-          <KpiValue>{pricesLoading ? '…' : formatDollars(totalValue)}</KpiValue>
-          <KpiSub>{accounts.length} account{accounts.length !== 1 ? 's' : ''}</KpiSub>
-        </KpiCard>
-        <KpiCard>
-          <KpiLabel>Total Gain / Loss</KpiLabel>
-          <KpiValue textColor={totalGainLoss >= 0 ? '#15803D' : colors.danger}>
-            {pricesLoading ? '…' : fmtGain(totalGainLoss)}
-          </KpiValue>
-          <KpiSub>unrealized</KpiSub>
-        </KpiCard>
-        <KpiCard>
-          <KpiLabel>Growth %</KpiLabel>
-          <KpiValue textColor={totalGainLoss >= 0 ? '#15803D' : colors.danger}>
-            {pricesLoading ? '…' : fmtPct(totalGrowthPct)}
-          </KpiValue>
-          <KpiSub>vs total cost basis</KpiSub>
-        </KpiCard>
-        <KpiCard>
-          <KpiLabel>Total Cost Basis</KpiLabel>
-          <KpiValue>{formatDollars(totalCostBasis)}</KpiValue>
-          <KpiSub>total invested</KpiSub>
-        </KpiCard>
+      <KpiGrid cols={4}>
+        <KpiCard label="Total Value" value={pricesLoading ? '…' : formatDollars(totalValue)} sub={`${accounts.length} account${accounts.length !== 1 ? 's' : ''}`} />
+        <KpiCard
+          tone={totalGainLoss >= 0 ? 'success' : 'danger'}
+          label="Total Gain / Loss"
+          value={pricesLoading ? '…' : fmtGain(totalGainLoss)}
+          sub="unrealized"
+        />
+        <KpiCard
+          tone={totalGainLoss >= 0 ? 'success' : 'danger'}
+          label="Growth %"
+          value={pricesLoading ? '…' : fmtPct(totalGrowthPct)}
+          sub="vs total cost basis"
+        />
+        <KpiCard label="Total Cost Basis" value={formatDollars(totalCostBasis)} sub="total invested" />
       </KpiGrid>
 
       <SplitBarWrap>
-        <KpiLabel style={{ marginBottom: 0 }}>Portfolio Split</KpiLabel>
+        <p style={{ fontSize: 10, fontWeight: 600, color: colors.textMuted, textTransform: 'uppercase', letterSpacing: '0.05em', margin: '0 0 0' }}>Portfolio Split</p>
         <SplitBar>
           <SplitSegment pct={taxablePct} bg={colors.primary} />
-          <SplitSegment pct={retirementPct} bg="#16A34A" />
+          <SplitSegment pct={retirementPct} bg={semanticColors.successTextMedium} />
         </SplitBar>
         <SplitLegend>
           <LegendDot bg={colors.primary}>
             Investments: {formatDollars(taxableValue)} ({taxablePct.toFixed(0)}%)
           </LegendDot>
-          <LegendDot bg="#16A34A">
+          <LegendDot bg={semanticColors.successTextMedium}>
             Retirement: {formatDollars(retirementValue)} ({retirementPct.toFixed(0)}%)
           </LegendDot>
         </SplitLegend>
@@ -1075,12 +967,12 @@ export default function InvestmentsPage() {
           </MarketVal>
         </MarketItem>
         {!pricesLoading && (
-          <span style={{ marginLeft: 'auto', fontSize: 10, color: '#475569' }}>
+          <span style={{ marginLeft: 'auto', fontSize: 10, color: semanticColors.neutralText }}>
             Live prices via Yahoo Finance
           </span>
         )}
         {pricesLoading && (
-          <span style={{ marginLeft: 'auto', fontSize: 10, color: '#94A3B8', fontStyle: 'italic' }}>
+          <span style={{ marginLeft: 'auto', fontSize: 10, color: colors.textDisabled, fontStyle: 'italic' }}>
             Fetching live prices…
           </span>
         )}

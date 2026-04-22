@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { prisma } from '@/lib/db';
-import { getSession } from '@/lib/auth';
+import { requireAuth, requireHouseholdResource, badRequest } from '@/lib/apiGuards';
 
 const createSchema = z.object({
   name: z.string().min(1),
@@ -11,23 +11,16 @@ const createSchema = z.object({
 });
 
 export async function POST(req: NextRequest) {
-  const session = await getSession();
+  const session = await requireAuth().catch(() => null);
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   const body = await req.json().catch(() => null);
   const parsed = createSchema.safeParse(body);
-  if (!parsed.success) return NextResponse.json({ error: 'Invalid', details: parsed.error.flatten() }, { status: 400 });
+  if (!parsed.success) return badRequest('Invalid', parsed.error.flatten());
 
   const account = await prisma.savingsAccount.create({
-    data: {
-      householdId: session.householdId,
-      name: parsed.data.name,
-      type: parsed.data.type,
-      institution: parsed.data.institution,
-      rate: parsed.data.rate,
-    },
+    data: { householdId: session.householdId, ...parsed.data },
   });
-
   return NextResponse.json({ account }, { status: 201 });
 }
 
@@ -40,19 +33,19 @@ const updateSchema = z.object({
 });
 
 export async function PATCH(req: NextRequest) {
-  const session = await getSession();
+  const session = await requireAuth().catch(() => null);
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   const body = await req.json().catch(() => null);
   const parsed = updateSchema.safeParse(body);
-  if (!parsed.success) return NextResponse.json({ error: 'Invalid' }, { status: 400 });
+  if (!parsed.success) return badRequest('Invalid');
 
   const { id, ...fields } = parsed.data;
-
-  const existing = await prisma.savingsAccount.findUnique({ where: { id } });
-  if (!existing || existing.householdId !== session.householdId) {
-    return NextResponse.json({ error: 'Not found' }, { status: 404 });
-  }
+  const result = await requireHouseholdResource(
+    (id) => prisma.savingsAccount.findUnique({ where: { id } }),
+    id,
+  ).catch(() => null);
+  if (!result) return NextResponse.json({ error: 'Not found' }, { status: 404 });
 
   const account = await prisma.savingsAccount.update({ where: { id }, data: fields });
   return NextResponse.json({ account });

@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { prisma } from '@/lib/db';
-import { getSession } from '@/lib/auth';
+import { requireAuth, badRequest, conflict } from '@/lib/apiGuards';
 
 export async function GET() {
-  const session = await getSession();
+  const session = await requireAuth().catch(() => null);
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   const reviews = await prisma.review.findMany({
@@ -33,24 +33,19 @@ const createSchema = z.object({
 });
 
 export async function POST(req: NextRequest) {
-  const session = await getSession();
+  const session = await requireAuth().catch(() => null);
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   const body = await req.json().catch(() => null);
   const parsed = createSchema.safeParse(body);
-  if (!parsed.success) {
-    return NextResponse.json({ error: 'Invalid request', details: parsed.error.flatten() }, { status: 400 });
-  }
+  if (!parsed.success) return badRequest('Invalid request', parsed.error.flatten());
 
   const { periodYear, periodMonth, type } = parsed.data;
 
-  // Prevent duplicate reviews for same month
   const existing = await prisma.review.findFirst({
     where: { householdId: session.householdId, periodYear, periodMonth },
   });
-  if (existing) {
-    return NextResponse.json({ error: 'A review for this month already exists' }, { status: 409 });
-  }
+  if (existing) return conflict({ error: 'A review for this month already exists' });
 
   const monthlySteps = ['expense', 'monthly', 'savings', 'investments', 'vaults', 'finalize'];
   const quarterlySteps = ['expense', 'monthly', 'savings', 'loans', 'investments', 'portfolio', 'vaults', 'finalize'];
@@ -63,9 +58,7 @@ export async function POST(req: NextRequest) {
       periodMonth,
       type,
       lastEditorId: session.memberId,
-      steps: {
-        create: stepKeys.map((stepKey) => ({ stepKey })),
-      },
+      steps: { create: stepKeys.map((stepKey) => ({ stepKey })) },
     },
     include: { steps: true },
   });

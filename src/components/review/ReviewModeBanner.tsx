@@ -2,13 +2,13 @@
 
 import React from 'react';
 import styled from 'styled-components';
-import { colors, font, spacing } from '@/styles/tokens';
+import { colors, font, spacing, semanticColors } from '@/styles/tokens';
 import { Button } from '@/components/ui/Button';
 import { useReviewStore } from '@/lib/store';
 
 const Banner = styled.div<{ $editing: boolean }>`
-  background: ${({ $editing }) => $editing ? colors.warningLight : '#F0F9FF'};
-  border-bottom: 1px solid ${({ $editing }) => $editing ? '#FDE68A' : '#BAE6FD'};
+  background: ${({ $editing }) => $editing ? colors.warningLight : semanticColors.infoBg};
+  border-bottom: 1px solid ${({ $editing }) => $editing ? semanticColors.warningBorderStrong : semanticColors.infoBorder};
   padding: 10px ${spacing[6]};
   display: flex;
   align-items: center;

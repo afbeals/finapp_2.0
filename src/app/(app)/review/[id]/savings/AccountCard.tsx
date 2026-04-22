@@ -8,6 +8,7 @@ import { colors, font, spacing, radius, semanticColors } from '@/styles/tokens';
 import { MONTH_NAMES_SHORT } from '@/lib/fire';
 import type { SavingsAccount, SavingsSnapshot, HistoricalSnapshot } from '@/types/entities';
 import type { ReviewPeriod } from '@/types/review';
+export type { ReviewPeriod };
 
 
 export interface HistoricalSnapshotWithBalance extends HistoricalSnapshot {

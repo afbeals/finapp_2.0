@@ -104,7 +104,7 @@ interface ReviewData {
   periodYear: number;
   periodMonth: number;
   type: 'MONTHLY' | 'QUARTERLY';
-  status: string;
+  status: string; // string from API, cast to ReviewStatus when passing to store
   completedAt: string | null;
   currentStep: string;
   lockedForEdit: boolean;
@@ -136,7 +136,7 @@ export default function HistoryDetailPage() {
       getReviewInvestments(reviewId),
     ]).then(([rev, inc, exp, sav, inv]) => {
       setReview(rev.review ?? null);
-      actions.setActiveReview(rev.review ?? null);
+      actions.setActiveReview((rev.review ?? null) as unknown as import('@/lib/store').ActiveReview | null);
       actions.setIsEditMode(false);
       setIncome((inc.entries ?? []).reduce((s, e) => s + e.amount, 0));
       setExpenses((exp.entries ?? []).reduce((s, e) => s + e.amount, 0));

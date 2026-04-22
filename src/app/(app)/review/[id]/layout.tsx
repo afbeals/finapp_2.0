@@ -7,6 +7,7 @@ import { ReviewModeBanner } from '@/components/review/ReviewModeBanner';
 import { EnableEditModal } from '@/components/modals/EnableEditModal';
 import { useReviewStore } from '@/lib/store';
 import { apiGet } from '@/lib/api';
+import type { ActiveReview } from '@/lib/store';
 import { LoadingState } from '@/components/shared/LoadingState';
 import { ErrorBoundary } from '@/components/shared/ErrorBoundary';
 
@@ -24,7 +25,7 @@ export default function ReviewLayout({ children }: { children: React.ReactNode }
       return;
     }
 
-    apiGet<{ review: unknown }>(`/api/reviews/${reviewId}`)
+    apiGet<{ review: ActiveReview }>(`/api/reviews/${reviewId}`)
       .then((data) => {
         actions.setActiveReview(data.review);
         setLoaded(true);

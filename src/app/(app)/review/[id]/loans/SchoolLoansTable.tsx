@@ -23,7 +23,7 @@ const TableScroll = styled.div`
 const Table = styled.table`width: max-content; min-width: 100%; border-collapse: collapse;`;
 const Thead = styled.thead`background: ${colors.bg}; position: sticky; top: 0; z-index: 1;`;
 const Th = styled.th.withConfig({ shouldForwardProp: (p) => p !== 'w' })<{ w?: number }>`
-  padding: 8px 12px;
+  padding: ${spacing[2]} ${spacing[3]};
   font-size: ${font.size.xs}; font-weight: ${font.weight.semibold};
   color: ${colors.textMuted}; text-align: right;
   border-bottom: 1px solid ${colors.border}; white-space: nowrap;

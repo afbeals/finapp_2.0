@@ -17,6 +17,7 @@ export function useCrudModal<T extends { id: number; name: string; color: string
   setEditColor: (v: string) => void;
   saving: boolean;
   openEdit: (item: T) => void;
+  closeEdit: () => void;
   handleAdd: (createFn: () => Promise<T | null>, onSuccess: (item: T) => void) => Promise<void>;
   handleSave: (updateFn: () => Promise<T | null>, onSuccess: (item: T) => void) => Promise<void>;
 } {
@@ -33,6 +34,10 @@ export function useCrudModal<T extends { id: number; name: string; color: string
     setEditItem(item);
     setEditName(item.name);
     setEditColor(item.color);
+  }
+
+  function closeEdit() {
+    setEditItem(null);
   }
 
   async function handleAdd(createFn: () => Promise<T | null>, onSuccess: (item: T) => void) {
@@ -74,6 +79,7 @@ export function useCrudModal<T extends { id: number; name: string; color: string
     setEditColor,
     saving,
     openEdit,
+    closeEdit,
     handleAdd,
     handleSave,
   };

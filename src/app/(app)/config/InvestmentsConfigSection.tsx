@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import styled from 'styled-components';
-import { Card, CardTitle } from '@/components/ui/Card';
+import { CardTitle } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Input, Label, FormGroup } from '@/components/ui/Input';
 import { Modal } from '@/components/ui/Modal';
@@ -17,6 +17,10 @@ import {
 } from '@/lib/api';
 import type { InvestmentCategory, InvestmentAccount, Member } from '@/types/entities';
 import { accountTypeLabel, badgeColors, ACCOUNT_TYPES } from './configHelpers';
+import { Section, SectionHeader } from './components/SectionCard';
+import { ColorPickerField } from './components/ColorPickerField';
+import { ItemRowContainer, ColorDot, RowActions } from './components/ItemRow';
+import { useCrudModal } from './hooks/useCrudModal';
 
 interface MemberWithEmail extends Member { email: string | null }
 
@@ -30,18 +34,16 @@ interface InvestmentsConfigSectionProps {
   members: MemberWithEmail[];
 }
 
+// ─── Local useSafeDelete hook ─────────────────────────────────────────────────
+
+function useSafeDelete() {
+  const [deleteTarget, setDeleteTarget] = useState<{ id: number; name: string } | null>(null);
+  const [transferTarget, setTransferTarget] = useState<number | ''>('');
+  const [deleting, setDeleting] = useState(false);
+  return { deleteTarget, setDeleteTarget, transferTarget, setTransferTarget, deleting, setDeleting };
+}
+
 // ─── Styled components ────────────────────────────────────────────────────────
-
-const Section = styled(Card)`
-  margin-bottom: ${spacing[6]};
-`;
-
-const SectionHeader = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: ${spacing[4]};
-`;
 
 const InvColumns = styled.div`
   display: grid;
@@ -85,34 +87,10 @@ const InvScrollList = styled.div`
   &::-webkit-scrollbar-thumb { background: ${colors.border}; border-radius: 2px; }
 `;
 
-const ItemRow = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 8px 0;
-  border-bottom: 1px solid ${colors.border};
-  &:last-child { border-bottom: none; }
-`;
-
 const ItemInfo = styled.div`
   display: flex;
   align-items: center;
   gap: 10px;
-`;
-
-const RowActions = styled.div`
-  display: flex;
-  gap: ${spacing[2]};
-`;
-
-const SmallDot = styled.div.withConfig({
-  shouldForwardProp: (prop) => prop !== 'color',
-})<{ color: string }>`
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-  background: ${({ color }) => color};
-  flex-shrink: 0;
 `;
 
 const TypeBadge = styled.span`
@@ -157,21 +135,32 @@ export function InvestmentsConfigSection({
   setAccounts,
   members,
 }: InvestmentsConfigSectionProps) {
-  // Add/edit investment category modal
-  const [showAddInvCat, setShowAddInvCat] = useState(false);
-  const [newInvCatName, setNewInvCatName] = useState('');
-  const [newInvCatColor, setNewInvCatColor] = useState('#6B7280');
-  const [addingInvCat, setAddingInvCat] = useState(false);
-  const [editInvCat, setEditInvCat] = useState<InvCategory | null>(null);
-  const [editInvCatName, setEditInvCatName] = useState('');
-  const [editInvCatColor, setEditInvCatColor] = useState('');
-  const [savingInvCat, setSavingInvCat] = useState(false);
+  // Investment category CRUD via shared hook
+  const {
+    showAdd: showAddInvCat,
+    setShowAdd: setShowAddInvCat,
+    newName: newInvCatName,
+    setNewName: setNewInvCatName,
+    newColor: newInvCatColor,
+    setNewColor: setNewInvCatColor,
+    adding: addingInvCat,
+    editItem: editInvCat,
+    editName: editInvCatName,
+    setEditName: setEditInvCatName,
+    editColor: editInvCatColor,
+    setEditColor: setEditInvCatColor,
+    saving: savingInvCat,
+    openEdit: openEditInvCat,
+    closeEdit: closeEditInvCat,
+    handleAdd: handleAddInvCatCrud,
+    handleSave: handleSaveInvCatCrud,
+  } = useCrudModal<InvCategory>('#6B7280');
 
   // Safe delete for investment category
-  const [deleteInvCat, setDeleteInvCat] = useState<InvCategory | null>(null);
+  const catDelete = useSafeDelete();
   const [deleteInvCatCount, setDeleteInvCatCount] = useState(0);
   const [transferCatName, setTransferCatName] = useState('');
-  const [deletingInvCat, setDeletingInvCat] = useState(false);
+  const deletingInvCat = catDelete.deleting;
 
   // Add/edit investment account modal
   const [showAddAccount, setShowAddAccount] = useState(false);
@@ -188,46 +177,33 @@ export function InvestmentsConfigSection({
   const [savingAccount, setSavingAccount] = useState(false);
 
   // Safe delete for investment account
-  const [deleteAccount, setDeleteAccount] = useState<InvestmentAccount | null>(null);
+  const acctDelete = useSafeDelete();
   const [deleteAccountPurchaseCount, setDeleteAccountPurchaseCount] = useState(0);
-  const [transferToId, setTransferToId] = useState<number | ''>('');
-  const [deletingAccount, setDeletingAccount] = useState(false);
+  const deletingAccount = acctDelete.deleting;
 
   // ── Investment Categories ─────────────────────────────────────────────────
 
   async function handleAddInvCat() {
-    if (!newInvCatName.trim()) return;
-    setAddingInvCat(true);
-    const data = await createInvestmentCategory({ name: newInvCatName.trim(), color: newInvCatColor }).catch(() => null);
-    if (data) {
-      setInvCategories((prev) => [...prev, data.category]);
-      setNewInvCatName(''); setNewInvCatColor('#6B7280');
-      setShowAddInvCat(false);
-    }
-    setAddingInvCat(false);
-  }
-
-  function openEditInvCat(cat: InvCategory) {
-    setEditInvCat(cat);
-    setEditInvCatName(cat.name);
-    setEditInvCatColor(cat.color);
+    await handleAddInvCatCrud(
+      () => createInvestmentCategory({ name: newInvCatName.trim(), color: newInvCatColor }).then((d) => d?.category ?? null).catch(() => null),
+      (item) => setInvCategories((prev) => [...prev, item]),
+    );
   }
 
   async function handleSaveInvCat() {
-    if (!editInvCat) return;
-    setSavingInvCat(true);
-    const data = await updateInvestmentCategory(editInvCat.id, { name: editInvCatName.trim(), color: editInvCatColor }).catch(() => null);
-    if (data) {
-      setInvCategories((prev) => prev.map((c) => c.id === editInvCat.id ? data.category : c));
-      setEditInvCat(null);
-    }
-    setSavingInvCat(false);
+    await handleSaveInvCatCrud(
+      () => {
+        if (!editInvCat) return Promise.resolve(null);
+        return updateInvestmentCategory(editInvCat.id, { name: editInvCatName.trim(), color: editInvCatColor }).then((d) => d?.category ?? null).catch(() => null);
+      },
+      (item) => setInvCategories((prev) => prev.map((c) => c.id === editInvCat!.id ? item : c)),
+    );
   }
 
   async function initiateDeleteInvCat(cat: InvCategory) {
     const result = await deleteInvestmentCategory(cat.id).catch((e) => e);
     if (result?.inUse) {
-      setDeleteInvCat(cat);
+      catDelete.setDeleteTarget(cat);
       setDeleteInvCatCount(result.purchaseCount ?? 0);
       setTransferCatName('');
     } else if (result?.ok) {
@@ -236,14 +212,14 @@ export function InvestmentsConfigSection({
   }
 
   async function handleConfirmDeleteInvCat() {
-    if (!deleteInvCat) return;
-    setDeletingInvCat(true);
-    const data = await deleteInvestmentCategory(deleteInvCat.id, transferCatName || undefined).catch(() => null);
+    if (!catDelete.deleteTarget) return;
+    catDelete.setDeleting(true);
+    const data = await deleteInvestmentCategory(catDelete.deleteTarget.id, transferCatName || undefined).catch(() => null);
     if (data?.ok) {
-      setInvCategories((prev) => prev.filter((c) => c.id !== deleteInvCat.id));
-      setDeleteInvCat(null);
+      setInvCategories((prev) => prev.filter((c) => c.id !== catDelete.deleteTarget!.id));
+      catDelete.setDeleteTarget(null);
     }
-    setDeletingInvCat(false);
+    catDelete.setDeleting(false);
   }
 
   // ── Investment Accounts ───────────────────────────────────────────────────
@@ -282,27 +258,27 @@ export function InvestmentsConfigSection({
   async function initiateDeleteAccount(acc: InvestmentAccount) {
     const result = await deleteInvestmentAccount(acc.id).catch((e) => e);
     if (result?.inUse) {
-      setDeleteAccount(acc);
+      acctDelete.setDeleteTarget(acc);
       setDeleteAccountPurchaseCount(result.purchaseCount ?? 0);
-      setTransferToId('');
+      acctDelete.setTransferTarget('');
     } else if (result?.ok) {
       setAccounts((prev) => prev.filter((a) => a.id !== acc.id));
     }
   }
 
   async function handleConfirmDeleteAccount() {
-    if (!deleteAccount) return;
-    setDeletingAccount(true);
-    const data = await deleteInvestmentAccount(deleteAccount.id, transferToId === '' ? undefined : Number(transferToId)).catch(() => null);
+    if (!acctDelete.deleteTarget) return;
+    acctDelete.setDeleting(true);
+    const data = await deleteInvestmentAccount(acctDelete.deleteTarget.id, acctDelete.transferTarget === '' ? undefined : Number(acctDelete.transferTarget)).catch(() => null);
     if (data?.ok) {
-      setAccounts((prev) => prev.filter((a) => a.id !== deleteAccount.id));
-      setDeleteAccount(null);
+      setAccounts((prev) => prev.filter((a) => a.id !== acctDelete.deleteTarget!.id));
+      acctDelete.setDeleteTarget(null);
     }
-    setDeletingAccount(false);
+    acctDelete.setDeleting(false);
   }
 
-  const transferAccOptions = accounts.filter((a) => a.id !== deleteAccount?.id);
-  const transferCatOptions = invCategories.filter((c) => c.id !== deleteInvCat?.id);
+  const transferAccOptions = accounts.filter((a) => a.id !== acctDelete.deleteTarget?.id);
+  const transferCatOptions = invCategories.filter((c) => c.id !== catDelete.deleteTarget?.id);
 
   return (
     <>
@@ -310,7 +286,6 @@ export function InvestmentsConfigSection({
         <SectionHeader>
           <CardTitle>Investments</CardTitle>
         </SectionHeader>
-
         <InvColumns>
           {/* Accounts column */}
           <InvColumn>
@@ -320,7 +295,7 @@ export function InvestmentsConfigSection({
             </InvColHeader>
             <InvScrollList>
               {accounts.map((acc) => (
-                <ItemRow key={acc.id}>
+                <ItemRowContainer key={acc.id}>
                   <ItemInfo style={{ minWidth: 0, overflow: 'hidden' }}>
                     <div style={{ minWidth: 0 }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
@@ -333,7 +308,7 @@ export function InvestmentsConfigSection({
                           <>
                             {acc.institution && <span style={{ fontSize: font.size.xs, color: colors.border }}>·</span>}
                             <span style={{ display: 'flex', alignItems: 'center', gap: 3 }}>
-                              <SmallDot color={acc.owner.color} />
+                              <ColorDot color={acc.owner.color} />
                               <span style={{ fontSize: font.size.xs, color: colors.textMuted }}>{acc.owner.name}</span>
                             </span>
                           </>
@@ -345,7 +320,7 @@ export function InvestmentsConfigSection({
                     <Button size="sm" variant="secondary" onClick={() => openEditAccount(acc)}>Edit</Button>
                     <Button size="sm" variant="danger" onClick={() => initiateDeleteAccount(acc)}>Delete</Button>
                   </RowActions>
-                </ItemRow>
+                </ItemRowContainer>
               ))}
               {accounts.length === 0 && <p style={{ color: colors.textMuted, fontSize: font.size.sm, padding: `${spacing[3]} 0` }}>No accounts yet.</p>}
             </InvScrollList>
@@ -361,7 +336,7 @@ export function InvestmentsConfigSection({
               {invCategories.map((cat) => {
                 const { bg, fg } = badgeColors(cat.color);
                 return (
-                  <ItemRow key={cat.id}>
+                  <ItemRowContainer key={cat.id}>
                     <ItemInfo>
                       <InvCatBadge bg={bg} fg={fg}>{cat.name}</InvCatBadge>
                     </ItemInfo>
@@ -369,7 +344,7 @@ export function InvestmentsConfigSection({
                       <Button size="sm" variant="secondary" onClick={() => openEditInvCat(cat)}>Edit</Button>
                       <Button size="sm" variant="danger" onClick={() => initiateDeleteInvCat(cat)}>Delete</Button>
                     </RowActions>
-                  </ItemRow>
+                  </ItemRowContainer>
                 );
               })}
               {invCategories.length === 0 && <p style={{ color: colors.textMuted, fontSize: font.size.sm, padding: `${spacing[3]} 0` }}>No categories yet.</p>}
@@ -393,8 +368,8 @@ export function InvestmentsConfigSection({
 
       {/* Edit Investment Category */}
       {editInvCat && (
-        <Modal isOpen onClose={() => setEditInvCat(null)} title="Edit Holdings Category"
-          footer={<><Button variant="secondary" onClick={() => setEditInvCat(null)}>Cancel</Button><Button onClick={handleSaveInvCat} disabled={savingInvCat || !editInvCatName.trim()}>{savingInvCat ? 'Saving…' : 'Save Changes'}</Button></>}>
+        <Modal isOpen onClose={closeEditInvCat} title="Edit Holdings Category"
+          footer={<><Button variant="secondary" onClick={closeEditInvCat}>Cancel</Button><Button onClick={handleSaveInvCat} disabled={savingInvCat || !editInvCatName.trim()}>{savingInvCat ? 'Saving…' : 'Save Changes'}</Button></>}>
           <FormGroup><Label>Name</Label><Input value={editInvCatName} onChange={(e) => setEditInvCatName(e.target.value)} /></FormGroup>
           <FormGroup>
             <Label>Badge Color</Label>
@@ -407,16 +382,16 @@ export function InvestmentsConfigSection({
       )}
 
       {/* Safe delete: Investment Category */}
-      {deleteInvCat && (
-        <Modal isOpen onClose={() => setDeleteInvCat(null)} title="Delete Holdings Category"
+      {catDelete.deleteTarget && (
+        <Modal isOpen onClose={() => catDelete.setDeleteTarget(null)} title="Delete Holdings Category"
           footer={<>
-            <Button variant="secondary" onClick={() => setDeleteInvCat(null)}>Cancel</Button>
+            <Button variant="secondary" onClick={() => catDelete.setDeleteTarget(null)}>Cancel</Button>
             <Button variant="danger" onClick={handleConfirmDeleteInvCat} disabled={deletingInvCat || (deleteInvCatCount > 0 && !transferCatName)}>
               {deletingInvCat ? 'Deleting…' : 'Delete Category'}
             </Button>
           </>}>
           <p style={{ color: colors.textPrimary, marginBottom: spacing[4] }}>
-            <strong>{deleteInvCat.name}</strong> is used by{' '}
+            <strong>{catDelete.deleteTarget.name}</strong> is used by{' '}
             <strong>{deleteInvCatCount} holding{deleteInvCatCount !== 1 ? 's' : ''}</strong>.
             Transfer them to another category before deleting.
           </p>
@@ -478,22 +453,22 @@ export function InvestmentsConfigSection({
       )}
 
       {/* Safe delete: Investment Account */}
-      {deleteAccount && (
-        <Modal isOpen onClose={() => setDeleteAccount(null)} title="Delete Investment Account"
+      {acctDelete.deleteTarget && (
+        <Modal isOpen onClose={() => acctDelete.setDeleteTarget(null)} title="Delete Investment Account"
           footer={<>
-            <Button variant="secondary" onClick={() => setDeleteAccount(null)}>Cancel</Button>
-            <Button variant="danger" onClick={handleConfirmDeleteAccount} disabled={deletingAccount || (deleteAccountPurchaseCount > 0 && transferToId === '')}>
+            <Button variant="secondary" onClick={() => acctDelete.setDeleteTarget(null)}>Cancel</Button>
+            <Button variant="danger" onClick={handleConfirmDeleteAccount} disabled={deletingAccount || (deleteAccountPurchaseCount > 0 && acctDelete.transferTarget === '')}>
               {deletingAccount ? 'Deleting…' : 'Delete Account'}
             </Button>
           </>}>
           <p style={{ color: colors.textPrimary, marginBottom: spacing[4] }}>
-            <strong>{deleteAccount.name}</strong> has{' '}
+            <strong>{acctDelete.deleteTarget.name}</strong> has{' '}
             <strong>{deleteAccountPurchaseCount} purchase{deleteAccountPurchaseCount !== 1 ? 's' : ''}</strong> linked to it.
             Transfer them to another account before deleting.
           </p>
           <FormGroup>
             <Label>Transfer purchases to *</Label>
-            <SelectInput value={transferToId} onChange={(e) => setTransferToId(e.target.value === '' ? '' : Number(e.target.value))}>
+            <SelectInput value={acctDelete.transferTarget} onChange={(e) => acctDelete.setTransferTarget(e.target.value === '' ? '' : Number(e.target.value))}>
               <option value="">— select an account —</option>
               {transferAccOptions.map((a) => <option key={a.id} value={a.id}>{a.name} ({accountTypeLabel(a.type)})</option>)}
             </SelectInput>

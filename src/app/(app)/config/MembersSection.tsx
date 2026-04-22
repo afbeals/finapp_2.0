@@ -2,13 +2,15 @@
 
 import React, { useState } from 'react';
 import styled from 'styled-components';
-import { Card, CardTitle } from '@/components/ui/Card';
+import { CardTitle } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Input, Label, FormGroup } from '@/components/ui/Input';
 import { Modal } from '@/components/ui/Modal';
 import { colors, font, spacing } from '@/styles/tokens';
 import { createMember } from '@/lib/api';
 import type { Member } from '@/types/entities';
+import { SectionCard } from './components/SectionCard';
+import { ColorPickerField } from './components/ColorPickerField';
 
 interface MemberWithEmail extends Member { email: string | null }
 
@@ -18,17 +20,6 @@ interface MembersSectionProps {
 }
 
 // ─── Styled components ────────────────────────────────────────────────────────
-
-const Section = styled(Card)`
-  margin-bottom: ${spacing[6]};
-`;
-
-const SectionHeader = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: ${spacing[4]};
-`;
 
 const MemberRow = styled.div`
   display: flex;
@@ -90,11 +81,7 @@ export function MembersSection({ members, setMembers }: MembersSectionProps) {
 
   return (
     <>
-      <Section padding="md">
-        <SectionHeader>
-          <CardTitle>Household Members</CardTitle>
-          <Button size="sm" onClick={() => setShowAddMember(true)}>+ Add Member</Button>
-        </SectionHeader>
+      <SectionCard title="Household Members" addLabel="+ Add Member" onAdd={() => setShowAddMember(true)}>
         {members.map((m) => (
           <MemberRow key={m.id}>
             <MemberInfo>
@@ -105,20 +92,14 @@ export function MembersSection({ members, setMembers }: MembersSectionProps) {
           </MemberRow>
         ))}
         {members.length === 0 && <p style={{ color: colors.textMuted, fontSize: font.size.sm }}>No members yet.</p>}
-      </Section>
+      </SectionCard>
 
       {/* Add Member */}
       <Modal isOpen={showAddMember} onClose={() => setShowAddMember(false)} title="Add Member"
         footer={<><Button variant="secondary" onClick={() => setShowAddMember(false)}>Cancel</Button><Button onClick={handleAddMember} disabled={addingMember || !newMemberName.trim()}>{addingMember ? 'Adding…' : 'Add Member'}</Button></>}>
         <FormGroup><Label>Name *</Label><Input value={newMemberName} onChange={(e) => setNewMemberName(e.target.value)} placeholder="e.g. Alex" /></FormGroup>
         <FormGroup><Label>Email (optional)</Label><Input type="email" value={newMemberEmail} onChange={(e) => setNewMemberEmail(e.target.value)} placeholder="alex@example.com" /></FormGroup>
-        <FormGroup>
-          <Label>Color</Label>
-          <div style={{ display: 'flex', alignItems: 'center', gap: spacing[3] }}>
-            <input type="color" value={newMemberColor} onChange={(e) => setNewMemberColor(e.target.value)} style={{ width: 48, height: 38, border: 'none', cursor: 'pointer', borderRadius: 6 }} />
-            <span style={{ fontSize: font.size.sm, color: colors.textMuted }}>{newMemberColor}</span>
-          </div>
-        </FormGroup>
+        <ColorPickerField value={newMemberColor} onChange={setNewMemberColor} />
       </Modal>
     </>
   );

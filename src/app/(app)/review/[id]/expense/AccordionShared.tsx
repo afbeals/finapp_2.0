@@ -200,7 +200,7 @@ export const AutocompleteDropdown = styled.ul`
   min-width: 200px;
   background: ${colors.surface};
   border: 1px solid ${colors.border};
-  border-radius: 6px;
+  border-radius: ${radius.sm};
   box-shadow: 0 4px 12px rgba(0,0,0,0.12);
   z-index: 50;
   list-style: none;

@@ -1,7 +1,7 @@
 'use client';
 
 import styled, { css } from 'styled-components';
-import { colors, radius, font, transition } from '@/styles/tokens';
+import { colors, radius, font, spacing, transition } from '@/styles/tokens';
 
 interface InputProps {
   hasError?: boolean;
@@ -54,13 +54,13 @@ export const Label = styled.label`
 export const FieldError = styled.p`
   font-size: ${font.size.sm};
   color: ${colors.danger};
-  margin-top: 4px;
+  margin-top: ${spacing[1]};
 `;
 
 export const FormGroup = styled.div`
   display: flex;
   flex-direction: column;
-  margin-bottom: 16px;
+  margin-bottom: ${spacing[4]};
 `;
 
 export const Select = styled.select<InputProps>`

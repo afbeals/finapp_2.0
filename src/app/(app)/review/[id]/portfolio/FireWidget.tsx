@@ -5,15 +5,7 @@ import styled from 'styled-components';
 import { formatDollarsWhole, toCents, toDollars } from '@/lib/money';
 import { fireNumber, yearsToFire } from '@/lib/fire';
 import { colors, semanticColors, font, spacing, radius } from '@/styles/tokens';
-
-// ─── Shared styled components (re-declared locally) ──────────────────────────
-
-const KpiProgressTrack = styled.div`height: 6px; background: ${colors.border}; border-radius: ${radius.full}; overflow: hidden; margin-top: 8px;`;
-const KpiProgressFill = styled.div.withConfig({ shouldForwardProp: (p) => p !== 'pct' })<{ pct: number; color?: string }>`
-  height: 100%; width: ${({ pct }) => Math.min(100, pct)}%;
-  background: ${({ color }) => color ?? colors.primary};
-  border-radius: ${radius.full};
-`;
+import { ProgressBar } from '@/components/ui/ProgressBar';
 
 // ─── FIRE Calculator styled components ───────────────────────────────────────
 
@@ -96,7 +88,7 @@ export function FireWidget({ totalPortfolioValue, actualYearlyExpenses }: FireWi
         <FireInputGroup>
           <FireLabel style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
             Current Yearly Expenses (from Monthly)
-            {useActual && <span style={{ background: colors.primaryLight, color: semanticColors.primaryText, fontSize: '9px', fontWeight: 700, padding: '1px 5px', borderRadius: 4 }}>ACTIVE</span>}
+            {useActual && <span style={{ background: colors.primaryLight, color: semanticColors.primaryText, fontSize: font.size.micro, fontWeight: 700, padding: '1px 5px', borderRadius: 4 }}>ACTIVE</span>}
           </FireLabel>
           <FireInput
             disabled
@@ -108,7 +100,7 @@ export function FireWidget({ totalPortfolioValue, actualYearlyExpenses }: FireWi
         <FireInputGroup>
           <FireLabel style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
             Estimated Yearly Expense
-            {!useActual && <span style={{ background: colors.primaryLight, color: semanticColors.primaryText, fontSize: '9px', fontWeight: 700, padding: '1px 5px', borderRadius: 4 }}>ACTIVE</span>}
+            {!useActual && <span style={{ background: colors.primaryLight, color: semanticColors.primaryText, fontSize: font.size.micro, fontWeight: 700, padding: '1px 5px', borderRadius: 4 }}>ACTIVE</span>}
           </FireLabel>
           <FireInput
             type="number"
@@ -155,9 +147,7 @@ export function FireWidget({ totalPortfolioValue, actualYearlyExpenses }: FireWi
           <FireTargetLabel>Current Progress</FireTargetLabel>
           <ProgressBoxValue>{formatDollarsWhole(totalPortfolioValue)}</ProgressBoxValue>
           <ProgressBoxSub>{firePct.toFixed(1)}% complete</ProgressBoxSub>
-          <KpiProgressTrack style={{ marginTop: 6 }}>
-            <KpiProgressFill pct={firePct} color={colors.success} />
-          </KpiProgressTrack>
+          <div style={{ marginTop: 6 }}><ProgressBar value={firePct} color={colors.success} height={6} /></div>
         </ProgressBox>
 
         <YearsToFireBox>

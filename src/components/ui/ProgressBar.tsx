@@ -3,9 +3,11 @@
 import styled from 'styled-components';
 import { colors, radius } from '@/styles/tokens';
 
-const Track = styled.div`
+const Track = styled.div.withConfig({
+  shouldForwardProp: (prop) => prop !== 'height',
+})<{ height?: number }>`
   width: 100%;
-  height: 8px;
+  height: ${({ height }) => height ?? 8}px;
   background: ${colors.border};
   border-radius: ${radius.full};
   overflow: hidden;
@@ -24,12 +26,13 @@ const Fill = styled.div.withConfig({
 interface ProgressBarProps {
   value: number; // 0–100
   color?: string;
+  height?: number; // px, default 8
   className?: string;
 }
 
-export function ProgressBar({ value, color, className }: ProgressBarProps) {
+export function ProgressBar({ value, color, height, className }: ProgressBarProps) {
   return (
-    <Track className={className}>
+    <Track height={height} className={className}>
       <Fill value={value} color={color} />
     </Track>
   );

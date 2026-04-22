@@ -47,6 +47,7 @@ export const spacing = {
 export const font = {
   family: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
   size: {
+    micro: '9px',
     xs: '11px',
     sm: '13px',
     base: '14px',

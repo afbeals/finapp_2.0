@@ -8,6 +8,7 @@ import {
 import { formatDollarsWhole, toCents, toDollars } from '@/lib/money';
 import { buildProjection, MONTH_NAMES_SHORT } from '@/lib/fire';
 import { colors, semanticColors, font, spacing, radius } from '@/styles/tokens';
+import { PanelCard, PanelHead, PanelTitle, PanelSubtitle } from '@/components/ui/Card';
 
 // ─── Styled components ────────────────────────────────────────────────────────
 
@@ -70,8 +71,6 @@ const MonthlyValueRow = styled.div.withConfig({ shouldForwardProp: (p) => p !== 
 const MonthRowLabel = styled.span`font-size: ${font.size.xs}; color: ${colors.textMuted};`;
 const MonthRowValue = styled.span`font-size: ${font.size.xs}; font-weight: ${font.weight.semibold}; color: ${colors.textPrimary};`;
 
-const CardTitle = styled.h2`font-size: ${font.size.base}; font-weight: ${font.weight.bold}; color: ${colors.textPrimary};`;
-const CardSub = styled.p`font-size: ${font.size.xs}; color: ${colors.textMuted};`;
 
 // ─── Props ────────────────────────────────────────────────────────────────────
 
@@ -124,8 +123,8 @@ export function WealthProjection({ totalPortfolioValue }: WealthProjectionProps)
     <ProjectionWrap>
       <ProjectionHead>
         <div>
-          <CardTitle>Wealth Projections</CardTitle>
-          <CardSub>Compound growth calculator</CardSub>
+          <PanelTitle>Wealth Projections</PanelTitle>
+          <PanelSubtitle>Compound growth calculator</PanelSubtitle>
         </div>
       </ProjectionHead>
 

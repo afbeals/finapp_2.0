@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { formatDollars, toCents } from '@/lib/money';
-import { createExpenseEntry, apiGet } from '@/lib/api';
+import { createExpenseEntry } from '@/lib/api';
 import { colors, font } from '@/styles/tokens';
 import type { Member, ExpenseCategory as Category, ExpenseEntry } from '@/types/entities';
 import {
@@ -10,67 +10,8 @@ import {
   AccordionCount, AccordionTotal, AccordionChevron, AccordionBody,
   EntryTable, EntryThead, EntryTh, EntryTr, EntryTd,
   EditableCell, MemberBadge, AddEntryRow, AddEntryInput,
-  AutocompleteWrapper, AutocompleteDropdown, AutocompleteItem,
-  AddEntryTrigger, TrashBtn, pastelBg, type NewRow,
+  AddEntryTrigger, TrashBtn, AutocompleteInput, pastelBg, type NewRow,
 } from './AccordionShared';
-
-// ─── Expense name autocomplete ────────────────────────────────────────────────
-
-function NameAutocompleteInput({
-  value, categoryId, onChange, onSelect, onKeyDown, placeholder,
-}: {
-  value: string;
-  categoryId: number;
-  onChange: (v: string) => void;
-  onSelect: (v: string) => void;
-  onKeyDown: (e: React.KeyboardEvent<HTMLInputElement>) => void;
-  placeholder?: string;
-}) {
-  const [suggestions, setSuggestions] = useState<string[]>([]);
-  const [open, setOpen] = useState(false);
-  const debounceRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  async function fetchSuggestions(q: string) {
-    const url = q.trim()
-      ? `/api/expense-items?q=${encodeURIComponent(q)}&categoryId=${categoryId}`
-      : `/api/expense-items?categoryId=${categoryId}`;
-    const data = await apiGet<{ names: string[] }>(url).catch(() => null);
-    if (data) { setSuggestions(data.names ?? []); setOpen((data.names ?? []).length > 0); }
-  }
-
-  React.useEffect(() => {
-    fetchSuggestions(value);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const v = e.target.value;
-    onChange(v);
-    if (debounceRef.current) clearTimeout(debounceRef.current);
-    debounceRef.current = setTimeout(() => fetchSuggestions(v), 150);
-  }
-
-  function pick(name: string) { onSelect(name); setSuggestions([]); setOpen(false); }
-
-  return (
-    <AutocompleteWrapper>
-      <AddEntryInput
-        autoFocus
-        placeholder={placeholder ?? 'Name'}
-        value={value}
-        onChange={handleChange}
-        onFocus={() => fetchSuggestions(value)}
-        onKeyDown={(e) => { if (e.key === 'Escape') setOpen(false); onKeyDown(e); }}
-        onBlur={() => setTimeout(() => setOpen(false), 150)}
-      />
-      {open && (
-        <AutocompleteDropdown>
-          {suggestions.map((s) => <AutocompleteItem key={s} onMouseDown={() => pick(s)}>{s}</AutocompleteItem>)}
-        </AutocompleteDropdown>
-      )}
-    </AutocompleteWrapper>
-  );
-}
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
@@ -92,6 +33,9 @@ export const CategoryAccordion = React.memo(function CategoryAccordion({
   const [open, setOpen] = useState(false);
   const [newRow, setNewRow] = useState<NewRow | null>(null);
   const [saving, setSaving] = useState(false);
+  const expenseUrl = (q: string) => q.trim()
+    ? `/api/expense-items?q=${encodeURIComponent(q)}&categoryId=${category.id}`
+    : `/api/expense-items?categoryId=${category.id}`;
   const total = entries.reduce((s, e) => s + e.amount, 0);
   const bg = pastelBg(category.color);
 
@@ -150,9 +94,9 @@ export const CategoryAccordion = React.memo(function CategoryAccordion({
               {newRow && (
                 <AddEntryRow>
                   <EntryTd>
-                    <NameAutocompleteInput
+                    <AutocompleteInput
                       value={newRow.description}
-                      categoryId={category.id}
+                      buildUrl={expenseUrl}
                       onChange={(v) => setNewRow((r) => r && ({ ...r, description: v }))}
                       onSelect={(v) => setNewRow((r) => r && ({ ...r, description: v }))}
                       onKeyDown={(e) => { if (e.key === 'Enter') commitNewRow(); if (e.key === 'Escape') setNewRow(null); }}

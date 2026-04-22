@@ -212,42 +212,42 @@ describe('Money stored as integer cents', () => {
   });
 });
 
-// ─── Seed integrity (reads dev.db, verifies expected data shape) ─────────────
+// ─── Seed integrity (runs seed against test.db — never reads dev.db) ─────────
 
 describe('Seed data integrity', () => {
-  let devPrisma: PrismaClient;
+  // Reuse the same test.db that was migrated in the outer beforeAll.
+  // Run the seed against it so tests are always deterministic and isolated
+  // from whatever state dev.db happens to be in.
 
   beforeAll(() => {
-    devPrisma = new PrismaClient({
-      datasources: { db: { url: 'file:../data/dev.db' } },
+    execSync('npx prisma db seed', {
+      cwd: path.resolve(__dirname, '../..'),
+      env: { ...process.env, DATABASE_URL: TEST_DB_URL },
+      stdio: 'pipe',
     });
   });
 
-  afterAll(async () => {
-    await devPrisma.$disconnect();
-  });
-
-  it('dev.db has the Beals-Gibson household', async () => {
-    const hh = await devPrisma.household.findFirst({ where: { name: 'Beals-Gibson' } });
+  it('seed produces the Beals-Gibson household', async () => {
+    const hh = await prisma.household.findFirst({ where: { name: 'Beals-Gibson' } });
     expect(hh).not.toBeNull();
   });
 
-  it('dev.db has exactly 2 members', async () => {
-    const hh = await devPrisma.household.findFirstOrThrow({ where: { name: 'Beals-Gibson' } });
-    const members = await devPrisma.member.findMany({ where: { householdId: hh.id } });
+  it('seed produces exactly 2 members', async () => {
+    const hh = await prisma.household.findFirstOrThrow({ where: { name: 'Beals-Gibson' } });
+    const members = await prisma.member.findMany({ where: { householdId: hh.id } });
     expect(members).toHaveLength(2);
     expect(members.map(m => m.name).sort()).toEqual(['Allan', 'Malia']);
   });
 
-  it('dev.db has exactly 4 reviews (Jan–Apr 2026)', async () => {
-    const hh = await devPrisma.household.findFirstOrThrow({ where: { name: 'Beals-Gibson' } });
-    const reviews = await devPrisma.review.findMany({ where: { householdId: hh.id } });
+  it('seed produces exactly 4 reviews (Jan–Apr 2026)', async () => {
+    const hh = await prisma.household.findFirstOrThrow({ where: { name: 'Beals-Gibson' } });
+    const reviews = await prisma.review.findMany({ where: { householdId: hh.id } });
     expect(reviews).toHaveLength(4);
   });
 
   it('January 2026 review is QUARTERLY and COMPLETE', async () => {
-    const hh = await devPrisma.household.findFirstOrThrow({ where: { name: 'Beals-Gibson' } });
-    const jan = await devPrisma.review.findFirst({
+    const hh = await prisma.household.findFirstOrThrow({ where: { name: 'Beals-Gibson' } });
+    const jan = await prisma.review.findFirst({
       where: { householdId: hh.id, periodYear: 2026, periodMonth: 1 },
     });
     expect(jan?.type).toBe('QUARTERLY');
@@ -256,8 +256,8 @@ describe('Seed data integrity', () => {
   });
 
   it('April 2026 review is MONTHLY and IN_PROGRESS', async () => {
-    const hh = await devPrisma.household.findFirstOrThrow({ where: { name: 'Beals-Gibson' } });
-    const apr = await devPrisma.review.findFirst({
+    const hh = await prisma.household.findFirstOrThrow({ where: { name: 'Beals-Gibson' } });
+    const apr = await prisma.review.findFirst({
       where: { householdId: hh.id, periodYear: 2026, periodMonth: 4 },
     });
     expect(apr?.type).toBe('MONTHLY');
@@ -265,13 +265,12 @@ describe('Seed data integrity', () => {
     expect(apr?.completedAt).toBeNull();
   });
 
-  it('dev.db income amounts are stored as cents', async () => {
-    const hh = await devPrisma.household.findFirstOrThrow({ where: { name: 'Beals-Gibson' } });
-    const janReview = await devPrisma.review.findFirstOrThrow({
+  it('income amounts are stored as cents', async () => {
+    const hh = await prisma.household.findFirstOrThrow({ where: { name: 'Beals-Gibson' } });
+    const janReview = await prisma.review.findFirstOrThrow({
       where: { householdId: hh.id, periodYear: 2026, periodMonth: 1 },
     });
-    const income = await devPrisma.incomeEntry.findMany({ where: { reviewId: janReview.id } });
-    // All amounts should be integers >= 0
+    const income = await prisma.incomeEntry.findMany({ where: { reviewId: janReview.id } });
     for (const entry of income) {
       expect(Number.isInteger(entry.amount)).toBe(true);
       expect(entry.amount).toBeGreaterThan(0);

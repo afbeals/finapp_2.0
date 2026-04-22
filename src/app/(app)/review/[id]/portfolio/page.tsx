@@ -11,6 +11,8 @@ import { fireNumber } from '@/lib/fire';
 import { getReviewIncome, getReviewExpenses, getReviewInvestments, getReviewSavings, apiGet } from '@/lib/api';
 import { colors, font, spacing, radius } from '@/styles/tokens';
 import { LoadingState } from '@/components/shared/LoadingState';
+import { ProgressBar } from '@/components/ui/ProgressBar';
+import { PanelCard, PanelHead, PanelTitle, PanelSubtitle, PanelBody } from '@/components/ui/Card';
 import { FireWidget } from './FireWidget';
 import { WealthProjection } from './WealthProjection';
 import { AssetAllocationCard } from './AssetAllocationCard';
@@ -48,17 +50,11 @@ const KpiValue = styled.p.withConfig({ shouldForwardProp: (p) => p !== 'tc' })<{
 `;
 const KpiSub = styled.p`font-size: ${font.size.xs}; color: ${colors.textMuted};`;
 
-const KpiProgressTrack = styled.div`height: 6px; background: ${colors.border}; border-radius: ${radius.full}; overflow: hidden; margin-top: 8px;`;
-const KpiProgressFill = styled.div.withConfig({ shouldForwardProp: (p) => p !== 'pct' })<{ pct: number; color?: string }>`
-  height: 100%; width: ${({ pct }) => Math.min(100, pct)}%;
-  background: ${({ color }) => color ?? colors.primary};
-  border-radius: ${radius.full};
-`;
 const CircleWrap = styled.div`position: relative; width: 52px; height: 52px; flex-shrink: 0;`;
 const CircleSvg = styled.svg`transform: rotate(-90deg);`;
 const CircleLabel = styled.div`
   position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
-  font-size: 9px; font-weight: ${font.weight.bold}; color: ${colors.success};
+  font-size: ${font.size.micro}; font-weight: ${font.weight.bold}; color: ${colors.success};
 `;
 
 // ─── Two-column layout ────────────────────────────────────────────────────────
@@ -71,23 +67,6 @@ const TwoCol = styled.div`
   @media (max-width: 900px) { grid-template-columns: 1fr; }
 `;
 
-// ─── Section card (for FIRE Calculator wrapper) ───────────────────────────────
-
-const SectionCard = styled.div`
-  background: ${colors.surface};
-  border: 1px solid ${colors.border};
-  border-radius: ${radius.lg};
-  overflow: hidden;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.04);
-`;
-const CardHead = styled.div`
-  padding: 14px 18px 10px;
-  border-bottom: 1px solid ${colors.border};
-  display: flex; align-items: baseline; justify-content: space-between; gap: ${spacing[3]};
-`;
-const CardTitle = styled.h2`font-size: ${font.size.base}; font-weight: ${font.weight.bold}; color: ${colors.textPrimary};`;
-const CardSub = styled.p`font-size: ${font.size.xs}; color: ${colors.textMuted};`;
-const CardBody = styled.div`padding: 16px 18px;`;
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
@@ -184,9 +163,7 @@ export default function PortfolioPage() {
             <KpiLabel>Net Worth</KpiLabel>
             <KpiValue>{formatDollarsWhole(netWorth)}</KpiValue>
             <KpiSub>↑ {formatDollarsWhole(ytdNetWorthGrowth)} YTD</KpiSub>
-            <KpiProgressTrack>
-              <KpiProgressFill pct={Math.min(100, (netWorth / Math.max(1, fireTarget)) * 100 * 2)} color={colors.primary} />
-            </KpiProgressTrack>
+            <div style={{ marginTop: 8 }}><ProgressBar value={Math.min(100, (netWorth / Math.max(1, fireTarget)) * 100 * 2)} color={colors.primary} height={6} /></div>
           </KpiBody>
         </KpiCard>
 
@@ -197,9 +174,7 @@ export default function PortfolioPage() {
             <KpiLabel>FIRE Progress</KpiLabel>
             <KpiValue tc={colors.warning}>{fireProgressPct.toFixed(1)}%</KpiValue>
             <KpiSub>of {formatDollarsWhole(fireTarget)} goal</KpiSub>
-            <KpiProgressTrack>
-              <KpiProgressFill pct={fireProgressPct} color={colors.warning} />
-            </KpiProgressTrack>
+            <div style={{ marginTop: 8 }}><ProgressBar value={fireProgressPct} color={colors.warning} height={6} /></div>
             <KpiSub style={{ marginTop: 4 }}>
               {formatDollarsWhole(totalPortfolio)} / {formatDollarsWhole(fireTarget)}
             </KpiSub>
@@ -235,18 +210,18 @@ export default function PortfolioPage() {
         <AssetAllocationCard allocationItems={allocationItems} netWorth={netWorth} />
 
         {/* FIRE Calculator */}
-        <SectionCard>
-          <CardHead>
+        <PanelCard>
+          <PanelHead>
             <div>
-              <CardTitle>FIRE Calculator</CardTitle>
-              <CardSub>Financial Independence, Retire Early (4% Rule)</CardSub>
+              <PanelTitle>FIRE Calculator</PanelTitle>
+              <PanelSubtitle>Financial Independence, Retire Early (4% Rule)</PanelSubtitle>
             </div>
             <span style={{ fontSize: 16, color: colors.textMuted, cursor: 'default' }} title="The FIRE number = 25× your annual expenses. Based on the 4% safe withdrawal rate.">ⓘ</span>
-          </CardHead>
-          <CardBody>
+          </PanelHead>
+          <PanelBody>
             <FireWidget totalPortfolioValue={totalPortfolio} actualYearlyExpenses={actualYearlyExpenses} />
-          </CardBody>
-        </SectionCard>
+          </PanelBody>
+        </PanelCard>
       </TwoCol>
 
       {/* ── Wealth Projections ── */}

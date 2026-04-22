@@ -52,3 +52,37 @@ export const CardSubtitle = styled.p`
   color: ${colors.textMuted};
   margin-top: 2px;
 `;
+
+// ─── Panel card: surface card with a divided header, used in review pages ────
+
+export const PanelCard = styled.div`
+  background: ${colors.surface};
+  border: 1px solid ${colors.border};
+  border-radius: ${radius.lg};
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+`;
+
+export const PanelHead = styled.div`
+  padding: 14px 18px 10px;
+  border-bottom: 1px solid ${colors.border};
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: ${spacing[3]};
+`;
+
+export const PanelTitle = styled.h2`
+  font-size: ${font.size.base};
+  font-weight: ${font.weight.bold};
+  color: ${colors.textPrimary};
+`;
+
+export const PanelSubtitle = styled.p`
+  font-size: ${font.size.xs};
+  color: ${colors.textMuted};
+`;
+
+export const PanelBody = styled.div`
+  padding: 16px 18px;
+`;

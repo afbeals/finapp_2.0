@@ -4,25 +4,10 @@ import React from 'react';
 import styled from 'styled-components';
 import { PieChart, Pie, Cell } from 'recharts';
 import { formatDollarsWhole } from '@/lib/money';
-import { colors, font, radius, spacing } from '@/styles/tokens';
+import { colors, font, radius } from '@/styles/tokens';
+import { PanelCard, PanelHead, PanelTitle, PanelSubtitle, PanelBody } from '@/components/ui/Card';
 
 // ─── Styled components ────────────────────────────────────────────────────────
-
-const SectionCard = styled.div`
-  background: ${colors.surface};
-  border: 1px solid ${colors.border};
-  border-radius: ${radius.lg};
-  overflow: hidden;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.04);
-`;
-const CardHead = styled.div`
-  padding: 14px 18px 10px;
-  border-bottom: 1px solid ${colors.border};
-  display: flex; align-items: baseline; justify-content: space-between; gap: ${spacing[3]};
-`;
-const CardTitle = styled.h2`font-size: ${font.size.base}; font-weight: ${font.weight.bold}; color: ${colors.textPrimary};`;
-const CardSub = styled.p`font-size: ${font.size.xs}; color: ${colors.textMuted};`;
-const CardBody = styled.div`padding: 16px 18px;`;
 
 const AllocationRow = styled.div`display: flex; align-items: center; gap: 12px; margin-bottom: 10px; &:last-child { margin-bottom: 0; }`;
 const AllocationLabel = styled.span`flex: 1; font-size: ${font.size.sm}; font-weight: ${font.weight.medium}; color: ${colors.textPrimary};`;
@@ -55,14 +40,14 @@ export function AssetAllocationCard({ allocationItems, netWorth }: AssetAllocati
   const pieData = allocationItems.map((a) => ({ name: a.label, value: a.value, fill: a.color }));
 
   return (
-    <SectionCard>
-      <CardHead>
+    <PanelCard>
+      <PanelHead>
         <div>
-          <CardTitle>Asset Allocation</CardTitle>
-          <CardSub>Portfolio breakdown by asset type</CardSub>
+          <PanelTitle>Asset Allocation</PanelTitle>
+          <PanelSubtitle>Portfolio breakdown by asset type</PanelSubtitle>
         </div>
-      </CardHead>
-      <CardBody>
+      </PanelHead>
+      <PanelBody>
         {/* Donut centered */}
         <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 14 }}>
           <div style={{ position: 'relative' }}>
@@ -77,7 +62,7 @@ export function AssetAllocationCard({ allocationItems, netWorth }: AssetAllocati
               fontSize: font.size.sm, fontWeight: font.weight.bold, color: colors.textPrimary,
             }}>
               <span>{formatDollarsWhole(allocationTotal > 0 ? allocationTotal : netWorth)}</span>
-              <span style={{ fontSize: '9px', color: colors.textMuted, fontWeight: 'normal' }}>Total</span>
+              <span style={{ fontSize: font.size.micro, color: colors.textMuted, fontWeight: 'normal' }}>Total</span>
             </div>
           </div>
         </div>
@@ -103,7 +88,7 @@ export function AssetAllocationCard({ allocationItems, netWorth }: AssetAllocati
             </p>
           )}
         </div>
-      </CardBody>
-    </SectionCard>
+      </PanelBody>
+    </PanelCard>
   );
 }

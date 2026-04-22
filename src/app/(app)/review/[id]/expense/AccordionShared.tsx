@@ -3,6 +3,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import styled from 'styled-components';
 import { colors, font, radius, spacing } from '@/styles/tokens';
+import { apiGet } from '@/lib/api';
 
 // ─── Accordion shell ──────────────────────────────────────────────────────────
 
@@ -247,6 +248,63 @@ export const TrashBtn = styled.button`
   border-radius: 4px;
   &:hover { color: ${colors.danger}; background: ${colors.dangerLight}; }
 `;
+
+// ─── Shared autocomplete input ────────────────────────────────────────────────
+
+interface AutocompleteInputProps {
+  value: string;
+  buildUrl: (q: string) => string;
+  onChange: (v: string) => void;
+  onSelect: (v: string) => void;
+  onKeyDown: (e: React.KeyboardEvent<HTMLInputElement>) => void;
+  placeholder?: string;
+}
+
+export function AutocompleteInput({
+  value, buildUrl, onChange, onSelect, onKeyDown, placeholder,
+}: AutocompleteInputProps) {
+  const [suggestions, setSuggestions] = useState<string[]>([]);
+  const [open, setOpen] = useState(false);
+  const debounceRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  async function fetchSuggestions(q: string) {
+    const data = await apiGet<{ names: string[] }>(buildUrl(q)).catch(() => null);
+    if (data) { setSuggestions(data.names ?? []); setOpen((data.names ?? []).length > 0); }
+  }
+
+  React.useEffect(() => {
+    fetchSuggestions(value);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const v = e.target.value;
+    onChange(v);
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => fetchSuggestions(v), 150);
+  }
+
+  function pick(name: string) { onSelect(name); setSuggestions([]); setOpen(false); }
+
+  return (
+    <AutocompleteWrapper>
+      <AddEntryInput
+        autoFocus
+        placeholder={placeholder ?? 'Name'}
+        value={value}
+        onChange={handleChange}
+        onFocus={() => fetchSuggestions(value)}
+        onKeyDown={(e) => { if (e.key === 'Escape') setOpen(false); onKeyDown(e); }}
+        onBlur={() => setTimeout(() => setOpen(false), 150)}
+      />
+      {open && (
+        <AutocompleteDropdown>
+          {suggestions.map((s) => <AutocompleteItem key={s} onMouseDown={() => pick(s)}>{s}</AutocompleteItem>)}
+        </AutocompleteDropdown>
+      )}
+    </AutocompleteWrapper>
+  );
+}
 
 // ─── Shared types ─────────────────────────────────────────────────────────────
 

@@ -11,7 +11,7 @@ import { useReviewStore } from '@/lib/store';
 import { useStepNav } from '@/lib/useStepNav';
 import { formatDollars } from '@/lib/money';
 import { getReviewIncome, getReviewExpenses, getReviewSavings, getReviewInvestments, apiPatch } from '@/lib/api';
-import { colors, font, spacing, semanticColors } from '@/styles/tokens';
+import { colors, font, radius, spacing, semanticColors } from '@/styles/tokens';
 import { LoadingState } from '@/components/shared/LoadingState';
 import { MONTH_NAMES_LONG } from '@/lib/fire';
 
@@ -35,7 +35,7 @@ const SummaryCard = styled(Card).withConfig({
   border-left: 4px solid ${({ accent }) => accent ?? colors.primary};
 `;
 
-const Label = styled.p`font-size: ${font.size.sm}; color: ${colors.textMuted}; margin-bottom: 4px;`;
+const Label = styled.p`font-size: ${font.size.sm}; color: ${colors.textMuted}; margin-bottom: ${spacing[1]};`;
 const Value = styled.p`font-size: ${font.size['2xl']}; font-weight: 700; color: ${colors.textPrimary};`;
 
 const StepList = styled.div`
@@ -49,8 +49,8 @@ const StepRow = styled.div`
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 10px 16px;
-  border-radius: 8px;
+  padding: 10px ${spacing[4]};
+  border-radius: ${radius.md};
   background: ${colors.bg};
 `;
 

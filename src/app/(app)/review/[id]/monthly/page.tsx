@@ -242,7 +242,7 @@ const LineItemRow = styled.tr`
 `;
 
 const LineItemTd = styled.td`
-  padding: 7px ${spacing[4]} 7px 48px;
+  padding: 7px ${spacing[4]} 7px ${spacing[12]};
   font-size: ${font.size.xs};
   color: ${colors.textMuted};
   border-bottom: 1px solid ${colors.border};

@@ -101,8 +101,7 @@ export default function PortfolioPage() {
 
   // FIRE calc (for banner only)
   const actualYearlyExpenses = totalExpenses * 12;
-  const fireExpensesEstimated = 75000 * 100;
-  const fireTarget = fireNumber(fireExpensesEstimated);
+  const fireTarget = fireNumber(actualYearlyExpenses);
   const fireProgressPct = Math.min(100, (totalPortfolio / Math.max(1, fireTarget)) * 100);
 
   // YTD savings rate (from current review month)

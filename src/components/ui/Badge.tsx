@@ -1,7 +1,7 @@
 'use client';
 
 import styled, { css } from 'styled-components';
-import { colors, radius, font, semanticColors } from '@/styles/tokens';
+import { colors, radius, font, spacing, semanticColors } from '@/styles/tokens';
 
 type BadgeVariant = 'default' | 'success' | 'warning' | 'danger' | 'primary' | 'quarterly';
 
@@ -21,7 +21,7 @@ const variantStyles: Record<BadgeVariant, ReturnType<typeof css>> = {
 export const Badge = styled.span<BadgeProps>`
   display: inline-flex;
   align-items: center;
-  gap: 4px;
+  gap: ${spacing[1]};
   padding: 2px 8px;
   border-radius: ${radius.full};
   font-size: ${font.size.xs};

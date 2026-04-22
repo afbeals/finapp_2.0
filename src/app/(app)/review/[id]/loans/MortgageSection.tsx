@@ -21,7 +21,7 @@ const ProgressFill = styled.div.withConfig({ shouldForwardProp: (p) => p !== 'pc
 
 const PaymentCard = styled.div`
   background: ${colors.primaryLight}; border: 1px solid ${colors.border}; border-radius: ${radius.lg};
-  padding: 16px 20px; margin-bottom: ${spacing[4]};
+  padding: ${spacing[4]} ${spacing[5]}; margin-bottom: ${spacing[4]};
 `;
 const PaymentCardTitle = styled.p`
   font-size: ${font.size.sm}; font-weight: ${font.weight.bold}; color: ${semanticColors.primaryTextDark}; margin-bottom: 12px;

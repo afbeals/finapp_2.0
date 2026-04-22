@@ -7,6 +7,10 @@ export default defineConfig({
   test: {
     globals: true,
     environment: 'node',
+    environmentMatchGlobs: [
+      // Component tests (files that import React components) run under jsdom
+      ['tests/unit/components/**', 'jsdom'],
+    ],
     setupFiles: ['./tests/setup.ts'],
     include: ['tests/**/*.test.{ts,tsx}'],
     env: {

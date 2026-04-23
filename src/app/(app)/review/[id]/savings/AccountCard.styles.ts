@@ -25,7 +25,7 @@ export const AccountRowHeader = styled.button.withConfig({
   text-align: left;
   border-radius: ${({ expanded }) => expanded ? `${radius.lg} ${radius.lg} 0 0` : radius.lg};
   transition: background ${transition.quick};
-  &:hover { background: ${colors.bg}; }
+  &:hover { background: ${colors.primaryLight}; }
 `;
 
 export const AccountIcon = styled.span`font-size: ${font.size['2xl']}; flex-shrink: 0;`;
@@ -63,7 +63,7 @@ export const ChevronIcon = styled.span.withConfig({
   margin-left: ${spacing[2]};
 `;
 
-export const ExpandedPanel = styled.div`border-top: 1px solid ${colors.border}; background: ${colors.bg};`;
+export const ExpandedPanel = styled.div`border-top: 1px solid ${colors.border}; background: ${colors.surface};`;
 
 export const EditingBadge = styled.span`
   font-size: ${font.size.xs}; font-weight: ${font.weight.medium};
@@ -94,7 +94,7 @@ export const SnapKpiValue = styled.div.withConfig({
 `;
 
 export const HistoryTable = styled.table`width: 100%; border-collapse: collapse;`;
-export const HistoryThead = styled.thead`background: ${colors.bg};`;
+export const HistoryThead = styled.thead`background: ${semanticColors.surfaceMuted};`;
 export const HistoryTh = styled.th`
   padding: 8px ${spacing[4]}; font-size: ${font.size.xs}; font-weight: ${font.weight.semibold};
   color: ${colors.textMuted}; text-align: center; border-bottom: 1px solid ${colors.border};
@@ -104,7 +104,7 @@ export const HistoryTr = styled.tr.withConfig({
   shouldForwardProp: (p) => p !== 'isCurrentMonth',
 })<{ isCurrentMonth: boolean }>`
   background: ${({ isCurrentMonth }) => isCurrentMonth ? colors.primaryLight : colors.surface};
-  &:nth-child(even) { background: ${({ isCurrentMonth }) => isCurrentMonth ? colors.primaryLight : colors.bg}; }
+  &:nth-child(even) { background: ${({ isCurrentMonth }) => isCurrentMonth ? colors.primaryLight : semanticColors.surfaceMuted}; }
   &:last-child td { border-bottom: none; }
 `;
 export const HistoryTd = styled.td.withConfig({ shouldForwardProp: (p) => p !== 'bold' })<{ bold?: boolean }>`

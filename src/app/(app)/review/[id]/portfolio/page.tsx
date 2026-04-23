@@ -7,12 +7,12 @@ import { StepShell } from '@/components/review/StepShell';
 import { STEP_META } from '@/components/review/stepMetadata';
 import { useStepNav } from '@/lib/useStepNav';
 import { useReviewStore } from '@/lib/store';
-import { formatDollarsWhole } from '@/lib/money';
+import { formatDollarsWhole, formatDollars } from '@/lib/money';
 import { fireNumber } from '@/lib/fire';
 import { getReviewIncome, getReviewExpenses, getReviewInvestments, getReviewSavings, getReviewLoans, apiGet } from '@/lib/api';
 import { theme } from '@/styles/tokens';
 
-const { colors, spacing } = theme;
+const { colors, semanticColors, spacing } = theme;
 import { LoadingState } from '@/components/shared/LoadingState';
 import { ProgressBar } from '@/components/ui/ProgressBar';
 import { PanelCard, PanelHead, PanelTitle, PanelSubtitle, PanelBody } from '@/components/ui/Card';
@@ -141,12 +141,19 @@ export default function PortfolioPage() {
           <KpiIcon>💰</KpiIcon>
           <KpiBody>
             <KpiLabel>Net Worth</KpiLabel>
-            <KpiValue>{formatDollarsWhole(netWorth)}</KpiValue>
+            <KpiValue tc={netWorth < 0 ? colors.danger : undefined}>{formatDollarsWhole(netWorth)}</KpiValue>
             <KpiSub>↑ {formatDollarsWhole(ytdNetWorthGrowth)} YTD</KpiSub>
             {totalLoanBalance > 0 && (
               <KpiSub style={{ color: colors.danger }}>Liabilities: −{formatDollarsWhole(totalLoanBalance)}</KpiSub>
             )}
-            <div style={{ marginTop: 8 }}><ProgressBar value={Math.min(100, (netWorth / Math.max(1, fireTarget)) * 100)} color={colors.primary} height={6} /></div>
+            <div style={{ marginTop: 8 }}>
+              <ProgressBar value={Math.max(0, Math.min(100, (netWorth / Math.max(1, fireTarget)) * 100))} color={netWorth < 0 ? colors.danger : colors.primary} height={6} />
+            </div>
+            {netWorth < 0 ? (
+              <KpiSub style={{ color: colors.danger, marginTop: 4 }}>Liabilities exceed assets by {formatDollars(-netWorth)}</KpiSub>
+            ) : (
+              <KpiSub style={{ marginTop: 4 }}>Progress toward FIRE target ({formatDollarsWhole(fireTarget)})</KpiSub>
+            )}
           </KpiBody>
         </KpiCard>
 
@@ -168,12 +175,18 @@ export default function PortfolioPage() {
         <KpiCard>
           <KpiBody>
             <KpiLabel>Savings Rate</KpiLabel>
-            <KpiValue tc={colors.success}>{savingsRate.toFixed(1)}%</KpiValue>
-            <KpiSub>
-              {formatDollarsWhole(totalIncome - totalExpenses)} saved of {formatDollarsWhole(totalIncome)} earned
+            <KpiValue tc={savingsRate < 0 ? colors.danger : colors.success}>{savingsRate.toFixed(1)}%</KpiValue>
+            <KpiSub style={{ color: savingsRate < 0 ? semanticColors.dangerText : undefined }}>
+              {savingsRate < 0
+                ? `${formatDollarsWhole(totalExpenses - totalIncome)} over budget`
+                : `${formatDollarsWhole(totalIncome - totalExpenses)} saved of ${formatDollarsWhole(totalIncome)} earned`}
             </KpiSub>
           </KpiBody>
-          <CircleProgress value={Math.min(100, savingsRate)} color={colors.success} label={`${savingsRate.toFixed(0)}%`} />
+          <CircleProgress
+            value={Math.max(0, Math.min(100, savingsRate))}
+            color={savingsRate < 0 ? colors.danger : colors.success}
+            label={`${savingsRate.toFixed(0)}%`}
+          />
         </KpiCard>
       </KpiBanner>
 

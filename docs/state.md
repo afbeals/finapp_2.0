@@ -1,17 +1,19 @@
 # State Management
 
-The app uses **Zustand** with **Immer** for global state. There are two small slices — session and review. Most page-level data (expenses, savings balances, etc.) lives in local `useState` within each page component, not in the global store.
+The app uses **Zustand** with **Immer** for global state. There are two small slices — session and review. Page-level data lives in local React state within each page component or its custom hook, not in the global store. Simple pages use `useState`; pages with many interdependent data pieces use `useReducer` (see below).
 
 ---
 
 ## When to use the store vs. local state
 
-| Use Zustand store for | Use local `useState` for |
-|----------------------|--------------------------|
+| Use Zustand store for | Use local `useState` / `useReducer` for |
+|----------------------|----------------------------------------|
 | Current logged-in member | Page-specific data (expenses list, form values) |
 | Active review object | Component UI state (modal open/closed, loading flags) |
 | Edit mode flag | Fetched data that doesn't need to persist across routes |
-| Household info | |
+| Household info | Complex page data with many interdependent pieces |
+
+**Rule of thumb:** if a page component needs more than ~5 related `useState` calls that update together, extract a custom hook in `src/lib/hooks/` and use `useReducer` with discriminated-union actions.
 
 ---
 
@@ -172,6 +174,37 @@ const useStore = create<GlobalStore>()(
   )
 );
 ```
+
+---
+
+## useReducer Pattern (complex page state)
+
+For pages with many interdependent state values, extract a custom hook with `useReducer`. This keeps the page component as a thin shell and makes state transitions testable as pure functions.
+
+```typescript
+// src/lib/hooks/investmentsReducer.ts
+type Action =
+  | { type: 'LOAD_SUCCESS'; accounts: InvestmentAccount[]; ... }
+  | { type: 'ADD_ACCOUNT'; account: InvestmentAccount }
+  | { type: 'REMOVE_ACCOUNT'; id: number }
+  | { type: 'LOAD_ERROR' };
+
+export function investmentsReducer(state: InvestmentsState, action: Action): InvestmentsState {
+  switch (action.type) {
+    case 'LOAD_SUCCESS': return { ...state, loading: false, accounts: action.accounts, ... };
+    case 'ADD_ACCOUNT':  return { ...state, accounts: [...state.accounts, action.account] };
+    // ...
+  }
+}
+
+// src/lib/hooks/useInvestmentsData.ts
+export function useInvestmentsData(reviewId: string) {
+  const [state, dispatch] = useReducer(investmentsReducer, initialState);
+  // fetch, dispatch actions, derive computed values, return everything the page needs
+}
+```
+
+The page component calls `useInvestmentsData` and spreads `d.xxx` — it contains no `useState` of its own.
 
 ---
 

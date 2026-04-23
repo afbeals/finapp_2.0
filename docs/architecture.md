@@ -69,10 +69,14 @@ pineapple-worktrees/temp/
 │   │   ├── apiGuards.ts                   # requireAuth(), requireReviewAccess()
 │   │   ├── fire.ts                        # FIRE math (amortization, compound growth)
 │   │   ├── money.ts                       # Cents ↔ dollars, formatDollars()
+│   │   ├── reviewProgress.ts              # Step ordering constants + progress calc
 │   │   ├── useStepNav.ts                  # Review wizard step navigation hook
 │   │   ├── store/                         # Zustand state slices
 │   │   └── hooks/
-│   │       └── useAsyncData.ts            # Loading/error state hook
+│   │       ├── useAsyncData.ts            # Generic loading/error state hook
+│   │       ├── useInvestmentsData.ts      # Investments page data + mutations (useReducer)
+│   │       ├── investmentsReducer.ts      # Discriminated-union reducer for investments state
+│   │       └── usePortfolioData.ts        # Portfolio page derived data hook
 │   │
 │   ├── styles/
 │   │   ├── tokens.ts                      # Design tokens (colors, spacing, font, radius...)
@@ -139,7 +143,7 @@ SQLite  (data/dev.db)
 User action (form submit, inline edit, toggle)
   │
   ▼
-Handler function in page component
+Handler function in page component (or custom hook)
   │  Calls lib/api.ts mutation (apiPost / apiPatch / apiDelete)
   │
   ▼
@@ -149,8 +153,9 @@ API route (validates, writes DB)
 Response comes back
   │
   ▼
-Local React state updated (useState / setXxx)
-  │  Most pages manage their own local data state
+Local React state updated
+  │  Simple pages: useState / setXxx
+  │  Complex pages (investments): useReducer + dispatch({ type: 'ACTION', ... })
   │  Zustand store holds cross-page session + active review info
   │
   ▼
@@ -184,3 +189,9 @@ Button.styles.ts     ← all styled.* definitions (if > 20 lines)
 
 ### API guards centralized
 All authentication and authorization logic lives in `src/lib/apiGuards.ts`. Route handlers call `requireAuth()` or `requireReviewAccess()` at the top — no route handler ever directly checks the session cookie.
+
+### Step ordering is canonical
+`src/lib/reviewProgress.ts` exports `MONTHLY_STEP_ORDER` and `QUARTERLY_STEP_ORDER` as the single source of truth for step sequences. Both the API route that seeds steps on review creation and the `StepIndicator` component read from these arrays — step order is never hardcoded in more than one place.
+
+### Shared error state component
+All page components use `<ErrorState>` from `src/components/shared/ErrorState.tsx` when a data fetch fails. Every page has a `loadError` state that renders this component instead of the page content, so users always get a visible error rather than a blank screen.

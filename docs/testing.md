@@ -81,10 +81,23 @@ src/app/(app)/config/
 
 | File | What it tests |
 |------|--------------|
-| `src/lib/__tests__/money.test.ts` | `toCents`, `toDollars`, `formatDollars`, `parseDollarsToCents` |
-| `src/lib/__tests__/fire.test.ts` | `monthlyPayment`, `amortizationSchedule`, `futureValue`, `yearsToFire`, `fireNumber` |
+| `src/lib/__tests__/money.test.ts` | `toCents`, `toDollars`, `formatDollars`, `currencyFormatter` |
+| `src/lib/__tests__/fire.test.ts` | `monthlyPayment`, `amortizationSchedule`, `futureValue`, `yearsToFire`, `fireNumber`, `projectedScheduleFrom` |
+| `src/lib/__tests__/reviewProgress.test.ts` | `reviewProgress` canonical ordering, `MONTHLY_STEP_ORDER`, `QUARTERLY_STEP_ORDER` |
+| `src/lib/__tests__/useStepNav.test.ts` | `goNext`, `goBack` PATCH calls and router navigation |
+| `src/lib/__tests__/useAsyncData.test.ts` | Loading state, resolution, stale-request cancellation, error surfacing |
+| `src/lib/__tests__/investmentsReducer.test.ts` | All discriminated-union actions in the investments reducer |
+| `src/lib/__tests__/routes.vaults.test.ts` | `PUT /api/reviews/[id]/vaults` — snapshots + pctUpdates |
+| `src/lib/__tests__/routes.loans.test.ts` | `PATCH /api/loan-snapshots/[id]` — balance/interest/principal |
+| `src/lib/__tests__/routes.investment-accounts.test.ts` | `PATCH` update, `DELETE` happy path, 409 in-use, transfer-and-delete |
+| `src/lib/__tests__/routes.vault-category-order.test.ts` | `PATCH /api/vault-category-order` — upsert, validation |
 | `src/app/(app)/config/__tests__/configHelpers.test.ts` | `accountTypeLabel`, `badgeColors` |
-| `tests/integration/` | API route integration tests |
+| `src/app/(app)/review/[id]/vaults/__tests__/` | Vaults page smoke tests |
+| `src/app/(app)/review/[id]/investments/__tests__/` | Investments page smoke tests |
+| `src/app/(app)/review/[id]/loans/__tests__/` | Loans page smoke tests |
+| `src/app/(app)/review/[id]/portfolio/__tests__/` | Portfolio page smoke tests |
+
+**Current pass count: 313 tests across 26 test files.**
 
 ---
 

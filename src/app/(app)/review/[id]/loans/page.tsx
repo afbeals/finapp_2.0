@@ -84,8 +84,20 @@ export default function LoansPage() {
     const payAmt = toCents(parseFloat(draft) || 0);
     const extraAmt = toCents(parseFloat(extraDraft) || 0);
     const snap = snapshots[loan.id];
+    const currentBalance = snap?.balance ?? loan.principal;
     const newPayments = (snap?.paymentsMade ?? 0) + (payAmt > 0 ? 1 : 0);
-    await patchSnapshot(loan.id, { paymentAmount: payAmt, extraPayment: extraAmt, paymentsMade: newPayments });
+    // Compute actual principal/interest split from the current balance
+    const interestThisPeriod = Math.round(currentBalance * (loan.rate / 12));
+    const principalThisPeriod = Math.max(0, payAmt + extraAmt - interestThisPeriod);
+    const newBalance = Math.max(0, currentBalance - principalThisPeriod);
+    await patchSnapshot(loan.id, {
+      paymentAmount: payAmt,
+      extraPayment: extraAmt,
+      paymentsMade: newPayments,
+      balance: newBalance,
+      interestPaid: (snap?.interestPaid ?? 0) + interestThisPeriod,
+      principalAmount: principalThisPeriod,
+    });
     setSavingMortgage(null);
   }, [paymentDrafts, extraPaymentDrafts, snapshots, patchSnapshot]);
 

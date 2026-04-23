@@ -82,6 +82,35 @@ export function pmiDropMonth(
 }
 
 /**
+ * Projection schedule starting from a known remaining balance rather than
+ * original principal. Used to correctly forecast payoff date / total interest
+ * after partial payments have already been made.
+ */
+export function projectedScheduleFrom(
+  currentBalance: number,
+  annualRate: number,
+  monthsRemaining: number,
+  extraMonthly = 0,
+): AmortizationRow[] {
+  if (currentBalance <= 0 || monthsRemaining <= 0) return [];
+  const rows: AmortizationRow[] = [];
+  let balance = currentBalance;
+  const r = annualRate / 12;
+  const basePayment = r > 0
+    ? Math.round((currentBalance * r * Math.pow(1 + r, monthsRemaining)) / (Math.pow(1 + r, monthsRemaining) - 1))
+    : Math.round(currentBalance / monthsRemaining);
+
+  for (let month = 1; month <= monthsRemaining; month++) {
+    if (balance <= 0) break;
+    const interest = Math.round(balance * r);
+    const principalPaid = Math.min(balance, Math.round(basePayment - interest + extraMonthly));
+    balance = Math.max(0, balance - principalPaid);
+    rows.push({ month, payment: basePayment + extraMonthly, principal: principalPaid, interest, balance });
+  }
+  return rows;
+}
+
+/**
  * Future value of a lump sum + recurring contributions compounded monthly
  * @param presentValue - current portfolio value (cents)
  * @param monthlyContribution - monthly addition (cents)

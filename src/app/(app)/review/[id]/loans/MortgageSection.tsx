@@ -4,9 +4,8 @@ import React, { useState } from 'react';
 import { formatDollars, toCents, toDollars } from '@/lib/money';
 import {
   monthlyPayment,
-  totalInterest,
   payoffDateStr,
-  amortizationSchedule,
+  projectedScheduleFrom,
   pmiDropMonth,
   MONTH_NAMES_SHORT,
 } from '@/lib/fire';
@@ -70,18 +69,32 @@ export const MortgageSection = React.memo(function MortgageSection({
   const [extraPrincipalApplied, setExtraPrincipalApplied] = useState(snap.extraPayment);
 
   // ── Derived amortization math ──────────────────────────────────────────────
-  const schedule = amortizationSchedule(loan.principal, loan.rate, loan.termMonths, extraPrincipalApplied);
-  const pmtIdx = Math.min(snap.paymentsMade, schedule.length) - 1; // last payment row (0-based)
-  const currentRow = schedule[Math.min(snap.paymentsMade, schedule.length - 1)] ?? schedule[schedule.length - 1];
-  const lastPaymentRow = pmtIdx >= 0 ? schedule[pmtIdx] : null;
+  // Use actual recorded balance when available; fall back to schedule-derived for first payment
+  const observedBalance = snap.paymentsMade > 0 ? snap.balance : loan.principal;
+  const remMonths = Math.max(0, loan.termMonths - snap.paymentsMade);
 
-  const derivedBalance = currentRow?.balance ?? loan.principal;
-  const scheduledRemMonths = schedule.filter((_, i) => i >= snap.paymentsMade).length;
-  const remMonths = Math.max(0, scheduledRemMonths);
+  // Projection schedule: starts from the observed balance, not original principal
+  const projSchedule = projectedScheduleFrom(observedBalance, loan.rate, remMonths, extraPrincipalApplied);
+  const totalInterestLife = projSchedule.reduce((s, r) => s + r.interest, 0)
+    + (snap.interestPaid ?? 0); // add already-paid interest for lifetime total
+
+  // Last payment breakdown — derived from actual paid amounts + interest on pre-payment balance
+  const lastPaymentBreakdown = snap.paymentsMade > 0 && snap.paymentAmount > 0
+    ? (() => {
+        // Pre-payment balance = current balance + principal paid this period
+        const interestPortion = Math.round((observedBalance + snap.principalAmount) * (loan.rate / 12));
+        const principalPortion = Math.max(0, snap.paymentAmount + snap.extraPayment - interestPortion);
+        return {
+          payment: snap.paymentAmount + snap.extraPayment,
+          principal: principalPortion,
+          interest: interestPortion,
+        };
+      })()
+    : null;
+
   const basePmt = monthlyPayment(loan.principal, loan.rate, loan.termMonths);
-  const totalInterestLife = schedule.reduce((s, r) => s + r.interest, 0);
-  const pct = Math.min(100, ((loan.principal - derivedBalance) / loan.principal) * 100);
-  const payoffStr = payoffDateStr(loan.startDate, snap.paymentsMade, remMonths);
+  const pct = Math.min(100, ((loan.principal - observedBalance) / loan.principal) * 100);
+  const payoffStr = payoffDateStr(loan.startDate, snap.paymentsMade, projSchedule.length);
 
   // ── Monthly totals ─────────────────────────────────────────────────────────
   const pmi = loan.mortgageInsurance ?? 0;
@@ -93,7 +106,7 @@ export const MortgageSection = React.memo(function MortgageSection({
 
   // ── LTV + PMI drop ─────────────────────────────────────────────────────────
   const homeValue = loan.homeValue ?? null;
-  const ltv = homeValue && homeValue > 0 ? (derivedBalance / homeValue) * 100 : null;
+  const ltv = homeValue && homeValue > 0 ? (observedBalance / homeValue) * 100 : null;
   const showPmiDrop = pmi > 0 && homeValue !== null;
   const pmiTarget = loan.pmiDropBalance ?? (homeValue ? Math.round(homeValue * 0.80) : null);
   const pmiDropPmt = pmiTarget !== null
@@ -102,9 +115,9 @@ export const MortgageSection = React.memo(function MortgageSection({
   const pmiDropStr = pmiDropPmt > 0
     ? monthIndexToDate(loan.startDate, 0, pmiDropPmt)
     : 'Already eligible';
-  const pmiToGo = pmiTarget !== null ? Math.max(0, derivedBalance - pmiTarget) : 0;
+  const pmiToGo = pmiTarget !== null ? Math.max(0, observedBalance - pmiTarget) : 0;
   const pmiPct = pmiTarget !== null && homeValue !== null
-    ? Math.min(100, ((homeValue - derivedBalance) / (homeValue - pmiTarget)) * 100)
+    ? Math.min(100, ((homeValue - observedBalance) / (homeValue - pmiTarget)) * 100)
     : 0;
 
   return (
@@ -176,39 +189,39 @@ export const MortgageSection = React.memo(function MortgageSection({
           label="Remaining Balance"
           tone="primary"
           largeValue
-          value={formatDollars(derivedBalance)}
+          value={formatDollars(observedBalance)}
           sub={`Payment #${snap.paymentsMade} of ${loan.termMonths}`}
         />
       </KpiGrid>
 
       {/* ── Last Payment P/I Split (full width) ── */}
-      {lastPaymentRow && (
+      {lastPaymentBreakdown && (
         <PiCardWrap style={{ marginBottom: spacing[3] }}>
           <p style={{ fontSize: font.size.xs, fontWeight: font.weight.semibold, color: colors.textMuted, textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: 2 }}>
             Last Payment Breakdown
           </p>
           <p style={{ fontSize: font.size.sm, color: colors.textPrimary, marginBottom: 4 }}>
-            <strong>{formatDollars(lastPaymentRow.payment)}</strong> total &mdash;{' '}
-            <span style={{ color: semanticColors.successText }}>{formatDollars(lastPaymentRow.principal)} principal</span>
+            <strong>{formatDollars(lastPaymentBreakdown.payment)}</strong> total &mdash;{' '}
+            <span style={{ color: semanticColors.successText }}>{formatDollars(lastPaymentBreakdown.principal)} principal</span>
             {' · '}
-            <span style={{ color: colors.danger }}>{formatDollars(lastPaymentRow.interest)} interest</span>
+            <span style={{ color: colors.danger }}>{formatDollars(lastPaymentBreakdown.interest)} interest</span>
           </p>
           <SplitBar>
             <SplitSegment
-              pct={(lastPaymentRow.principal / lastPaymentRow.payment) * 100}
+              pct={(lastPaymentBreakdown.principal / lastPaymentBreakdown.payment) * 100}
               bg={semanticColors.successTextMedium}
             />
             <SplitSegment
-              pct={(lastPaymentRow.interest / lastPaymentRow.payment) * 100}
+              pct={(lastPaymentBreakdown.interest / lastPaymentBreakdown.payment) * 100}
               bg={colors.danger}
             />
           </SplitBar>
           <SplitLegend>
             <SplitDot bg={semanticColors.successTextMedium}>
-              Principal {((lastPaymentRow.principal / lastPaymentRow.payment) * 100).toFixed(1)}%
+              Principal {((lastPaymentBreakdown.principal / lastPaymentBreakdown.payment) * 100).toFixed(1)}%
             </SplitDot>
             <SplitDot bg={colors.danger}>
-              Interest {((lastPaymentRow.interest / lastPaymentRow.payment) * 100).toFixed(1)}%
+              Interest {((lastPaymentBreakdown.interest / lastPaymentBreakdown.payment) * 100).toFixed(1)}%
             </SplitDot>
           </SplitLegend>
         </PiCardWrap>

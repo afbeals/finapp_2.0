@@ -7,6 +7,7 @@ import {
   formatPercent,
   formatRate,
   parseDollarsToCents,
+  currencyFormatter,
 } from '@/lib/money';
 
 describe('toCents', () => {
@@ -201,5 +202,33 @@ describe('parseDollarsToCents', () => {
 
   it('rounds correctly for fractional cents', () => {
     expect(parseDollarsToCents('$0.005')).toBe(1);
+  });
+});
+
+describe('currencyFormatter', () => {
+  it('formats a dollar string with thousands separator and 2 decimals', () => {
+    expect(currencyFormatter('1234.56')).toBe('$1,234.56');
+  });
+
+  it('formats zero', () => {
+    expect(currencyFormatter('0')).toBe('$0.00');
+  });
+
+  it('formats a whole dollar string', () => {
+    // input is dollars, '500' → $500.00
+    expect(currencyFormatter('500')).toBe('$500.00');
+  });
+
+  it('handles non-numeric input gracefully (returns $0.00)', () => {
+    expect(currencyFormatter('abc')).toBe('$0.00');
+  });
+
+  it('handles empty string gracefully', () => {
+    expect(currencyFormatter('')).toBe('$0.00');
+  });
+
+  it('formats negative dollar string', () => {
+    // '-50' dollars → -$50.00
+    expect(currencyFormatter('-50')).toBe('-$50.00');
   });
 });

@@ -10,6 +10,7 @@ import {
   yearsToFire,
   fireNumber,
   buildProjection,
+  projectedScheduleFrom,
 } from '@/lib/fire';
 
 describe('MONTH_NAMES_SHORT', () => {
@@ -236,5 +237,54 @@ describe('buildProjection', () => {
 
   it('returns empty array for 0 years', () => {
     expect(buildProjection(100000, 1000, 0.07, 0)).toHaveLength(0);
+  });
+});
+
+describe('projectedScheduleFrom', () => {
+  it('returns empty array when currentBalance is 0', () => {
+    expect(projectedScheduleFrom(0, 0.06, 12)).toHaveLength(0);
+  });
+
+  it('returns empty array when monthsRemaining is 0', () => {
+    expect(projectedScheduleFrom(100000, 0.06, 0)).toHaveLength(0);
+  });
+
+  it('length is at most monthsRemaining', () => {
+    const rows = projectedScheduleFrom(100000, 0.06, 12);
+    expect(rows.length).toBeLessThanOrEqual(12);
+  });
+
+  it('final balance reaches 0', () => {
+    const rows = projectedScheduleFrom(100000, 0.06, 12);
+    expect(rows[rows.length - 1].balance).toBe(0);
+  });
+
+  it('extra monthly payments shorten the schedule vs no extra', () => {
+    const withoutExtra = projectedScheduleFrom(100000, 0.06, 24);
+    const withExtra = projectedScheduleFrom(100000, 0.06, 24, 10000);
+    expect(withExtra.length).toBeLessThan(withoutExtra.length);
+  });
+
+  it('each row has required fields', () => {
+    const rows = projectedScheduleFrom(50000, 0.05, 6);
+    const row = rows[0];
+    expect(row).toHaveProperty('month', 1);
+    expect(row).toHaveProperty('payment');
+    expect(row).toHaveProperty('principal');
+    expect(row).toHaveProperty('interest');
+    expect(row).toHaveProperty('balance');
+  });
+
+  it('balance decreases monotonically', () => {
+    const rows = projectedScheduleFrom(100000, 0.06, 12);
+    for (let i = 1; i < rows.length; i++) {
+      expect(rows[i].balance).toBeLessThan(rows[i - 1].balance);
+    }
+  });
+
+  it('handles 0% interest rate', () => {
+    const rows = projectedScheduleFrom(12000, 0, 12);
+    expect(rows[0].interest).toBe(0);
+    expect(rows).toHaveLength(12);
   });
 });

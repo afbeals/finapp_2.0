@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { prisma } from '@/lib/db';
 import { requireAuth, badRequest, conflict } from '@/lib/apiGuards';
+import { MONTHLY_STEP_ORDER, QUARTERLY_STEP_ORDER } from '@/lib/reviewProgress';
 
 export async function GET() {
   const session = await requireAuth().catch(() => null);
@@ -47,9 +48,7 @@ export async function POST(req: NextRequest) {
   });
   if (existing) return conflict({ error: 'A review for this month already exists' });
 
-  const monthlySteps = ['expense', 'monthly', 'savings', 'investments', 'vaults', 'finalize'];
-  const quarterlySteps = ['expense', 'monthly', 'savings', 'loans', 'investments', 'portfolio', 'vaults', 'finalize'];
-  const stepKeys = type === 'QUARTERLY' ? quarterlySteps : monthlySteps;
+  const stepKeys = type === 'QUARTERLY' ? [...QUARTERLY_STEP_ORDER] : [...MONTHLY_STEP_ORDER];
 
   const review = await prisma.review.create({
     data: {

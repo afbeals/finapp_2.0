@@ -26,7 +26,7 @@ export default function ExpensePage() {
   const reviewId = params.id as string;
   const { state: reviewState } = useReviewStore();
   const { state: sessionState } = useSessionStore();
-  const { goNext, goBack, goSkip, saving } = useStepNav('expense');
+  const { goNext, saving } = useStepNav('expense');
   const readOnly = reviewState.activeReview?.status === 'COMPLETE' && !reviewState.isEditMode;
   const currentMemberId = sessionState.memberId;
   const currentMember = sessionState.members.find((m) => m.id === currentMemberId);
@@ -90,9 +90,6 @@ export default function ExpensePage() {
     <StepShell
       title={STEP_META.expense.title}
       subtitle={STEP_META.expense.subtitle}
-      stepName="Expense Entry"
-      onBack={goBack}
-      onSkip={goSkip}
       onNext={goNext}
       saving={saving}
       readOnly={readOnly}

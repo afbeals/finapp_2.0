@@ -40,7 +40,7 @@ export default function VaultsPage() {
   const params = useParams();
   const reviewId = params.id as string;
   const { state: reviewState } = useReviewStore();
-  const { goNext, goBack, goSkip, saving } = useStepNav('vaults');
+  const { goNext, saving } = useStepNav('vaults');
   const readOnly = reviewState.activeReview?.status === 'COMPLETE' && !reviewState.isEditMode;
 
   const [vaults, setVaults] = useState<Vault[]>([]);
@@ -204,9 +204,6 @@ export default function VaultsPage() {
     <StepShell
       title={STEP_META.vaults.title}
       subtitle={STEP_META.vaults.subtitle}
-      stepName="Vaults"
-      onBack={goBack}
-      onSkip={goSkip}
       onNext={handleSave}
       saving={saving}
       readOnly={readOnly}

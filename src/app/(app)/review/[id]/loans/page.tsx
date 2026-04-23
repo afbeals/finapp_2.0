@@ -24,7 +24,7 @@ export default function LoansPage() {
   const params = useParams();
   const reviewId = params.id as string;
   const { state: reviewState } = useReviewStore();
-  const { goNext, goBack, goSkip, saving } = useStepNav('loans');
+  const { goNext, saving } = useStepNav('loans');
   const readOnly = reviewState.activeReview?.status === 'COMPLETE' && !reviewState.isEditMode;
 
   const [loans, setLoans] = useState<Loan[]>([]);
@@ -126,9 +126,6 @@ export default function LoansPage() {
     <StepShell
       title={STEP_META.loans.title}
       subtitle={STEP_META.loans.subtitle}
-      stepName="Loans"
-      onBack={goBack}
-      onSkip={goSkip}
       onNext={goNext}
       saving={saving}
       readOnly={readOnly}

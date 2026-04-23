@@ -1,12 +1,12 @@
 'use client';
 
-import { useEffect, useState, useMemo, useCallback } from 'react';
 import { useParams } from 'next/navigation';
 import { StepShell } from '@/components/review/StepShell';
 import { STEP_META } from '@/components/review/stepMetadata';
 import { useStepNav } from '@/lib/useStepNav';
 import { useReviewStore } from '@/lib/store';
-import { formatDollars, toDollars } from '@/lib/money';
+import { useInvestmentsData } from '@/lib/hooks/useInvestmentsData';
+import { toDollars } from '@/lib/money';
 import { theme } from '@/styles/tokens';
 
 const { colors, semanticColors, font, spacing } = theme;
@@ -23,357 +23,34 @@ import { Button } from '@/components/ui/Button';
 import { Modal } from '@/components/ui/Modal';
 import { Input, Label, Select, FormGroup } from '@/components/ui/Input';
 import { ConfirmModal } from '@/components/shared/ConfirmModal';
-import {
-  getReviewInvestments,
-  getInvestmentCategories,
-  getMembers,
-  apiPut,
-  apiDelete,
-  getMarketPrices,
-  createInvestmentAccount,
-  updateInvestmentAccount,
-  deleteInvestmentAccount,
-  upsertRetirementSnapshot,
-} from '@/lib/api';
-import type {
-  Purchase,
-  InvestmentAccount,
-  InvestmentCategory,
-  Member,
-  HistoricalRetirementSnapshot,
-  RetirementSnapshot,
-} from '@/types/entities';
+import { formatDollars } from '@/lib/money';
 import { InvestmentSection } from './InvestmentSection';
 import { AddPurchaseModal } from './AddPurchaseModal';
 import { RetirementAccountCard } from './RetirementAccountCard';
-import {
-  EditRetirementAccountModal,
-  type RetirementAccountFormValues,
-} from './EditRetirementAccountModal';
-import {
-  TAXABLE_TYPES,
-  RETIREMENT_TYPES,
-  buildPositions,
-  buildCategoryColorMap,
-  fmtGain,
-  fmtPct,
-} from './investmentHelpers';
-
-type InvCategoryDef = InvestmentCategory;
+import { EditRetirementAccountModal } from './EditRetirementAccountModal';
+import { fmtGain, fmtPct } from './investmentHelpers';
 
 export default function InvestmentsPage() {
   const params = useParams();
   const reviewId = params.id as string;
-  const reviewIdNum = Number(reviewId);
   const { state: reviewState } = useReviewStore();
-  const { goNext, goBack, goSkip, saving } = useStepNav('investments');
+  const { goNext, saving } = useStepNav('investments');
   const readOnly = reviewState.activeReview?.status === 'COMPLETE' && !reviewState.isEditMode;
 
-  const [accounts, setAccounts] = useState<InvestmentAccount[]>([]);
-  const [invCategories, setInvCategories] = useState<InvCategoryDef[]>([]);
-  const [members, setMembers] = useState<Member[]>([]);
-  const [allRetirementHistory, setAllRetirementHistory] = useState<HistoricalRetirementSnapshot[]>([]);
-  const [retirementSnapshots, setRetirementSnapshots] = useState<RetirementSnapshot[]>([]);
-  const [allReviews, setAllReviews] = useState<{ id: number; periodYear: number; periodMonth: number }[]>([]);
-  const [livePrices, setLivePrices] = useState<Record<string, number>>({});
-  const [pricesLoading, setPricesLoading] = useState(false);
-  const [marketIndices, setMarketIndices] = useState<Record<string, number>>({});
-  const [loading, setLoading] = useState(true);
-  const [loadError, setLoadError] = useState(false);
-  const [showAddModal, setShowAddModal] = useState(false);
-  const [addDefaultAccountId, setAddDefaultAccountId] = useState<number | undefined>();
-
-  const [expandedRetirementIds, setExpandedRetirementIds] = useState<Set<number>>(new Set());
-  const [retirementModalMode, setRetirementModalMode] = useState<'add' | 'edit' | null>(null);
-  const [retirementModalAccountId, setRetirementModalAccountId] = useState<number | null>(null);
-  const [deleteAccountId, setDeleteAccountId] = useState<number | null>(null);
-  const [deleting, setDeleting] = useState(false);
-
-  // Taxable account CRUD
-  const [taxableModalMode, setTaxableModalMode] = useState<'add' | 'edit' | null>(null);
-  const [taxableModalAccountId, setTaxableModalAccountId] = useState<number | null>(null);
-  const [taxableAccForm, setTaxableAccForm] = useState({ name: '', institution: '', ownerMemberId: null as number | null });
-  const [savingTaxable, setSavingTaxable] = useState(false);
-  const [deleteTaxableId, setDeleteTaxableId] = useState<number | null>(null);
-  const [deletingTaxable, setDeletingTaxable] = useState(false);
-  const [taxableDeletePurchaseCount, setTaxableDeletePurchaseCount] = useState(0);
-  const [taxableTransferToId, setTaxableTransferToId] = useState<number | null>(null);
-
-  useEffect(() => {
-    Promise.all([
-      getReviewInvestments(reviewId),
-      getInvestmentCategories(),
-      getMembers(),
-    ])
-      .then(([inv, { categories: cats }, { members: mems }]) => {
-        setAccounts(inv.accounts ?? []);
-        setInvCategories(cats ?? []);
-        setMembers(mems ?? []);
-        setRetirementSnapshots(inv.retirementSnapshots ?? []);
-        setAllRetirementHistory(inv.allRetirementSnapshots ?? []);
-        setAllReviews(inv.allReviews ?? []);
-      })
-      .catch(() => setLoadError(true))
-      .finally(() => setLoading(false));
-  }, [reviewId]);
-
-  // Fetch live prices once accounts are loaded (only for taxable — retirement no longer uses lots)
-  const fetchPrices = useCallback(async (accs: InvestmentAccount[]) => {
-    const taxableTickers = accs
-      .filter((a) => TAXABLE_TYPES.has(a.type))
-      .flatMap((a) => a.purchases.map((p) => p.ticker));
-    const allTickers = Array.from(new Set(taxableTickers));
-    const indexTickers = ['SPY', 'QQQ', 'DIA'];
-    const all = [...allTickers, ...indexTickers];
-    if (all.length === 0) return;
-    setPricesLoading(true);
-    try {
-      const { prices } = await getMarketPrices(all);
-      const portfolio: Record<string, number> = {};
-      const indices: Record<string, number> = {};
-      for (const [ticker, price] of Object.entries(prices)) {
-        if (indexTickers.includes(ticker)) indices[ticker] = price;
-        else portfolio[ticker] = price;
-      }
-      setLivePrices(portfolio);
-      setMarketIndices(indices);
-    } finally {
-      setPricesLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    if (accounts.length > 0) fetchPrices(accounts);
-  }, [accounts, fetchPrices]);
-
-  function handlePurchaseAdded(purchase: Purchase) {
-    setAccounts((prev) =>
-      prev.map((a) => a.id === purchase.accountId ? { ...a, purchases: [...a.purchases, purchase] } : a)
-    );
-    if (!livePrices[purchase.ticker]) {
-      getMarketPrices([purchase.ticker])
-        .then(({ prices }) => {
-          if (prices[purchase.ticker]) {
-            setLivePrices((prev) => ({ ...prev, [purchase.ticker]: prices[purchase.ticker] }));
-          }
-        });
-    }
-  }
+  const d = useInvestmentsData(reviewId);
 
   async function handleSave() {
-    const taxableAccountIds = new Set(taxableAccounts.map((a) => a.id));
-    const snapshots = accounts
-      .filter((a) => taxableAccountIds.has(a.id))
-      .flatMap((a) =>
-        a.purchases.map((p) => {
-          const price = livePrices[p.ticker] ?? 0;
-          const value = Math.round(p.shares * price);
-          const lotCostBasis = Math.round(p.shares * p.pricePerShare);
-          return { purchaseId: p.id, price, value, gainLoss: value - lotCostBasis };
-        })
-      );
-    const retirementPayload = retirementSnapshots.map((s) => ({ accountId: s.accountId, balance: s.balance }));
-    await apiPut(`/api/reviews/${reviewId}/investments`, {
-      snapshots,
-      retirementSnapshots: retirementPayload,
-    });
+    await d.buildSavePayload();
     await goNext();
   }
 
-  const taxableAccounts = useMemo(() => accounts.filter((a) => TAXABLE_TYPES.has(a.type)), [accounts]);
-  const retirementAccounts = useMemo(() => accounts.filter((a) => RETIREMENT_TYPES.has(a.type)), [accounts]);
-
-  const taxablePositions = useMemo(() => buildPositions(taxableAccounts, livePrices), [taxableAccounts, livePrices]);
-
-  const retirementBalanceByAccount = useMemo(() => {
-    const m: Record<number, number> = {};
-    for (const s of retirementSnapshots) m[s.accountId] = s.balance;
-    return m;
-  }, [retirementSnapshots]);
-
-  const retirementHistoryByAccount = useMemo(() => {
-    const m: Record<number, HistoricalRetirementSnapshot[]> = {};
-    for (const s of allRetirementHistory) {
-      if (!m[s.accountId]) m[s.accountId] = [];
-      m[s.accountId].push(s);
-    }
-    return m;
-  }, [allRetirementHistory]);
-
-  const categoryColorMap = useMemo(() => buildCategoryColorMap(invCategories), [invCategories]);
-
-  const taxableValue = taxablePositions.reduce((s, p) => s + p.currentValue, 0);
-  const retirementValue = Object.values(retirementBalanceByAccount).reduce((s, v) => s + v, 0);
-  const totalValue = taxableValue + retirementValue;
-  const totalGainLoss = taxablePositions.reduce((s, p) => s + p.gainLoss, 0);
-  const totalCostBasis = taxablePositions.reduce((s, p) => s + p.totalCostBasis, 0);
-  const totalGrowthPct = totalCostBasis > 0 ? totalGainLoss / totalCostBasis : 0;
-  const taxablePct = totalValue > 0 ? (taxableValue / totalValue) * 100 : 50;
-  const retirementPct = 100 - taxablePct;
-
-  const sp500 = marketIndices['SPY'];
-  const nasdaq = marketIndices['QQQ'];
-  const djia = marketIndices['DIA'];
-
-  const toggleRetirementExpand = useCallback((id: number) => {
-    setExpandedRetirementIds((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
-  }, []);
-
-  const saveRetirementBalance = useCallback(
-    async (accountId: number, rid: number, balanceDollars: string) => {
-      const cents = Math.round(Number(balanceDollars) * 100);
-      if (!Number.isFinite(cents) || cents < 0) return;
-      const { snapshot } = await upsertRetirementSnapshot({ accountId, reviewId: rid, balance: cents });
-      setAllRetirementHistory((prev) => {
-        const i = prev.findIndex((r) => r.accountId === accountId && r.reviewId === rid);
-        const hist: HistoricalRetirementSnapshot = {
-          id: snapshot.id,
-          accountId,
-          reviewId: rid,
-          balance: cents,
-          review: snapshot.review,
-        };
-        if (i === -1) return [...prev, hist];
-        const next = [...prev];
-        next[i] = hist;
-        return next;
-      });
-      if (rid === reviewIdNum) {
-        setRetirementSnapshots((prev) => {
-          const i = prev.findIndex((r) => r.accountId === accountId);
-          const row = { id: snapshot.id, accountId, reviewId: rid, balance: cents };
-          if (i === -1) return [...prev, row];
-          const next = [...prev];
-          next[i] = row;
-          return next;
-        });
-      }
-    },
-    [reviewIdNum],
-  );
-
-  const addRetirementHistoryRow = useCallback(
-    async (accountId: number, rid: number) => {
-      await saveRetirementBalance(accountId, rid, '0');
-    },
-    [saveRetirementBalance],
-  );
-
-  const handleSubmitRetirementAccount = useCallback(
-    async (values: RetirementAccountFormValues) => {
-      if (retirementModalMode === 'add') {
-        const { account } = await createInvestmentAccount(values);
-        setAccounts((prev) => [...prev, { ...account, purchases: [] }]);
-        setExpandedRetirementIds((prev) => new Set(prev).add(account.id));
-      } else if (retirementModalMode === 'edit' && retirementModalAccountId) {
-        const { account } = await updateInvestmentAccount(retirementModalAccountId, values);
-        setAccounts((prev) =>
-          prev.map((a) =>
-            a.id === account.id ? { ...account, purchases: a.purchases } : a,
-          ),
-        );
-      }
-    },
-    [retirementModalMode, retirementModalAccountId],
-  );
-
-  const confirmDelete = useCallback(async () => {
-    if (deleteAccountId == null) return;
-    setDeleting(true);
-    try {
-      await apiDelete(`/api/config/investment-accounts/${deleteAccountId}`, { force: true });
-      setAccounts((prev) => prev.filter((a) => a.id !== deleteAccountId));
-      setRetirementSnapshots((prev) => prev.filter((s) => s.accountId !== deleteAccountId));
-      setAllRetirementHistory((prev) => prev.filter((s) => s.accountId !== deleteAccountId));
-      setDeleteAccountId(null);
-    } finally {
-      setDeleting(false);
-    }
-  }, [deleteAccountId]);
-
-  const editingAccount = retirementModalAccountId
-    ? accounts.find((a) => a.id === retirementModalAccountId)
-    : undefined;
-
-  function openTaxableModal(mode: 'add' | 'edit', accountId?: number) {
-    const acc = accountId ? accounts.find((a) => a.id === accountId) : undefined;
-    setTaxableAccForm({
-      name: acc?.name ?? '',
-      institution: acc?.institution ?? '',
-      ownerMemberId: acc?.ownerMemberId ?? null,
-    });
-    setTaxableModalAccountId(accountId ?? null);
-    setTaxableModalMode(mode);
-  }
-
-  async function handleSubmitTaxableAccount() {
-    if (!taxableAccForm.name.trim()) return;
-    setSavingTaxable(true);
-    try {
-      if (taxableModalMode === 'add') {
-        const { account } = await createInvestmentAccount({ ...taxableAccForm, type: 'TAXABLE' });
-        setAccounts((prev) => [...prev, { ...account, purchases: [] }]);
-      } else if (taxableModalAccountId) {
-        const { account } = await updateInvestmentAccount(taxableModalAccountId, taxableAccForm);
-        setAccounts((prev) => prev.map((a) => a.id === account.id ? { ...account, purchases: a.purchases } : a));
-      }
-      setTaxableModalMode(null);
-    } finally {
-      setSavingTaxable(false);
-    }
-  }
-
-  async function initiateTaxableDelete(accountId: number) {
-    try {
-      const result = await deleteInvestmentAccount(accountId);
-      if (result?.ok) {
-        setAccounts((prev) => prev.filter((a) => a.id !== accountId));
-      }
-    } catch (e: unknown) {
-      // 409 means account is in use — extract payload to show transfer dialog
-      const payload = (e as { payload?: { inUse?: boolean; purchaseCount?: number } })?.payload;
-      if (payload?.inUse) {
-        setTaxableDeletePurchaseCount(payload.purchaseCount ?? 0);
-        setTaxableTransferToId(null);
-        setDeleteTaxableId(accountId);
-      }
-    }
-  }
-
-  async function confirmTaxableDelete() {
-    if (deleteTaxableId == null) return;
-    setDeletingTaxable(true);
-    try {
-      const result = await deleteInvestmentAccount(
-        deleteTaxableId,
-        taxableTransferToId ?? undefined,
-      );
-      if (result?.ok) {
-        setAccounts((prev) => prev.filter((a) => a.id !== deleteTaxableId));
-        setDeleteTaxableId(null);
-      }
-    } finally {
-      setDeletingTaxable(false);
-    }
-  }
-
-  const taxableTransferOptions = taxableAccounts.filter((a) => a.id !== deleteTaxableId);
-
-  if (loading) return <LoadingState centered />;
-  if (loadError) return <ErrorState centered message="Couldn't load investments — please refresh." />;
+  if (d.loading) return <LoadingState centered />;
+  if (d.loadError) return <ErrorState centered message="Couldn't load investments — please refresh." />;
 
   return (
     <StepShell
       title={STEP_META.investments.title}
       subtitle={STEP_META.investments.subtitle}
-      stepName="Investments"
-      onBack={goBack}
-      onSkip={goSkip}
       onNext={handleSave}
       saving={saving}
       readOnly={readOnly}
@@ -382,34 +59,34 @@ export default function InvestmentsPage() {
       <SectionHeader title="Combined Portfolio Summary" />
 
       <KpiGrid cols={4}>
-        <KpiCard label="Total Value" value={pricesLoading ? '…' : formatDollars(totalValue)} sub={`${accounts.length} account${accounts.length !== 1 ? 's' : ''}`} />
+        <KpiCard label="Total Value" value={d.pricesLoading ? '…' : formatDollars(d.totalValue)} sub={`${d.accounts.length} account${d.accounts.length !== 1 ? 's' : ''}`} />
         <KpiCard
-          tone={totalGainLoss >= 0 ? 'success' : 'danger'}
+          tone={d.totalGainLoss >= 0 ? 'success' : 'danger'}
           label="Taxable Gain / Loss"
-          value={pricesLoading ? '…' : fmtGain(totalGainLoss)}
+          value={d.pricesLoading ? '…' : fmtGain(d.totalGainLoss)}
           sub="unrealized"
         />
         <KpiCard
-          tone={totalGainLoss >= 0 ? 'success' : 'danger'}
+          tone={d.totalGainLoss >= 0 ? 'success' : 'danger'}
           label="Taxable Growth %"
-          value={pricesLoading ? '…' : fmtPct(totalGrowthPct)}
+          value={d.pricesLoading ? '…' : fmtPct(d.totalGrowthPct)}
           sub="vs taxable cost basis"
         />
-        <KpiCard label="Taxable Cost Basis" value={formatDollars(totalCostBasis)} sub="total invested" />
+        <KpiCard label="Taxable Cost Basis" value={formatDollars(d.totalCostBasis)} sub="total invested" />
       </KpiGrid>
 
       <SplitBarWrap>
         <p style={{ fontSize: 10, fontWeight: 600, color: colors.textMuted, textTransform: 'uppercase', letterSpacing: '0.05em', margin: '0 0 0' }}>Portfolio Split</p>
         <SplitBar>
-          <SplitSegment pct={taxablePct} bg={colors.primary} />
-          <SplitSegment pct={retirementPct} bg={semanticColors.successTextMedium} />
+          <SplitSegment pct={d.taxablePct} bg={colors.primary} />
+          <SplitSegment pct={d.retirementPct} bg={semanticColors.successTextMedium} />
         </SplitBar>
         <SplitLegend>
           <LegendDot bg={colors.primary}>
-            Investments: {formatDollars(taxableValue)} ({taxablePct.toFixed(0)}%)
+            Investments: {formatDollars(d.taxableValue)} ({d.taxablePct.toFixed(0)}%)
           </LegendDot>
           <LegendDot bg={semanticColors.successTextMedium}>
-            Retirement: {formatDollars(retirementValue)} ({retirementPct.toFixed(0)}%)
+            Retirement: {formatDollars(d.retirementValue)} ({d.retirementPct.toFixed(0)}%)
           </LegendDot>
         </SplitLegend>
       </SplitBarWrap>
@@ -420,25 +97,25 @@ export default function InvestmentsPage() {
           <MarketTag>Market</MarketTag>
           <MarketItem>
             <MarketName>S&amp;P 500 (SPY)</MarketName>
-            <MarketVal up={sp500 !== undefined ? true : undefined}>
-              {sp500 ? `$${toDollars(sp500).toFixed(2)}` : pricesLoading ? '…' : '—'}
+            <MarketVal up={d.sp500 !== undefined ? true : undefined}>
+              {d.sp500 ? `$${toDollars(d.sp500).toFixed(2)}` : d.pricesLoading ? '…' : '—'}
             </MarketVal>
           </MarketItem>
           <MarketItem>
             <MarketName>NASDAQ (QQQ)</MarketName>
-            <MarketVal up={nasdaq !== undefined ? true : undefined}>
-              {nasdaq ? `$${toDollars(nasdaq).toFixed(2)}` : pricesLoading ? '…' : '—'}
+            <MarketVal up={d.nasdaq !== undefined ? true : undefined}>
+              {d.nasdaq ? `$${toDollars(d.nasdaq).toFixed(2)}` : d.pricesLoading ? '…' : '—'}
             </MarketVal>
           </MarketItem>
           <MarketItem>
             <MarketName>DJIA (DIA)</MarketName>
-            <MarketVal up={djia !== undefined ? true : undefined}>
-              {djia ? `$${toDollars(djia).toFixed(2)}` : pricesLoading ? '…' : '—'}
+            <MarketVal up={d.djia !== undefined ? true : undefined}>
+              {d.djia ? `$${toDollars(d.djia).toFixed(2)}` : d.pricesLoading ? '…' : '—'}
             </MarketVal>
           </MarketItem>
         </MarketItemGroup>
-        <span style={{ fontSize: 10, color: pricesLoading ? colors.textDisabled : semanticColors.neutralText, fontStyle: pricesLoading ? 'italic' : 'normal' }}>
-          {pricesLoading ? 'Fetching live prices…' : 'Live prices via Yahoo Finance'}
+        <span style={{ fontSize: 10, color: d.pricesLoading ? colors.textDisabled : semanticColors.neutralText, fontStyle: d.pricesLoading ? 'italic' : 'normal' }}>
+          {d.pricesLoading ? 'Fetching live prices…' : 'Live prices via Yahoo Finance'}
         </span>
       </MarketStrip>
 
@@ -447,52 +124,52 @@ export default function InvestmentsPage() {
         title="Investment Accounts (Taxable)"
         actions={
           !readOnly && (
-            <Button size="sm" onClick={() => openTaxableModal('add')}>+ Add Account</Button>
+            <Button size="sm" onClick={() => d.openTaxableModal('add')}>+ Add Account</Button>
           )
         }
       />
-      {taxableAccounts.length === 0 && (
+      {d.taxableAccounts.length === 0 && (
         <p style={{ color: colors.textMuted, fontStyle: 'italic', marginBottom: spacing[3] }}>
           No taxable investment accounts yet.
         </p>
       )}
-      {taxableAccounts.length > 0 && (
+      {d.taxableAccounts.length > 0 && (
         <InvestmentSection
-          title={taxableAccounts.length === 1 ? taxableAccounts[0].name : 'Taxable Portfolio'}
+          title={d.taxableAccounts.length === 1 ? d.taxableAccounts[0].name : 'Taxable Portfolio'}
           isRetirement={false}
-          accounts={taxableAccounts}
-          positions={taxablePositions}
-          livePrices={livePrices}
-          pricesLoading={pricesLoading}
+          accounts={d.taxableAccounts}
+          positions={d.taxablePositions}
+          livePrices={d.livePrices}
+          pricesLoading={d.pricesLoading}
           readOnly={readOnly}
-          categoryColorMap={categoryColorMap}
-          onAddPurchase={(id) => { setAddDefaultAccountId(id); setShowAddModal(true); }}
-          onEditAccount={!readOnly ? (id) => openTaxableModal('edit', id) : undefined}
-          onDeleteAccount={!readOnly ? (id) => initiateTaxableDelete(id) : undefined}
+          categoryColorMap={d.categoryColorMap}
+          onAddPurchase={(id) => { d.setAddDefaultAccountId(id); d.setShowAddModal(true); }}
+          onEditAccount={!readOnly ? (id) => d.openTaxableModal('edit', id) : undefined}
+          onDeleteAccount={!readOnly ? (id) => d.initiateTaxableDelete(id) : undefined}
         />
       )}
 
       {/* ── Retirement Accounts ── */}
       <SectionHeader title="Retirement Accounts" />
-      {retirementAccounts.map((account) => (
+      {d.retirementAccounts.map((account) => (
         <RetirementAccountCard
           key={account.id}
           account={account}
-          currentBalance={retirementBalanceByAccount[account.id] ?? 0}
-          history={retirementHistoryByAccount[account.id] ?? []}
-          allReviews={allReviews}
-          currentReviewId={reviewIdNum}
+          currentBalance={d.retirementBalanceByAccount[account.id] ?? 0}
+          history={d.retirementHistoryByAccount[account.id] ?? []}
+          allReviews={d.allReviews}
+          currentReviewId={d.reviewIdNum}
           readOnly={readOnly}
-          isExpanded={expandedRetirementIds.has(account.id)}
-          onToggleExpand={toggleRetirementExpand}
-          onSaveBalance={saveRetirementBalance}
-          onAddHistoryRow={addRetirementHistoryRow}
-          onEdit={(id) => { setRetirementModalAccountId(id); setRetirementModalMode('edit'); }}
-          onDelete={(id) => setDeleteAccountId(id)}
+          isExpanded={d.expandedRetirementIds.has(account.id)}
+          onToggleExpand={d.toggleRetirementExpand}
+          onSaveBalance={d.saveRetirementBalance}
+          onAddHistoryRow={d.addRetirementHistoryRow}
+          onEdit={(id) => { d.setRetirementModalAccountId(id); d.setRetirementModalMode('edit'); }}
+          onDelete={(id) => d.setDeleteAccountId(id)}
         />
       ))}
 
-      {retirementAccounts.length === 0 && (
+      {d.retirementAccounts.length === 0 && (
         <p style={{ color: colors.textMuted, fontStyle: 'italic', marginBottom: spacing[3] }}>
           No retirement accounts yet. Add one below.
         </p>
@@ -500,53 +177,53 @@ export default function InvestmentsPage() {
 
       {!readOnly && (
         <Button
-          onClick={() => { setRetirementModalAccountId(null); setRetirementModalMode('add'); }}
+          onClick={() => { d.setRetirementModalAccountId(null); d.setRetirementModalMode('add'); }}
           style={{ marginTop: spacing[3] }}
         >
           + Add Retirement Account
         </Button>
       )}
 
-      {showAddModal && (
+      {d.showAddModal && (
         <AddPurchaseModal
-          accounts={accounts}
-          categories={invCategories}
-          defaultAccountId={addDefaultAccountId}
-          onClose={() => setShowAddModal(false)}
-          onAdded={handlePurchaseAdded}
+          accounts={d.accounts}
+          categories={d.invCategories}
+          defaultAccountId={d.addDefaultAccountId}
+          onClose={() => d.setShowAddModal(false)}
+          onAdded={d.handlePurchaseAdded}
         />
       )}
 
       <EditRetirementAccountModal
-        isOpen={retirementModalMode !== null}
-        onClose={() => { setRetirementModalMode(null); setRetirementModalAccountId(null); }}
-        onSubmit={handleSubmitRetirementAccount}
-        members={members}
-        initialValues={editingAccount}
-        mode={retirementModalMode ?? 'add'}
+        isOpen={d.retirementModalMode !== null}
+        onClose={() => { d.setRetirementModalMode(null); d.setRetirementModalAccountId(null); }}
+        onSubmit={d.handleSubmitRetirementAccount}
+        members={d.members}
+        initialValues={d.editingAccount}
+        mode={d.retirementModalMode ?? 'add'}
       />
 
       <ConfirmModal
-        isOpen={deleteAccountId !== null}
-        onClose={() => setDeleteAccountId(null)}
-        onConfirm={confirmDelete}
+        isOpen={d.deleteAccountId !== null}
+        onClose={() => d.setDeleteAccountId(null)}
+        onConfirm={d.confirmDelete}
         title="Delete Retirement Account"
         message="This will remove the account and all of its snapshots. This cannot be undone."
-        confirmLabel={deleting ? 'Deleting…' : 'Delete'}
+        confirmLabel={d.deleting ? 'Deleting…' : 'Delete'}
         confirmVariant="danger"
-        loading={deleting}
+        loading={d.deleting}
       />
 
       {/* Add / Edit Taxable Account Modal */}
       <Modal
-        isOpen={taxableModalMode !== null}
-        onClose={() => setTaxableModalMode(null)}
-        title={taxableModalMode === 'add' ? 'Add Investment Account' : 'Edit Investment Account'}
+        isOpen={d.taxableModalMode !== null}
+        onClose={() => d.setTaxableModalMode(null)}
+        title={d.taxableModalMode === 'add' ? 'Add Investment Account' : 'Edit Investment Account'}
         footer={
           <>
-            <Button variant="secondary" onClick={() => setTaxableModalMode(null)}>Cancel</Button>
-            <Button onClick={handleSubmitTaxableAccount} disabled={savingTaxable || !taxableAccForm.name.trim()}>
-              {savingTaxable ? 'Saving…' : taxableModalMode === 'add' ? 'Add Account' : 'Save Changes'}
+            <Button variant="secondary" onClick={() => d.setTaxableModalMode(null)}>Cancel</Button>
+            <Button onClick={d.handleSubmitTaxableAccount} disabled={d.savingTaxable || !d.taxableAccForm.name.trim()}>
+              {d.savingTaxable ? 'Saving…' : d.taxableModalMode === 'add' ? 'Add Account' : 'Save Changes'}
             </Button>
           </>
         }
@@ -554,27 +231,27 @@ export default function InvestmentsPage() {
         <FormGroup>
           <Label>Name *</Label>
           <Input
-            value={taxableAccForm.name}
-            onChange={(e) => setTaxableAccForm((f) => ({ ...f, name: e.target.value }))}
+            value={d.taxableAccForm.name}
+            onChange={(e) => d.setTaxableAccForm((f) => ({ ...f, name: e.target.value }))}
             placeholder="e.g. Fidelity Brokerage"
           />
         </FormGroup>
         <FormGroup>
           <Label>Institution</Label>
           <Input
-            value={taxableAccForm.institution}
-            onChange={(e) => setTaxableAccForm((f) => ({ ...f, institution: e.target.value }))}
+            value={d.taxableAccForm.institution}
+            onChange={(e) => d.setTaxableAccForm((f) => ({ ...f, institution: e.target.value }))}
             placeholder="e.g. Fidelity"
           />
         </FormGroup>
         <FormGroup>
           <Label>Owner</Label>
           <Select
-            value={taxableAccForm.ownerMemberId ?? ''}
-            onChange={(e) => setTaxableAccForm((f) => ({ ...f, ownerMemberId: e.target.value ? Number(e.target.value) : null }))}
+            value={d.taxableAccForm.ownerMemberId ?? ''}
+            onChange={(e) => d.setTaxableAccForm((f) => ({ ...f, ownerMemberId: e.target.value ? Number(e.target.value) : null }))}
           >
             <option value="">— unassigned —</option>
-            {members.map((m) => (
+            {d.members.map((m) => (
               <option key={m.id} value={m.id}>{m.name}</option>
             ))}
           </Select>
@@ -582,43 +259,43 @@ export default function InvestmentsPage() {
       </Modal>
 
       {/* Delete Taxable Account Confirm */}
-      {deleteTaxableId !== null && (
+      {d.deleteTaxableId !== null && (
         <Modal
           isOpen
-          onClose={() => setDeleteTaxableId(null)}
+          onClose={() => d.setDeleteTaxableId(null)}
           title="Delete Investment Account"
           footer={
             <>
-              <Button variant="secondary" onClick={() => setDeleteTaxableId(null)}>Cancel</Button>
+              <Button variant="secondary" onClick={() => d.setDeleteTaxableId(null)}>Cancel</Button>
               <Button
                 variant="danger"
-                onClick={confirmTaxableDelete}
-                disabled={deletingTaxable || (taxableDeletePurchaseCount > 0 && taxableTransferToId == null)}
+                onClick={d.confirmTaxableDelete}
+                disabled={d.deletingTaxable || (d.taxableDeletePurchaseCount > 0 && d.taxableTransferToId == null)}
               >
-                {deletingTaxable ? 'Deleting…' : 'Delete Account'}
+                {d.deletingTaxable ? 'Deleting…' : 'Delete Account'}
               </Button>
             </>
           }
         >
-          {taxableDeletePurchaseCount > 0 ? (
+          {d.taxableDeletePurchaseCount > 0 ? (
             <>
               <p style={{ marginBottom: spacing[4] }}>
-                This account has <strong>{taxableDeletePurchaseCount} purchase lot{taxableDeletePurchaseCount !== 1 ? 's' : ''}</strong>.
+                This account has <strong>{d.taxableDeletePurchaseCount} purchase lot{d.taxableDeletePurchaseCount !== 1 ? 's' : ''}</strong>.
                 Transfer them to another account before deleting.
               </p>
               <FormGroup>
                 <Label>Transfer purchases to *</Label>
                 <Select
-                  value={taxableTransferToId ?? ''}
-                  onChange={(e) => setTaxableTransferToId(e.target.value ? Number(e.target.value) : null)}
+                  value={d.taxableTransferToId ?? ''}
+                  onChange={(e) => d.setTaxableTransferToId(e.target.value ? Number(e.target.value) : null)}
                 >
                   <option value="">— select an account —</option>
-                  {taxableTransferOptions.map((a) => (
+                  {d.taxableTransferOptions.map((a) => (
                     <option key={a.id} value={a.id}>{a.name}</option>
                   ))}
                 </Select>
               </FormGroup>
-              {taxableTransferOptions.length === 0 && (
+              {d.taxableTransferOptions.length === 0 && (
                 <p style={{ fontSize: font.size.sm, color: colors.danger, marginTop: spacing[2] }}>
                   No other accounts available. Add another account first.
                 </p>

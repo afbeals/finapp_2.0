@@ -92,7 +92,7 @@ export default function FinalizePage() {
   if (isComplete) {
     const period = activeReview ? `${MONTH_NAMES_LONG[activeReview.periodMonth - 1]} ${activeReview.periodYear}` : '';
     return (
-      <StepShell title="Finalize" stepName="Finalize" onBack={goBack} onNext={() => router.push('/dashboard')} nextLabel="Back to Dashboard" readOnly>
+      <StepShell title="Finalize" onNext={() => router.push('/dashboard')} nextLabel="Back to Dashboard" readOnly>
         <CompleteBox>
           <CompleteIcon>✅</CompleteIcon>
           <h2 style={{ fontSize: font.size['3xl'], fontWeight: 700, marginBottom: spacing[2] }}>Review Complete</h2>
@@ -107,8 +107,6 @@ export default function FinalizePage() {
     <StepShell
       title={STEP_META.finalize.title}
       subtitle={STEP_META.finalize.subtitle}
-      stepName="Finalize"
-      onBack={goBack}
       onNext={handleComplete}
       nextLabel={completing ? 'Completing…' : 'Complete Review ✓'}
       saving={completing || saving}

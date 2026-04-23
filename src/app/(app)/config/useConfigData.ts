@@ -5,9 +5,8 @@ import {
   getMembers,
   getExpenseCategories,
   getInvestmentCategories,
-  getInvestmentAccounts,
 } from '@/lib/api';
-import type { ExpenseCategory, InvestmentCategory, InvestmentAccount, Member } from '@/types/entities';
+import type { ExpenseCategory, InvestmentCategory, Member } from '@/types/entities';
 
 interface MemberWithEmail extends Member { email: string | null }
 
@@ -17,19 +16,16 @@ interface ConfigData {
   members: MemberWithEmail[];
   expenseCategories: ExpenseCategory[];
   invCategories: InvCategory[];
-  accounts: InvestmentAccount[];
   loading: boolean;
   setMembers: React.Dispatch<React.SetStateAction<MemberWithEmail[]>>;
   setExpenseCategories: React.Dispatch<React.SetStateAction<ExpenseCategory[]>>;
   setInvCategories: React.Dispatch<React.SetStateAction<InvCategory[]>>;
-  setAccounts: React.Dispatch<React.SetStateAction<InvestmentAccount[]>>;
 }
 
 export function useConfigData(): ConfigData {
   const [members, setMembers] = useState<MemberWithEmail[]>([]);
   const [expenseCategories, setExpenseCategories] = useState<ExpenseCategory[]>([]);
   const [invCategories, setInvCategories] = useState<InvCategory[]>([]);
-  const [accounts, setAccounts] = useState<InvestmentAccount[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -37,12 +33,10 @@ export function useConfigData(): ConfigData {
       getMembers(),
       getExpenseCategories(),
       getInvestmentCategories(),
-      getInvestmentAccounts(),
-    ]).then(([m, c, ic, a]) => {
+    ]).then(([m, c, ic]) => {
       setMembers((m.members ?? []) as MemberWithEmail[]);
       setExpenseCategories(c.categories ?? []);
       setInvCategories(ic.categories ?? []);
-      setAccounts(a.accounts ?? []);
     }).finally(() => setLoading(false));
   }, []);
 
@@ -50,11 +44,9 @@ export function useConfigData(): ConfigData {
     members,
     expenseCategories,
     invCategories,
-    accounts,
     loading,
     setMembers,
     setExpenseCategories,
     setInvCategories,
-    setAccounts,
   };
 }

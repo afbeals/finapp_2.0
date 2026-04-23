@@ -27,7 +27,7 @@ export default function SavingsPage() {
   const params = useParams();
   const reviewId = params.id as string;
   const { state: reviewState } = useReviewStore();
-  const { goNext, goBack, goSkip, saving } = useStepNav('savings');
+  const { goNext, saving } = useStepNav('savings');
   const readOnly = reviewState.activeReview?.status === 'COMPLETE' && !reviewState.isEditMode;
 
   const [accounts, setAccounts] = useState<SavingsAccount[]>([]);
@@ -168,9 +168,6 @@ export default function SavingsPage() {
     <StepShell
       title={STEP_META.savings.title}
       subtitle={STEP_META.savings.subtitle}
-      stepName="Savings"
-      onBack={goBack}
-      onSkip={goSkip}
       onNext={goNext}
       saving={saving}
       readOnly={readOnly}

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo, useCallback } from 'react';
 import { useParams } from 'next/navigation';
 import { StepShell } from '@/components/review/StepShell';
 import { STEP_META } from '@/components/review/stepMetadata';
@@ -37,7 +37,7 @@ export default function MonthlySummaryPage() {
   const params = useParams();
   const reviewId = params.id as string;
   const { state: reviewState } = useReviewStore();
-  const { goNext, goBack, goSkip, saving } = useStepNav('monthly');
+  const { goNext, saving } = useStepNav('monthly');
   const readOnly = reviewState.activeReview?.status === 'COMPLETE' && !reviewState.isEditMode;
 
   const [income, setIncome] = useState<IncomeEntry[]>([]);
@@ -73,7 +73,7 @@ export default function MonthlySummaryPage() {
     }).catch(() => setLoadError(true)).finally(() => setLoading(false));
   }, [reviewId]);
 
-  function getCategoryTrend(categoryId: number): { dir: 'up' | 'down' | 'stable'; pct: number } | null {
+  const getCategoryTrend = useCallback((categoryId: number): { dir: 'up' | 'down' | 'stable'; pct: number } | null => {
     const currentReviewId = Number(reviewId);
     const sorted = [...categoryHistory].sort((a, b) =>
       a.periodYear !== b.periodYear ? a.periodYear - b.periodYear : a.periodMonth - b.periodMonth
@@ -86,43 +86,50 @@ export default function MonthlySummaryPage() {
     const pct = Math.round(((curr - prev) / prev) * 100);
     if (Math.abs(pct) < 2) return { dir: 'stable', pct: 0 };
     return { dir: pct > 0 ? 'up' : 'down', pct };
-  }
+  }, [categoryHistory, reviewId]);
 
-  const totalIncome = income.reduce((s, e) => s + e.amount, 0);
-  const totalExpenses = expenses.reduce((s, e) => s + e.amount, 0);
+  const totalIncome = useMemo(() => income.reduce((s, e) => s + e.amount, 0), [income]);
+  const totalExpenses = useMemo(() => expenses.reduce((s, e) => s + e.amount, 0), [expenses]);
   const netFlow = totalIncome - totalExpenses;
   const savingsRate = totalIncome > 0 ? netFlow / totalIncome : 0;
 
-  const completedReviews = allReviews.filter((r) => r.totalIncome > 0 || r.totalExpenses > 0);
+  const completedReviews = useMemo(
+    () => allReviews.filter((r) => r.totalIncome > 0 || r.totalExpenses > 0),
+    [allReviews],
+  );
   const monthsCount = completedReviews.length || 1;
-  const totalIncomeAll = completedReviews.reduce((s, r) => s + r.totalIncome, 0);
-  const totalExpensesAll = completedReviews.reduce((s, r) => s + r.totalExpenses, 0);
+  const totalIncomeAll = useMemo(() => completedReviews.reduce((s, r) => s + r.totalIncome, 0), [completedReviews]);
+  const totalExpensesAll = useMemo(() => completedReviews.reduce((s, r) => s + r.totalExpenses, 0), [completedReviews]);
   const avgExpenses = totalExpensesAll / monthsCount;
   const avgNet = (totalIncomeAll - totalExpensesAll) / monthsCount;
   const annualPace = avgNet * 12;
 
-  const trendData = completedReviews.map((r) => ({
+  const trendData = useMemo(() => completedReviews.map((r) => ({
     month: MONTH_NAMES_SHORT[r.periodMonth - 1],
     income: r.totalIncome / 100,
     expenses: r.totalExpenses / 100,
     net: (r.totalIncome - r.totalExpenses) / 100,
-  }));
+  })), [completedReviews]);
 
-  // Group expenses by category, keeping line items
-  const byCategory = expenses.reduce<Record<number, { category: Category; total: number; items: ExpenseEntry[] }>>((acc, e) => {
-    const cid = e.category.id;
-    if (!acc[cid]) acc[cid] = { category: e.category, total: 0, items: [] };
-    acc[cid].total += e.amount;
-    acc[cid].items.push(e);
-    return acc;
-  }, {});
-  const categoryTotals = Object.values(byCategory).sort((a, b) => b.total - a.total);
+  const categoryTotals = useMemo(() => {
+    const byCategory = expenses.reduce<Record<number, { category: Category; total: number; items: ExpenseEntry[] }>>((acc, e) => {
+      const cid = e.category.id;
+      if (!acc[cid]) acc[cid] = { category: e.category, total: 0, items: [] };
+      acc[cid].total += e.amount;
+      acc[cid].items.push(e);
+      return acc;
+    }, {});
+    return Object.values(byCategory).sort((a, b) => b.total - a.total);
+  }, [expenses]);
 
-  const selectedReviews = allReviews.filter((r) => selectedMonths.includes(r.id));
+  const selectedReviews = useMemo(
+    () => allReviews.filter((r) => selectedMonths.includes(r.id)),
+    [allReviews, selectedMonths],
+  );
 
-  function toggleMonth(id: number) {
+  const toggleMonth = useCallback((id: number) => {
     setSelectedMonths((prev) => prev.includes(id) ? prev.filter((m) => m !== id) : [...prev, id]);
-  }
+  }, []);
 
   if (loading) return <LoadingState centered />;
   if (loadError) return <ErrorState centered message="Couldn't load monthly summary — please refresh." />;
@@ -133,9 +140,6 @@ export default function MonthlySummaryPage() {
     <StepShell
       title={STEP_META.monthly.title}
       subtitle={STEP_META.monthly.subtitle}
-      stepName="Monthly Summary"
-      onBack={goBack}
-      onSkip={goSkip}
       onNext={goNext}
       saving={saving}
       readOnly={readOnly}

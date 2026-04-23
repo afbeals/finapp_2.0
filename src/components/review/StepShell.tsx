@@ -10,10 +10,7 @@ const { spacing } = theme;
 interface StepShellProps {
   title: string;
   subtitle?: string;
-  stepName: string;
   children: React.ReactNode;
-  onBack?: () => void;
-  onSkip?: () => void;
   onNext: () => void;
   nextLabel?: string;
   saving?: boolean;
@@ -24,10 +21,7 @@ interface StepShellProps {
 export function StepShell({
   title,
   subtitle,
-  stepName: _stepName,
   children,
-  onBack: _onBack,
-  onSkip: _onSkip,
   onNext,
   nextLabel = 'Next Step →',
   saving = false,

@@ -43,6 +43,32 @@ Select **Allan** or **Malia**, enter PIN **1234**.
 
 ---
 
+## Production Database Setup
+
+`data/prod.db` holds real financial data and is seeded separately from the dev database. Run this **once** (or whenever you need to rebuild from the baseline):
+
+```bash
+DATABASE_URL="file:../data/prod.db" yarn db:import-prod
+```
+
+The script will:
+1. Back up any existing `prod.db` to `data/backups/`
+2. Apply pending migrations
+3. Prompt for household name, PIN, emails, and a few account details
+4. Import all 2026 historical data (Jan–Mar reviews, savings accounts, loans, investments, vaults)
+
+All sheet data is baked into `scripts/lib/sheet-data.ts` — no internet connection required.
+
+To run the app against the production database:
+
+```bash
+DATABASE_URL="file:../data/prod.db" yarn dev
+```
+
+> `dev.db` (demo/seed data) and `prod.db` (real data) are completely independent — switching between them is just a matter of which `DATABASE_URL` you use.
+
+---
+
 ## Environment Variables
 
 ```bash

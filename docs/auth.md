@@ -66,17 +66,31 @@ GET /api/auth/logout
 
 ## How to Reset the PIN
 
-**Option 1 — Prisma Studio (easiest)**
+### Production database (`prod.db`)
+
+**Step 1 — Generate a new hash:**
+```bash
+node -e "const b=require('bcryptjs'); console.log(b.hashSync('YOUR_NEW_PIN', 10))"
+```
+
+**Step 2 — Open Prisma Studio pointed at prod.db:**
+```bash
+DATABASE_URL="file:../data/prod.db" yarn db:studio
+```
+Navigate to **Household** → click the record → paste the new hash into `pinHash` → **Save**.
+
+### Development database (`dev.db`)
+
+**Option 1 — Prisma Studio**
 
 ```bash
 yarn db:studio
-# Open: Household → select record
-# Generate a new hash:
-node -e "const b=require('bcryptjs'); console.log(b.hashSync('YOUR_NEW_PIN',10))"
-# Paste the hash into the pinHash field → Save
+# Household → select record → edit pinHash → Save
+# Generate hash with:
+node -e "const b=require('bcryptjs'); console.log(b.hashSync('YOUR_NEW_PIN', 10))"
 ```
 
-**Option 2 — Seed script**
+**Option 2 — Seed script** (wipes all demo data)
 
 Edit `prisma/seed.ts` and change the PIN constant at the top:
 
@@ -84,7 +98,7 @@ Edit `prisma/seed.ts` and change the PIN constant at the top:
 const HOUSEHOLD_PIN = '1234'; // ← change this
 ```
 
-Then re-seed (this wipes all data):
+Then re-seed:
 
 ```bash
 yarn db:reset
@@ -95,10 +109,8 @@ yarn db:reset
 ```bash
 # Generate hash
 node -e "const b=require('bcryptjs'); console.log(b.hashSync('5678',10))"
-# Opens SQLite shell
-sqlite3 data/dev.db
-UPDATE Household SET pinHash = '$2a$10$...' WHERE id = 1;
-.quit
+# Then update the DB:
+sqlite3 data/dev.db "UPDATE Household SET pinHash = '\$2a\$10\$...' WHERE id = 1;"
 ```
 
 ---

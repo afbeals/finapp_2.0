@@ -6,6 +6,7 @@ Welcome! This directory contains everything you need to understand and contribut
 
 | File | What it covers |
 |------|---------------|
+| [setup.md](./setup.md) | **New computer setup** — full first-run guide, PIN/member management, backups |
 | [architecture.md](./architecture.md) | System overview, directory structure, data flow diagrams |
 | [database.md](./database.md) | Prisma schema, all models, relationships, Prisma CLI commands |
 | [auth.md](./auth.md) | PIN login, sessions, how to reset a PIN |
@@ -14,9 +15,17 @@ Welcome! This directory contains everything you need to understand and contribut
 | [review-workflow.md](./review-workflow.md) | Multi-step review wizard, step lifecycle |
 | [styling.md](./styling.md) | Styled-components, theme tokens, co-located styles pattern |
 | [testing.md](./testing.md) | Running tests, test environments, writing new tests |
-| [development.md](./development.md) | Local setup, environment variables, scripts, common tasks |
+| [development.md](./development.md) | Local dev setup, environment variables, scripts, common tasks |
 
-## Quick Start (< 5 minutes)
+## New computer? Start here
+
+See **[setup.md](./setup.md)** for the complete first-run guide covering:
+- Installing Node and dependencies
+- Configuring `.env.production` with a secure session secret
+- Running `yarn db:import-prod` to initialize the production database
+- Changing the PIN, adding members, and backing up data
+
+## Developer quick start (demo data)
 
 ```bash
 # 1. Ensure Node >= 22.12

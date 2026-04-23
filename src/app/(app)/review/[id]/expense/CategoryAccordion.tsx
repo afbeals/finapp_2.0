@@ -86,7 +86,7 @@ export const CategoryAccordion = React.memo(function CategoryAccordion({
                   <EntryTd>
                     {e.member
                       ? <MemberBadge memberColor={e.member.color}>{e.member.name}</MemberBadge>
-                      : <span style={{ color: colors.textMuted, fontSize: font.size.xs }}>—</span>}
+                      : <MemberBadge memberColor={colors.textMuted}>Shared</MemberBadge>}
                   </EntryTd>
                   <EntryTd><EditableCell value={e.notes ?? ''} readOnly={readOnly} onSave={(v) => onUpdate(e.id, 'notes', v)} /></EntryTd>
                   <EntryTd>{!readOnly && <TrashBtn onClick={() => onDelete(e.id)}>🗑</TrashBtn>}</EntryTd>

@@ -76,9 +76,10 @@ export const RetirementAccountCard = React.memo(function RetirementAccountCard({
           <SubRow>
             <TypeBadge>{accountTypeLabel(account.type)}</TypeBadge>
             {account.institution && <SubText>{account.institution}</SubText>}
-            {account.owner && (
-              <OwnerChip chipColor={account.owner.color}>{account.owner.name}</OwnerChip>
-            )}
+            {account.owner
+              ? <OwnerChip chipColor={account.owner.color}>{account.owner.name}</OwnerChip>
+              : <OwnerChip chipColor="#94A3B8">Shared</OwnerChip>
+            }
           </SubRow>
         </TitleCol>
 

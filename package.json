@@ -17,6 +17,7 @@
     "db:studio": "prisma studio",
     "db:deploy": "prisma migrate deploy",
     "db:backup": "mkdir -p data/backups && cp data/prod.db data/backups/prod-$(date +%Y-%m-%d-%H%M).db",
+    "db:import-prod": "tsx scripts/import-prod-baseline.ts",
     "test": "vitest",
     "test:ci": "vitest run",
     "test:ui": "vitest --ui",

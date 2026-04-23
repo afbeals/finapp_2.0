@@ -34,6 +34,14 @@ export const SubtotalBadge = styled.span.withConfig({ shouldForwardProp: (p) => 
   padding: 3px 10px; border-radius: ${radius.full};
 `;
 
+export const DeleteCategoryBtn = styled.button`
+  display: flex; align-items: center; justify-content: center;
+  width: 24px; height: 24px; border: none; border-radius: ${radius.sm};
+  background: transparent; color: ${colors.textMuted}; cursor: pointer;
+  font-size: 14px; opacity: 0.5; flex-shrink: 0;
+  &:hover { background: ${colors.dangerLight}; color: ${colors.danger}; opacity: 1; }
+`;
+
 export const AddRowBtn = styled.button`
   display: flex; align-items: center; gap: 5px;
   margin: 10px 18px; padding: 5px 12px;

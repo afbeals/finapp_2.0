@@ -9,7 +9,7 @@ import type { Vault, Member } from '@/types/entities';
 import { TrashBtn } from '@/components/shared/TrashBtn';
 import {
   SectionWrap, SectionHeaderRow, Chevron, LabelGroup, SectionLabel, SubtotalBadge,
-  AddRowBtn, TableWrap, FTable, FThead, FTh, FTr, FTd,
+  DeleteCategoryBtn, AddRowBtn, TableWrap, FTable, FThead, FTh, FTr, FTd,
   RawNameCell, CellSelect, NumInput, OrderInput, DueInput, OwnerBadge,
 } from './FixedSection.styles';
 import { EditCell } from './EditCell';
@@ -33,10 +33,11 @@ export interface FixedSectionProps {
   onUpdate: (id: number, patch: Partial<Vault>, save?: boolean) => void;
   onDelete: (id: number) => void;
   onAdd: (category: string) => void;
+  onDeleteCategory?: (category: string) => void;
   onGroupOrderChange?: (category: string, groupOrder: number) => void;
 }
 
-export function FixedSection({ category, groupOrder, vaults, members, readOnly, onUpdate, onDelete, onAdd, onGroupOrderChange }: FixedSectionProps) {
+export function FixedSection({ category, groupOrder, vaults, members, readOnly, onUpdate, onDelete, onAdd, onDeleteCategory, onGroupOrderChange }: FixedSectionProps) {
   const [open, setOpen] = useState(true);
   const pal = CAT_COLORS[category] ?? { bg: semanticColors.surfaceMuted, border: colors.border, header: colors.bg, text: semanticColors.neutralText, subtext: colors.textMuted };
   const subtotal = vaults.reduce((s, v) => s + monthlyAmount(v), 0);
@@ -61,6 +62,15 @@ export function FixedSection({ category, groupOrder, vaults, members, readOnly, 
           )}
         </LabelGroup>
         <SubtotalBadge bg={pal.bg} textColor={pal.text}>Subtotal: {formatDollars(subtotal)}</SubtotalBadge>
+        {!readOnly && onDeleteCategory && (
+          <DeleteCategoryBtn
+            type="button"
+            title={`Delete ${category} vault`}
+            onClick={(e) => { e.stopPropagation(); onDeleteCategory(category); }}
+          >
+            🗑
+          </DeleteCategoryBtn>
+        )}
       </SectionHeaderRow>
 
       {open && (

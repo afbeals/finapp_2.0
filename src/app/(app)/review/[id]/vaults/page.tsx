@@ -13,6 +13,8 @@ const { colors, semanticColors, font, spacing } = theme;
 import { LoadingState } from '@/components/shared/LoadingState';
 import { TrashBtn } from '@/components/shared/TrashBtn';
 import { InlineEdit } from '@/components/shared/InlineEdit';
+import { Modal } from '@/components/ui/Modal';
+import { Button } from '@/components/ui/Button';
 import {
   SectionTitle, SummaryBar, SummaryTotal, SummaryTotalLabel, SummaryTotalValue, SummaryDivider,
   CatChip, CatChipLabel, CatChipVal, AddRowBtn, TableWrap, FTable, FThead, FTh,
@@ -47,6 +49,7 @@ export default function VaultsPage() {
   const [treasuryPcts, setTreasuryPcts] = useState<Record<number, number>>({});
   const [groupOrderOverrides, setGroupOrderOverrides] = useState<Record<string, number>>({});
   const [newFixedCategory, setNewFixedCategory] = useState<string>('');
+  const [deleteCategoryName, setDeleteCategoryName] = useState<string | null>(null);
 
   useEffect(() => {
     Promise.all([
@@ -77,6 +80,13 @@ export default function VaultsPage() {
   async function handleDeleteVault(id: number) {
     setVaults((prev) => prev.filter((v) => v.id !== id));
     await deleteVault(id);
+  }
+
+  async function handleDeleteCategory(category: string) {
+    const toDelete = vaults.filter((v) => v.type === 'FIXED' && v.category === category);
+    setVaults((prev) => prev.filter((v) => !(v.type === 'FIXED' && v.category === category)));
+    setDeleteCategoryName(null);
+    await Promise.all(toDelete.map((v) => deleteVault(v.id)));
   }
 
   async function handleAddVault(type: 'FIXED' | 'VARIABLE', category: string) {
@@ -226,6 +236,7 @@ export default function VaultsPage() {
             onUpdate={patchVault}
             onDelete={handleDeleteVault}
             onAdd={(category) => handleAddVault('FIXED', category)}
+            onDeleteCategory={(category) => setDeleteCategoryName(category)}
             onGroupOrderChange={handleGroupOrderChange}
           />
         );
@@ -233,23 +244,54 @@ export default function VaultsPage() {
 
       {!readOnly && (
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, margin: '10px 18px' }}>
-          <select
-            value={newFixedCategory || (allCategories[0] ?? CAT_ORDER[0])}
+          <input
+            type="text"
+            placeholder="New vault name (e.g. Health)"
+            value={newFixedCategory}
             onChange={(e) => setNewFixedCategory(e.target.value)}
-            style={{ height: 30, padding: '0 8px', border: `1px solid ${colors.border}`, borderRadius: 6, fontSize: 13, color: colors.textPrimary, background: colors.surface }}
-          >
-            {allCategories.map((c) => <option key={c} value={c}>{c}</option>)}
-            {CAT_ORDER.filter((c) => !allCategories.includes(c)).map((c) => (
-              <option key={c} value={c}>{c} (new)</option>
-            ))}
-          </select>
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && newFixedCategory.trim()) {
+                handleAddVault('FIXED', newFixedCategory.trim());
+                setNewFixedCategory('');
+              }
+            }}
+            style={{ height: 30, padding: '0 8px', border: `1px solid ${colors.border}`, borderRadius: 6, fontSize: 13, color: colors.textPrimary, background: colors.surface, width: 220 }}
+          />
           <AddRowBtn
             style={{ margin: 0 }}
-            onClick={() => handleAddVault('FIXED', (newFixedCategory || allCategories[0]) ?? CAT_ORDER[0])}
+            onClick={() => {
+              const name = newFixedCategory.trim() || `Vault ${allCategories.length + 1}`;
+              handleAddVault('FIXED', name);
+              setNewFixedCategory('');
+            }}
           >
-            + Add fixed vault
+            + Add vault
           </AddRowBtn>
         </div>
+      )}
+
+      {/* ── Delete category confirmation modal ── */}
+      {deleteCategoryName !== null && (
+        <Modal
+          isOpen
+          onClose={() => setDeleteCategoryName(null)}
+          title={`Delete "${deleteCategoryName}" vault?`}
+          footer={
+            <>
+              <Button variant="secondary" onClick={() => setDeleteCategoryName(null)}>Cancel</Button>
+              <Button variant="danger" onClick={() => handleDeleteCategory(deleteCategoryName)}>
+                Delete vault &amp; all rows
+              </Button>
+            </>
+          }
+        >
+          <p style={{ fontSize: font.size.base, color: colors.textSecondary, lineHeight: 1.6 }}>
+            This will permanently delete the <strong>{deleteCategoryName}</strong> vault and all{' '}
+            <strong>{(fixedByCategory[deleteCategoryName] ?? []).length}</strong> row
+            {(fixedByCategory[deleteCategoryName] ?? []).length !== 1 ? 's' : ''} inside it.
+            This cannot be undone.
+          </p>
+        </Modal>
       )}
 
       {/* ── Treasury Distribution ── */}

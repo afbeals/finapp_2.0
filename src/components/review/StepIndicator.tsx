@@ -11,6 +11,7 @@ import {
 } from './StepIndicator.styles';
 import { MONTH_NAMES_SHORT } from '@/lib/fire';
 import { useReviewStore } from '@/lib/store';
+import { reviewProgress } from '@/lib/reviewProgress';
 import { SkipStepModal } from '@/components/modals/SkipStepModal';
 import { useStepNav } from '@/lib/useStepNav';
 
@@ -50,9 +51,7 @@ export function StepIndicator() {
   });
 
   const currentIndex = steps.indexOf(activeReview.currentStep);
-  const doneCount = stepObjects.filter((s) => s.status !== 'PENDING').length;
-  const pct = Math.round((doneCount / steps.length) * 100);
-  const stepNum = currentIndex >= 0 ? currentIndex + 1 : doneCount + 1;
+  const { stepNum, total: stepTotal, pct } = reviewProgress(activeReview.steps, activeReview.currentStep);
   const periodLabel = `${MONTH_NAMES_SHORT[activeReview.periodMonth - 1]} ${activeReview.periodYear} ${activeReview.type === 'QUARTERLY' ? 'Quarterly' : 'Monthly'} Review Progress`;
 
   async function handleClick(key: string, idx: number) {
@@ -72,7 +71,7 @@ export function StepIndicator() {
       <Inner>
         <TitleRow>
           <ProgressTitle>{periodLabel}</ProgressTitle>
-          <ProgressCounter>Step {stepNum} of {steps.length} · {pct}%</ProgressCounter>
+          <ProgressCounter>Step {stepNum} of {stepTotal} · {pct}%</ProgressCounter>
         </TitleRow>
 
         <ContentRow>

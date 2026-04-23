@@ -19,6 +19,7 @@ import { NewReviewModal } from '@/components/modals/NewReviewModal';
 import { ProgressBar } from '@/components/ui/ProgressBar';
 import { useReviewStore, useSessionStore } from '@/lib/store';
 import type { ReviewStep } from '@/lib/store';
+import { reviewProgress } from '@/lib/reviewProgress';
 import { formatDollars } from '@/lib/money';
 import { apiGet } from '@/lib/api';
 import { MONTH_NAMES_SHORT, MONTH_NAMES_LONG } from '@/lib/fire';
@@ -122,11 +123,7 @@ export default function DashboardPage() {
             </ReviewTitle>
             <div style={{ marginBottom: spacing[4] }}>
               {(() => {
-                const done = activeReview.steps.filter((s) => s.status !== 'PENDING').length;
-                const total = activeReview.steps.length;
-                const pct = Math.round((done / total) * 100);
-                const currentIdx = activeReview.steps.findIndex((s) => s.stepKey === activeReview.currentStep);
-                const stepNum = currentIdx >= 0 ? currentIdx + 1 : done + 1;
+                const { stepNum, total, pct } = reviewProgress(activeReview.steps, activeReview.currentStep);
                 return (
                   <>
                     <ProgressBar value={pct} color={colors.primary} />

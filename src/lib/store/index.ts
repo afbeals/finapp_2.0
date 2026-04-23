@@ -1,6 +1,5 @@
 'use client';
 
-import { setAutoFreeze } from 'immer';
 import { create } from 'zustand';
 import { devtools, subscribeWithSelector } from 'zustand/middleware';
 import { immer } from 'zustand/middleware/immer';
@@ -8,9 +7,6 @@ import { immer } from 'zustand/middleware/immer';
 import { createReviewSlice } from './reviewSlice';
 import { createSessionSlice } from './sessionSlice';
 import type { GlobalStore } from './types';
-
-// Prevent immer from deep-freezing state objects, which breaks direct mutations in actions
-setAutoFreeze(false);
 
 export const useStore = create<GlobalStore>()(
   immer(

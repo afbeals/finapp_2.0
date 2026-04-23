@@ -25,9 +25,6 @@ describe('InvestmentsConfigSection', () => {
   const defaultProps = {
     invCategories: [],
     setInvCategories: vi.fn(),
-    accounts: [],
-    setAccounts: vi.fn(),
-    members: [],
   };
 
   it('renders the "Investments" section heading', () => {

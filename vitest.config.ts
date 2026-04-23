@@ -29,19 +29,16 @@ export default defineConfig({
         },
         resolve: { alias },
       },
-      // jsdom environment: component smoke tests
+      // happy-dom environment: component smoke tests
       {
         plugins: [react()],
         test: {
-          name: 'jsdom',
+          name: 'happy-dom',
           globals: true,
-          environment: 'jsdom',
+          environment: 'happy-dom',
           setupFiles: ['./tests/setup.ts'],
           include: [
-            'src/app/(app)/config/__tests__/MembersSection.test.tsx',
-            'src/app/(app)/config/__tests__/ExpenseCategoriesSection.test.tsx',
-            'src/app/(app)/config/__tests__/InvestmentsConfigSection.test.tsx',
-            'src/app/(app)/review/**/__tests__/**/*.test.{ts,tsx}',
+            'src/app/**/__tests__/**/*.test.{ts,tsx}',
           ],
           env,
         },

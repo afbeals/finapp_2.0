@@ -39,6 +39,7 @@ export default function FinalizePage() {
   const [savings, setSavings] = useState(0);
   const [portfolio, setPortfolio] = useState(0);
   const [completing, setCompleting] = useState(false);
+  const [completeError, setCompleteError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -57,11 +58,23 @@ export default function FinalizePage() {
 
   async function handleComplete() {
     setCompleting(true);
-    await apiPatch(`/api/reviews/${reviewId}/steps/finalize`, { status: 'COMPLETE' }).catch(() => null);
-    const data = await apiPatch<{ review: typeof reviewState.activeReview }>(`/api/reviews/${reviewId}`, { status: 'COMPLETE', currentStep: 'finalize' });
-    actions.setActiveReview(data.review);
-    setCompleting(false);
-    router.push('/dashboard');
+    setCompleteError(null);
+    try {
+      await apiPatch(`/api/reviews/${reviewId}/steps/finalize`, { status: 'COMPLETE' });
+    } catch {
+      setCompleteError("Couldn't finalize — try again");
+      setCompleting(false);
+      return;
+    }
+    try {
+      const data = await apiPatch<{ review: typeof reviewState.activeReview }>(`/api/reviews/${reviewId}`, { status: 'COMPLETE', currentStep: 'finalize' });
+      actions.setActiveReview(data.review);
+      router.push('/dashboard');
+    } catch {
+      setCompleteError("Couldn't finalize — try again");
+    } finally {
+      setCompleting(false);
+    }
   }
 
   const activeReview = reviewState.activeReview;
@@ -118,6 +131,12 @@ export default function FinalizePage() {
           <Value>{formatDollars(savings)}</Value>
         </SummaryCard>
       </SummaryGrid>
+
+      {completeError && (
+        <p style={{ color: colors.danger, marginBottom: spacing[4], fontWeight: font.weight.medium }}>
+          ⚠ {completeError}
+        </p>
+      )}
 
       <Card padding="md" style={{ marginBottom: spacing[6] }}>
         <CardTitle style={{ marginBottom: spacing[4] }}>Step Completion</CardTitle>

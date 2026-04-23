@@ -73,11 +73,15 @@ export function useStepNav(currentKey: string) {
   const goBack = useCallback(async () => {
     if (prevKey) {
       actions.setCurrentStep(prevKey);
-      await fetch(`/api/reviews/${reviewId}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ currentStep: prevKey }),
-      }).catch(() => null);
+      try {
+        await fetch(`/api/reviews/${reviewId}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ currentStep: prevKey }),
+        });
+      } catch (e) {
+        console.error('Failed to update currentStep on goBack:', e);
+      }
       router.push(`/review/${reviewId}/${prevKey}`);
     } else {
       router.push('/dashboard');

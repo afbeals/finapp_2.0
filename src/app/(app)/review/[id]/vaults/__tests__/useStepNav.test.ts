@@ -44,20 +44,18 @@ describe('useStepNav', () => {
       const { result } = renderHook(() => useStepNav('expense'));
       await act(() => result.current.goNext());
 
+      const calls = mockFetch.mock.calls as unknown as [string, RequestInit][];
+
       // Should PATCH the step status
-      const stepCall = mockFetch.mock.calls.find((c) =>
-        (c[0] as string).includes('/steps/expense')
-      );
+      const stepCall = calls.find((c) => c[0].includes('/steps/expense'));
       expect(stepCall).toBeTruthy();
-      const stepBody = JSON.parse((stepCall![1] as RequestInit).body as string);
+      const stepBody = JSON.parse(stepCall![1].body as string);
       expect(stepBody.status).toBe('COMPLETE');
 
       // Should PATCH the review currentStep
-      const reviewCall = mockFetch.mock.calls.find((c) =>
-        (c[0] as string).match(/\/api\/reviews\/42$/)
-      );
+      const reviewCall = calls.find((c) => c[0].match(/\/api\/reviews\/42$/));
       expect(reviewCall).toBeTruthy();
-      const reviewBody = JSON.parse((reviewCall![1] as RequestInit).body as string);
+      const reviewBody = JSON.parse(reviewCall![1].body as string);
       expect(reviewBody.currentStep).toBe('monthly');
 
       // Should navigate
@@ -76,10 +74,9 @@ describe('useStepNav', () => {
       const { result } = renderHook(() => useStepNav('monthly'));
       await act(() => result.current.goSkip());
 
-      const stepCall = mockFetch.mock.calls.find((c) =>
-        (c[0] as string).includes('/steps/monthly')
-      );
-      const body = JSON.parse((stepCall![1] as RequestInit).body as string);
+      const calls = mockFetch.mock.calls as unknown as [string, RequestInit][];
+      const stepCall = calls.find((c) => c[0].includes('/steps/monthly'));
+      const body = JSON.parse(stepCall![1].body as string);
       expect(body.status).toBe('SKIPPED');
       expect(mockPush).toHaveBeenCalledWith('/review/42/savings');
     });
@@ -90,11 +87,10 @@ describe('useStepNav', () => {
       const { result } = renderHook(() => useStepNav('savings'));
       await act(() => result.current.goBack());
 
-      const reviewCall = mockFetch.mock.calls.find((c) =>
-        (c[0] as string).match(/\/api\/reviews\/42$/)
-      );
+      const calls = mockFetch.mock.calls as unknown as [string, RequestInit][];
+      const reviewCall = calls.find((c) => c[0].match(/\/api\/reviews\/42$/));
       expect(reviewCall).toBeTruthy();
-      const body = JSON.parse((reviewCall![1] as RequestInit).body as string);
+      const body = JSON.parse(reviewCall![1].body as string);
       expect(body.currentStep).toBe('monthly');
       expect(mockPush).toHaveBeenCalledWith('/review/42/monthly');
     });

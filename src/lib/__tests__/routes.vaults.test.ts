@@ -24,7 +24,7 @@ vi.mock('@/lib/apiGuards', async (importOriginal) => {
 import { GET, PUT } from '@/app/api/reviews/[id]/vaults/route';
 import { prisma } from '@/lib/db';
 
-const mockPrisma = prisma as {
+const mockPrisma = prisma as unknown as {
   vault: { findMany: ReturnType<typeof vi.fn>; update: ReturnType<typeof vi.fn> };
   vaultSnapshot: { findMany: ReturnType<typeof vi.fn>; upsert: ReturnType<typeof vi.fn> };
 };

@@ -23,7 +23,7 @@ vi.mock('@/lib/apiGuards', async (importOriginal) => {
 import { GET, PATCH } from '@/app/api/reviews/[id]/loans/route';
 import { prisma } from '@/lib/db';
 
-const mockPrisma = prisma as {
+const mockPrisma = prisma as unknown as {
   loan: { findMany: ReturnType<typeof vi.fn> };
   loanSnapshot: { upsert: ReturnType<typeof vi.fn> };
 };

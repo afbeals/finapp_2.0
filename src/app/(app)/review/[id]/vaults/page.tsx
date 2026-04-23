@@ -68,12 +68,17 @@ export default function VaultsPage() {
     }).finally(() => setLoading(false));
   }, [reviewId]);
 
-  function patchVault(id: number, patch: Partial<Vault>, save = false) {
-    setVaults((prev) => prev.map((v) => v.id === id ? { ...v, ...patch } : v));
+  async function patchVault(id: number, patch: Partial<Vault>, save = false) {
+    const prev = vaults.find((v) => v.id === id);
+    setVaults((vs) => vs.map((v) => v.id === id ? { ...v, ...patch } : v));
     if (save) {
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { owner: _owner, ...saveData } = patch;
-      patchApi(id, saveData);
+      try {
+        await patchApi(id, saveData);
+      } catch {
+        if (prev) setVaults((vs) => vs.map((v) => v.id === id ? prev : v));
+      }
     }
   }
 
@@ -153,9 +158,17 @@ export default function VaultsPage() {
     setTreasuryPcts((prev) => ({ ...prev, [vaultId]: Math.max(0, Math.min(100, pct)) }));
   }
 
-  function handleGroupOrderChange(category: string, newOrder: number) {
+  async function handleGroupOrderChange(category: string, newOrder: number) {
     setGroupOrderOverrides((prev) => ({ ...prev, [category]: newOrder }));
-    patchVaultCategoryOrder(category, newOrder);
+    try {
+      await patchVaultCategoryOrder(category, newOrder);
+    } catch {
+      setGroupOrderOverrides((prev) => {
+        const next = { ...prev };
+        delete next[category];
+        return next;
+      });
+    }
   }
 
   function handleClearTreasury() {

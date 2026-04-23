@@ -350,7 +350,7 @@ export default function InvestmentsPage() {
       const result = await deleteInvestmentAccount(
         deleteTaxableId,
         taxableTransferToId ?? undefined,
-      ).catch(() => null);
+      );
       if (result?.ok) {
         setAccounts((prev) => prev.filter((a) => a.id !== deleteTaxableId));
         setDeleteTaxableId(null);

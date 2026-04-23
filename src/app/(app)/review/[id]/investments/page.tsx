@@ -16,6 +16,7 @@ import {
   MarketStrip, MarketItemGroup, MarketTag, MarketItem, MarketName, MarketVal,
 } from './InvestmentsPage.styles';
 import { LoadingState } from '@/components/shared/LoadingState';
+import { ErrorState } from '@/components/shared/ErrorState';
 import { KpiGrid, KpiCard } from '@/components/shared/KpiGrid';
 import { SectionHeader } from '@/components/shared/SectionHeader';
 import { Button } from '@/components/ui/Button';
@@ -78,6 +79,7 @@ export default function InvestmentsPage() {
   const [pricesLoading, setPricesLoading] = useState(false);
   const [marketIndices, setMarketIndices] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
   const [addDefaultAccountId, setAddDefaultAccountId] = useState<number | undefined>();
 
@@ -111,7 +113,7 @@ export default function InvestmentsPage() {
         setAllRetirementHistory(inv.allRetirementSnapshots ?? []);
         setAllReviews(inv.allReviews ?? []);
       })
-      .catch((e) => console.error('investments fetch:', e))
+      .catch(() => setLoadError(true))
       .finally(() => setLoading(false));
   }, [reviewId]);
 
@@ -363,6 +365,7 @@ export default function InvestmentsPage() {
   const taxableTransferOptions = taxableAccounts.filter((a) => a.id !== deleteTaxableId);
 
   if (loading) return <LoadingState centered />;
+  if (loadError) return <ErrorState centered message="Couldn't load investments — please refresh." />;
 
   return (
     <StepShell

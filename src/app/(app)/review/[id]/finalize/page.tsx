@@ -15,6 +15,7 @@ import { theme } from '@/styles/tokens';
 
 const { colors, font, spacing, semanticColors } = theme;
 import { LoadingState } from '@/components/shared/LoadingState';
+import { ErrorState } from '@/components/shared/ErrorState';
 import { MONTH_NAMES_LONG } from '@/lib/fire';
 import { SummaryGrid, SummaryCard, Label, Value, StepList, StepRow, CompleteBox, CompleteIcon } from './FinalizePage.styles';
 
@@ -41,6 +42,7 @@ export default function FinalizePage() {
   const [completing, setCompleting] = useState(false);
   const [completeError, setCompleteError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
 
   useEffect(() => {
     Promise.all([
@@ -53,7 +55,7 @@ export default function FinalizePage() {
       setExpenses((exp.entries ?? []).reduce((s, e) => s + e.amount, 0));
       setSavings(((sav as unknown as { snapshots: { endingBalance: number }[] }).snapshots ?? []).reduce((s, e) => s + e.endingBalance, 0));
       setPortfolio(Object.values((inv as { snapshots: Record<number, { value: number }> }).snapshots ?? {}).reduce((s, e) => s + e.value, 0));
-    }).finally(() => setLoading(false));
+    }).catch(() => setLoadError(true)).finally(() => setLoading(false));
   }, [reviewId]);
 
   async function handleComplete() {
@@ -85,6 +87,7 @@ export default function FinalizePage() {
   const isComplete = activeReview?.status === 'COMPLETE';
 
   if (loading) return <LoadingState centered />;
+  if (loadError) return <ErrorState centered message="Couldn't load review data — please refresh." />;
 
   if (isComplete) {
     const period = activeReview ? `${MONTH_NAMES_LONG[activeReview.periodMonth - 1]} ${activeReview.periodYear}` : '';

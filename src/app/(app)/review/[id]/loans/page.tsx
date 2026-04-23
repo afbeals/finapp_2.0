@@ -13,6 +13,7 @@ import { theme } from '@/styles/tokens';
 
 const { colors } = theme;
 import { LoadingState } from '@/components/shared/LoadingState';
+import { ErrorState } from '@/components/shared/ErrorState';
 import { SectionHeader } from '@/components/shared/SectionHeader';
 import { AmortizationModal } from '@/components/shared/AmortizationModal';
 import { SchoolLoansTable } from './SchoolLoansTable';
@@ -29,6 +30,7 @@ export default function LoansPage() {
   const [loans, setLoans] = useState<Loan[]>([]);
   const [snapshots, setSnapshots] = useState<Record<number, LoanSnapshot>>({});
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
   const [amorLoan, setAmorLoan] = useState<Loan | null>(null);
 
   // Per-review: payment amount + optional extra principal per mortgage
@@ -57,6 +59,7 @@ export default function LoansPage() {
         }
         setPaymentDrafts(drafts);
       })
+      .catch(() => setLoadError(true))
       .finally(() => setLoading(false));
   }, [reviewId]);
 
@@ -117,6 +120,7 @@ export default function LoansPage() {
   const mortgageLoans = useMemo(() => loans.filter((l) => l.category === 'MORTGAGE'), [loans]);
 
   if (loading) return <LoadingState centered />;
+  if (loadError) return <ErrorState centered message="Couldn't load loans — please refresh." />;
 
   return (
     <StepShell

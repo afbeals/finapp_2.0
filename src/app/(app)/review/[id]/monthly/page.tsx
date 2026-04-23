@@ -10,6 +10,7 @@ import { formatDollarsWhole } from '@/lib/money';
 import { MONTH_NAMES_SHORT } from '@/lib/fire';
 import { getReviewIncome, getReviewExpenses, getExpenseCategories, apiGet } from '@/lib/api';
 import { LoadingState } from '@/components/shared/LoadingState';
+import { ErrorState } from '@/components/shared/ErrorState';
 import { SectionHeader } from '@/components/shared/SectionHeader';
 import { KpiGrid, KpiCard } from '@/components/shared/KpiGrid';
 import type { ExpenseCategory, ExpenseEntry, IncomeEntry } from '@/types/entities';
@@ -48,6 +49,7 @@ export default function MonthlySummaryPage() {
   const [expandedCategories, setExpandedCategories] = useState<Set<number>>(new Set());
   const [incomeExpanded, setIncomeExpanded] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
 
   useEffect(() => {
     Promise.all([
@@ -68,7 +70,7 @@ export default function MonthlySummaryPage() {
       setAllReviews(reviews);
       setSelectedMonths(reviews.map((r) => r.id));
       setCategoryHistory(catData.byReview ?? []);
-    }).finally(() => setLoading(false));
+    }).catch(() => setLoadError(true)).finally(() => setLoading(false));
   }, [reviewId]);
 
   function getCategoryTrend(categoryId: number): { dir: 'up' | 'down' | 'stable'; pct: number } | null {
@@ -123,6 +125,7 @@ export default function MonthlySummaryPage() {
   }
 
   if (loading) return <LoadingState centered />;
+  if (loadError) return <ErrorState centered message="Couldn't load monthly summary — please refresh." />;
 
   const currentYear = reviewState.activeReview?.periodYear ?? new Date().getFullYear();
 

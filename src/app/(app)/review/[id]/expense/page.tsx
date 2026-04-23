@@ -15,6 +15,7 @@ import { theme } from '@/styles/tokens';
 
 const { colors, semanticColors, font, spacing } = theme;
 import { LoadingState } from '@/components/shared/LoadingState';
+import { ErrorState } from '@/components/shared/ErrorState';
 import { IncomeAccordion } from './IncomeAccordion';
 import { CategoryAccordion } from './CategoryAccordion';
 import type { ExpenseCategory as Category, ExpenseEntry, IncomeEntry } from '@/types/entities';
@@ -34,6 +35,7 @@ export default function ExpensePage() {
   const [expenses, setExpenses] = useState<ExpenseEntry[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
 
   useEffect(() => {
     Promise.all([
@@ -44,7 +46,7 @@ export default function ExpensePage() {
       setIncome(incData.entries ?? []);
       setExpenses(expData.entries ?? []);
       setCategories(catData.categories ?? []);
-    }).finally(() => setLoading(false));
+    }).catch(() => setLoadError(true)).finally(() => setLoading(false));
   }, [reviewId]);
 
   const handleUpdateIncome = useCallback(async (id: number, field: 'name' | 'notes' | 'amount', value: string) => {
@@ -60,13 +62,21 @@ export default function ExpensePage() {
   }, [reviewId]);
 
   const handleDeleteIncome = useCallback(async (id: number) => {
-    await deleteIncomeEntry(reviewId, id).catch(() => null);
-    setIncome((prev) => prev.filter((e) => e.id !== id));
+    try {
+      await deleteIncomeEntry(reviewId, id);
+      setIncome((prev) => prev.filter((e) => e.id !== id));
+    } catch {
+      // deletion failed — leave entry in place
+    }
   }, [reviewId]);
 
   const handleDeleteExpense = useCallback(async (id: number) => {
-    await deleteExpenseEntry(reviewId, id).catch(() => null);
-    setExpenses((prev) => prev.filter((e) => e.id !== id));
+    try {
+      await deleteExpenseEntry(reviewId, id);
+      setExpenses((prev) => prev.filter((e) => e.id !== id));
+    } catch {
+      // deletion failed — leave entry in place
+    }
   }, [reviewId]);
 
   const totalIncome = useMemo(() => income.reduce((s, e) => s + e.amount, 0), [income]);
@@ -74,6 +84,7 @@ export default function ExpensePage() {
   const netSavings = useMemo(() => totalIncome - totalExpenses, [totalIncome, totalExpenses]);
 
   if (loading) return <LoadingState centered />;
+  if (loadError) return <ErrorState centered message="Couldn't load expense data — please refresh." />;
 
   return (
     <StepShell

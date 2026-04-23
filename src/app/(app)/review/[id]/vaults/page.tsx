@@ -11,6 +11,7 @@ import { theme } from '@/styles/tokens';
 
 const { colors, semanticColors, font, spacing } = theme;
 import { LoadingState } from '@/components/shared/LoadingState';
+import { ErrorState } from '@/components/shared/ErrorState';
 import { TrashBtn } from '@/components/shared/TrashBtn';
 import { InlineEdit } from '@/components/shared/InlineEdit';
 import { Modal } from '@/components/ui/Modal';
@@ -45,6 +46,7 @@ export default function VaultsPage() {
   const [vaults, setVaults] = useState<Vault[]>([]);
   const [members, setMembers] = useState<Member[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
   const [treasuryAmount, setTreasuryAmount] = useState(0);
   const [treasuryPcts, setTreasuryPcts] = useState<Record<number, number>>({});
   const [groupOrderOverrides, setGroupOrderOverrides] = useState<Record<string, number>>({});
@@ -65,7 +67,7 @@ export default function VaultsPage() {
       const overrides: Record<string, number> = {};
       for (const o of orders ?? []) overrides[o.category] = o.groupOrder;
       setGroupOrderOverrides(overrides);
-    }).finally(() => setLoading(false));
+    }).catch(() => setLoadError(true)).finally(() => setLoading(false));
   }, [reviewId]);
 
   async function patchVault(id: number, patch: Partial<Vault>, save = false) {
@@ -191,6 +193,7 @@ export default function VaultsPage() {
   }
 
   if (loading) return <LoadingState centered />;
+  if (loadError) return <ErrorState centered message="Couldn't load vaults — please refresh." />;
 
   const allCategories = [
     ...CAT_ORDER.filter((c) => fixedByCategory[c]),

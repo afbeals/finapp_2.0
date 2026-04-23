@@ -12,6 +12,7 @@ import { theme } from '@/styles/tokens';
 
 const { colors, font, spacing } = theme;
 import { LoadingState } from '@/components/shared/LoadingState';
+import { ErrorState } from '@/components/shared/ErrorState';
 import { SectionHeader } from '@/components/shared/SectionHeader';
 import { KpiGrid, KpiCard } from '@/components/shared/KpiGrid';
 import { Modal } from '@/components/ui/Modal';
@@ -35,6 +36,7 @@ export default function SavingsPage() {
   const [allReviews, setAllReviews] = useState<ReviewPeriod[]>([]);
   const [expandedIds, setExpandedIds] = useState<Set<number>>(new Set());
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
   const [addingAccount, setAddingAccount] = useState(false);
   const [newAccount, setNewAccount] = useState({ name: '', institution: '', type: 'HYSA' });
@@ -52,6 +54,7 @@ export default function SavingsPage() {
         }
         setSnapshots(map);
       })
+      .catch(() => setLoadError(true))
       .finally(() => setLoading(false));
   }, [reviewId]);
 
@@ -159,6 +162,7 @@ export default function SavingsPage() {
   }, [allSnapshots, allReviews, accounts, currentYear, getAccountHistory]);
 
   if (loading) return <LoadingState centered />;
+  if (loadError) return <ErrorState centered message="Couldn't load savings data — please refresh." />;
 
   return (
     <StepShell

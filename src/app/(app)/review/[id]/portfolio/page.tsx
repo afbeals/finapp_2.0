@@ -14,6 +14,7 @@ import { theme } from '@/styles/tokens';
 
 const { colors, semanticColors, spacing } = theme;
 import { LoadingState } from '@/components/shared/LoadingState';
+import { ErrorState } from '@/components/shared/ErrorState';
 import { ProgressBar } from '@/components/ui/ProgressBar';
 import { PanelCard, PanelHead, PanelTitle, PanelSubtitle, PanelBody } from '@/components/ui/Card';
 import { KpiCard, KpiIcon, KpiBody, KpiLabel, KpiValue, KpiSub } from '@/components/ui/KpiCard';
@@ -61,6 +62,7 @@ export default function PortfolioPage() {
   const [ytdIncome, setYtdIncome] = useState(0);
   const [ytdSaved, setYtdSaved] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
 
   useEffect(() => {
     Promise.all([
@@ -95,7 +97,7 @@ export default function PortfolioPage() {
       setYtdIncome((allReviews.reviews ?? [])
         .filter((r) => r.periodYear === yr)
         .reduce((s, r) => s + r.totalIncome, 0));
-    }).finally(() => setLoading(false));
+    }).catch(() => setLoadError(true)).finally(() => setLoading(false));
   }, [reviewId]);
 
   // Net worth = investments + HYSA − outstanding loans
@@ -122,6 +124,7 @@ export default function PortfolioPage() {
   const ytdNetWorthGrowth = ytdSaved;
 
   if (loading) return <LoadingState centered />;
+  if (loadError) return <ErrorState centered message="Couldn't load portfolio data — please refresh." />;
 
   return (
     <StepShell

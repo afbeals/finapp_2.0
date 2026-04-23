@@ -11,6 +11,7 @@ import {
   SectionTitle, ClickableRow, NetChange,
 } from './DashboardPage.styles';
 import { LoadingState } from '@/components/shared/LoadingState';
+import { ErrorState } from '@/components/shared/ErrorState';
 import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
@@ -48,6 +49,7 @@ export default function DashboardPage() {
 
   const [reviews, setReviews] = useState<Review[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
   const [showNewModal, setShowNewModal] = useState(false);
   const [selectedHistoryId, setSelectedHistoryId] = useState<number | null>(null);
 
@@ -58,7 +60,7 @@ export default function DashboardPage() {
       const active = data.find((r: Review) => r.status === 'IN_PROGRESS');
       reviewActions.setActiveReview(active ?? null);
     } catch {
-      // ignore fetch errors on load
+      setLoadError(true);
     } finally {
       setLoading(false);
     }
@@ -88,9 +90,8 @@ export default function DashboardPage() {
     router.push(`/review/${full.id}/expense`);
   }
 
-  if (loading) {
-    return <Page><LoadingState centered /></Page>;
-  }
+  if (loading) return <Page><LoadingState centered /></Page>;
+  if (loadError) return <Page><ErrorState centered message="Couldn't load reviews — please refresh." /></Page>;
 
   const greeting = `Welcome back, ${activeMemberName}`;
 

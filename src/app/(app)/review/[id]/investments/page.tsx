@@ -327,13 +327,19 @@ export default function InvestmentsPage() {
   }
 
   async function initiateTaxableDelete(accountId: number) {
-    const result = await deleteInvestmentAccount(accountId).catch((e) => e);
-    if (result?.inUse) {
-      setTaxableDeletePurchaseCount(result.purchaseCount ?? 0);
-      setTaxableTransferToId(null);
-      setDeleteTaxableId(accountId);
-    } else if (result?.ok) {
-      setAccounts((prev) => prev.filter((a) => a.id !== accountId));
+    try {
+      const result = await deleteInvestmentAccount(accountId);
+      if (result?.ok) {
+        setAccounts((prev) => prev.filter((a) => a.id !== accountId));
+      }
+    } catch (e: unknown) {
+      // 409 means account is in use — extract payload to show transfer dialog
+      const payload = (e as { payload?: { inUse?: boolean; purchaseCount?: number } })?.payload;
+      if (payload?.inUse) {
+        setTaxableDeletePurchaseCount(payload.purchaseCount ?? 0);
+        setTaxableTransferToId(null);
+        setDeleteTaxableId(accountId);
+      }
     }
   }
 

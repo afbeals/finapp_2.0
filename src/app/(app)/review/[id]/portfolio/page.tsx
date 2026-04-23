@@ -146,13 +146,10 @@ export default function PortfolioPage() {
             {totalLoanBalance > 0 && (
               <KpiSub style={{ color: colors.danger }}>Liabilities: −{formatDollarsWhole(totalLoanBalance)}</KpiSub>
             )}
-            <div style={{ marginTop: 8 }}>
-              <ProgressBar value={Math.max(0, Math.min(100, (netWorth / Math.max(1, fireTarget)) * 100))} color={netWorth < 0 ? colors.danger : colors.primary} height={6} />
-            </div>
             {netWorth < 0 ? (
               <KpiSub style={{ color: colors.danger, marginTop: 4 }}>Liabilities exceed assets by {formatDollars(-netWorth)}</KpiSub>
             ) : (
-              <KpiSub style={{ marginTop: 4 }}>Progress toward FIRE target ({formatDollarsWhole(fireTarget)})</KpiSub>
+              <KpiSub style={{ marginTop: 4 }}>{((netWorth / Math.max(1, fireTarget)) * 100).toFixed(1)}% of FIRE target ({formatDollarsWhole(fireTarget)})</KpiSub>
             )}
           </KpiBody>
         </KpiCard>

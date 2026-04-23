@@ -5,6 +5,7 @@ import { formatDollars, toCents, toDollars } from '@/lib/money';
 import {
   monthlyPayment,
   payoffDateStr,
+  amortizationSchedule,
   projectedScheduleFrom,
   pmiDropMonth,
   MONTH_NAMES_SHORT,
@@ -69,8 +70,12 @@ export const MortgageSection = React.memo(function MortgageSection({
   const [extraPrincipalApplied, setExtraPrincipalApplied] = useState(snap.extraPayment);
 
   // ── Derived amortization math ──────────────────────────────────────────────
-  // Use actual recorded balance when available; fall back to schedule-derived for first payment
-  const observedBalance = snap.paymentsMade > 0 ? snap.balance : loan.principal;
+  // Use actual recorded balance when available. Fall back to schedule-derived when:
+  // - no payments made yet, OR
+  // - balance was never persisted (old snapshots have balance=0 with paymentsMade>0)
+  const scheduleForBalance = amortizationSchedule(loan.principal, loan.rate, loan.termMonths, 0);
+  const schedDerivedBalance = scheduleForBalance[Math.min(snap.paymentsMade, scheduleForBalance.length - 1)]?.balance ?? loan.principal;
+  const observedBalance = snap.paymentsMade > 0 && snap.balance > 0 ? snap.balance : snap.paymentsMade === 0 ? loan.principal : schedDerivedBalance;
   const remMonths = Math.max(0, loan.termMonths - snap.paymentsMade);
 
   // Projection schedule: starts from the observed balance, not original principal

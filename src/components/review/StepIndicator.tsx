@@ -11,7 +11,7 @@ import {
 } from './StepIndicator.styles';
 import { MONTH_NAMES_SHORT } from '@/lib/fire';
 import { useReviewStore } from '@/lib/store';
-import { reviewProgress } from '@/lib/reviewProgress';
+import { reviewProgress, MONTHLY_STEP_ORDER, QUARTERLY_STEP_ORDER } from '@/lib/reviewProgress';
 import { SkipStepModal } from '@/components/modals/SkipStepModal';
 import { useStepNav } from '@/lib/useStepNav';
 
@@ -30,8 +30,8 @@ const STEP_LINE2: Record<string, string> = {
 };
 
 const QUARTERLY_KEYS = new Set(['loans', 'portfolio']);
-const MONTHLY_STEPS = ['expense', 'monthly', 'savings', 'investments', 'vaults', 'finalize'];
-const QUARTERLY_STEPS = ['expense', 'monthly', 'savings', 'loans', 'investments', 'portfolio', 'vaults', 'finalize'];
+const MONTHLY_STEPS: string[] = [...MONTHLY_STEP_ORDER];
+const QUARTERLY_STEPS: string[] = [...QUARTERLY_STEP_ORDER];
 
 export function StepIndicator() {
   const router = useRouter();
@@ -51,7 +51,7 @@ export function StepIndicator() {
   });
 
   const currentIndex = steps.indexOf(activeReview.currentStep);
-  const { stepNum, total: stepTotal, pct } = reviewProgress(activeReview.steps, activeReview.currentStep);
+  const { stepNum, total: stepTotal, pct } = reviewProgress(activeReview.steps, activeReview.currentStep, steps);
   const periodLabel = `${MONTH_NAMES_SHORT[activeReview.periodMonth - 1]} ${activeReview.periodYear} ${activeReview.type === 'QUARTERLY' ? 'Quarterly' : 'Monthly'} Review Progress`;
 
   async function handleClick(key: string, idx: number) {

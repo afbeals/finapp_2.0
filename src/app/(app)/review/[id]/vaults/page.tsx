@@ -46,6 +46,7 @@ export default function VaultsPage() {
   const [treasuryAmount, setTreasuryAmount] = useState(0);
   const [treasuryPcts, setTreasuryPcts] = useState<Record<number, number>>({});
   const [groupOrderOverrides, setGroupOrderOverrides] = useState<Record<string, number>>({});
+  const [newFixedCategory, setNewFixedCategory] = useState<string>('');
 
   useEffect(() => {
     Promise.all([
@@ -79,17 +80,22 @@ export default function VaultsPage() {
   }
 
   async function handleAddVault(type: 'FIXED' | 'VARIABLE', category: string) {
-    const siblings = vaults.filter((v) => v.type === type && v.category === category);
+    const targetCategory = category || CAT_ORDER[0];
+    const siblings = vaults.filter((v) => v.type === type && v.category === targetCategory);
     const maxOrder = siblings.reduce((m, v) => Math.max(m, v.sortOrder), 0);
-    const { vault } = await createVault({
-      name: 'New Vault', type, category,
-      ownerMemberId: null, target: 0,
-      frequency: type === 'VARIABLE' ? 'GOAL' : 'MONTHLY',
-      rateMonths: 1, currentBalance: 0, treasuryPct: 0,
-      sortOrder: maxOrder + 1, description: '', dueMonths: '',
-    });
-    setVaults((prev) => [...prev, vault]);
-    if (type === 'VARIABLE') setTreasuryPcts((prev) => ({ ...prev, [vault.id]: 0 }));
+    try {
+      const { vault } = await createVault({
+        name: 'New Vault', type, category: targetCategory,
+        ownerMemberId: null, target: 0,
+        frequency: type === 'VARIABLE' ? 'GOAL' : 'MONTHLY',
+        rateMonths: 1, currentBalance: 0, treasuryPct: 0,
+        sortOrder: maxOrder + 1, description: '', dueMonths: '',
+      });
+      setVaults((prev) => [...prev, vault]);
+      if (type === 'VARIABLE') setTreasuryPcts((prev) => ({ ...prev, [vault.id]: 0 }));
+    } catch {
+      // createVault failed — nothing to show yet, user will see no change
+    }
   }
 
   const fixedVaults = useMemo(() => vaults.filter((v) => v.type === 'FIXED'), [vaults]);
@@ -226,9 +232,24 @@ export default function VaultsPage() {
       })}
 
       {!readOnly && (
-        <AddRowBtn onClick={() => handleAddVault('FIXED', allCategories[0] ?? CAT_ORDER[0])}>
-          + Add fixed vault
-        </AddRowBtn>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, margin: '10px 18px' }}>
+          <select
+            value={newFixedCategory || (allCategories[0] ?? CAT_ORDER[0])}
+            onChange={(e) => setNewFixedCategory(e.target.value)}
+            style={{ height: 30, padding: '0 8px', border: `1px solid ${colors.border}`, borderRadius: 6, fontSize: 13, color: colors.textPrimary, background: colors.surface }}
+          >
+            {allCategories.map((c) => <option key={c} value={c}>{c}</option>)}
+            {CAT_ORDER.filter((c) => !allCategories.includes(c)).map((c) => (
+              <option key={c} value={c}>{c} (new)</option>
+            ))}
+          </select>
+          <AddRowBtn
+            style={{ margin: 0 }}
+            onClick={() => handleAddVault('FIXED', (newFixedCategory || allCategories[0]) ?? CAT_ORDER[0])}
+          >
+            + Add fixed vault
+          </AddRowBtn>
+        </div>
       )}
 
       {/* ── Treasury Distribution ── */}

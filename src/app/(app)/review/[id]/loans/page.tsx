@@ -7,6 +7,7 @@ import { STEP_META } from '@/components/review/stepMetadata';
 import { useStepNav } from '@/lib/useStepNav';
 import { useReviewStore } from '@/lib/store';
 import { toCents, toDollars } from '@/lib/money';
+import { amortizationSchedule } from '@/lib/fire';
 import { getReviewLoans, patchLoanSnapshot, patchLoan as apiPatchLoan } from '@/lib/api';
 import { theme } from '@/styles/tokens';
 
@@ -84,7 +85,18 @@ export default function LoansPage() {
     const payAmt = toCents(parseFloat(draft) || 0);
     const extraAmt = toCents(parseFloat(extraDraft) || 0);
     const snap = snapshots[loan.id];
-    const currentBalance = snap?.balance ?? loan.principal;
+    // For old snapshots where balance was never persisted (balance=0 with payments>0),
+    // derive from amortization schedule
+    const snapBalance = snap?.balance ?? 0;
+    const paymentsAlreadyMade = snap?.paymentsMade ?? 0;
+    const currentBalance = snapBalance > 0
+      ? snapBalance
+      : paymentsAlreadyMade === 0
+        ? loan.principal
+        : (() => {
+            const sched = amortizationSchedule(loan.principal, loan.rate, loan.termMonths, 0);
+            return sched[Math.min(paymentsAlreadyMade, sched.length - 1)]?.balance ?? loan.principal;
+          })();
     const newPayments = (snap?.paymentsMade ?? 0) + (payAmt > 0 ? 1 : 0);
     // Compute actual principal/interest split from the current balance
     const interestThisPeriod = Math.round(currentBalance * (loan.rate / 12));

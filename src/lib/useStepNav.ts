@@ -3,9 +3,10 @@
 import { useCallback, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { useReviewStore } from '@/lib/store';
+import { MONTHLY_STEP_ORDER, QUARTERLY_STEP_ORDER } from '@/lib/reviewProgress';
 
-const MONTHLY_ORDER = ['expense', 'monthly', 'savings', 'investments', 'vaults', 'finalize'];
-const QUARTERLY_ORDER = ['expense', 'monthly', 'savings', 'loans', 'investments', 'portfolio', 'vaults', 'finalize'];
+const MONTHLY_ORDER: string[] = [...MONTHLY_STEP_ORDER];
+const QUARTERLY_ORDER: string[] = [...QUARTERLY_STEP_ORDER];
 
 export function useStepNav(currentKey: string) {
   const router = useRouter();

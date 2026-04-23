@@ -19,7 +19,7 @@ import { NewReviewModal } from '@/components/modals/NewReviewModal';
 import { ProgressBar } from '@/components/ui/ProgressBar';
 import { useReviewStore, useSessionStore } from '@/lib/store';
 import type { ReviewStep } from '@/lib/store';
-import { reviewProgress } from '@/lib/reviewProgress';
+import { reviewProgress, MONTHLY_STEP_ORDER, QUARTERLY_STEP_ORDER } from '@/lib/reviewProgress';
 import { formatDollars } from '@/lib/money';
 import { apiGet } from '@/lib/api';
 import { MONTH_NAMES_SHORT, MONTH_NAMES_LONG } from '@/lib/fire';
@@ -123,7 +123,8 @@ export default function DashboardPage() {
             </ReviewTitle>
             <div style={{ marginBottom: spacing[4] }}>
               {(() => {
-                const { stepNum, total, pct } = reviewProgress(activeReview.steps, activeReview.currentStep);
+                const stepOrder = activeReview.type === 'QUARTERLY' ? QUARTERLY_STEP_ORDER : MONTHLY_STEP_ORDER;
+                const { stepNum, total, pct } = reviewProgress(activeReview.steps, activeReview.currentStep, [...stepOrder]);
                 return (
                   <>
                     <ProgressBar value={pct} color={colors.primary} />

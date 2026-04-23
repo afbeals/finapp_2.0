@@ -2,7 +2,6 @@
 
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useParams } from 'next/navigation';
-import styled from 'styled-components';
 import { StepShell } from '@/components/review/StepShell';
 import { useStepNav } from '@/lib/useStepNav';
 import { useReviewStore } from '@/lib/store';
@@ -10,7 +9,7 @@ import { formatDollars, toCents } from '@/lib/money';
 import { apiPatch, apiPost, apiPut, apiGet } from '@/lib/api';
 import { theme } from '@/styles/tokens';
 
-const { colors, font, spacing, radius } = theme;
+const { colors, font, spacing } = theme;
 import { LoadingState } from '@/components/shared/LoadingState';
 import { SectionHeader } from '@/components/shared/SectionHeader';
 import { KpiGrid, KpiCard } from '@/components/shared/KpiGrid';
@@ -18,53 +17,7 @@ import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
 import { AccountCard, type HistoricalSnapshotWithBalance, type ReviewPeriod } from './AccountCard';
 import type { SavingsAccount, SavingsSnapshot, HistoricalSnapshot } from '@/types/entities';
-
-// ─── Add account modal form fields ───────────────────────────────────────────
-
-const FieldLabel = styled.label`
-  display: block;
-  font-size: ${font.size.xs};
-  font-weight: ${font.weight.semibold};
-  color: ${colors.textMuted};
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  margin-bottom: ${spacing[1]};
-`;
-
-const FieldInput = styled.input`
-  width: 100%;
-  padding: ${spacing[2]} ${spacing[3]};
-  font-size: ${font.size.sm};
-  font-family: inherit;
-  border: 1px solid ${colors.border};
-  border-radius: ${radius.md};
-  background: ${colors.surface};
-  color: ${colors.textPrimary};
-  margin-bottom: ${spacing[3]};
-  outline: none;
-  &:focus { border-color: ${colors.primary}; box-shadow: 0 0 0 2px ${colors.primaryLight}; }
-`;
-
-const FieldSelect = styled.select`
-  width: 100%;
-  padding: ${spacing[2]} ${spacing[3]};
-  font-size: ${font.size.sm};
-  font-family: inherit;
-  border: 1px solid ${colors.border};
-  border-radius: ${radius.md};
-  background: ${colors.surface};
-  color: ${colors.textPrimary};
-  margin-bottom: ${spacing[3]};
-  outline: none;
-  &:focus { border-color: ${colors.primary}; }
-`;
-
-const ModalActions = styled.div`
-  display: flex;
-  gap: ${spacing[2]};
-  justify-content: flex-end;
-  margin-top: ${spacing[2]};
-`;
+import { FieldLabel, FieldInput, FieldSelect, ModalActions } from './SavingsPage.styles';
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 

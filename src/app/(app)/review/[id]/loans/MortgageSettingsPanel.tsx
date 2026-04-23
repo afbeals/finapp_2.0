@@ -1,79 +1,12 @@
 'use client';
 
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import styled from 'styled-components';
 import { toCents, toDollars } from '@/lib/money';
 import { theme } from '@/styles/tokens';
 
-const { colors, font, spacing, radius } = theme;
+const { spacing } = theme;
 import type { Loan } from '@/types/entities';
-
-// ─── Styled components ────────────────────────────────────────────────────────
-
-const Panel = styled.div`
-  background: ${colors.surface};
-  border: 1px solid ${colors.border};
-  border-radius: ${radius.lg};
-  padding: ${spacing[4]} ${spacing[5]};
-  margin-bottom: ${spacing[4]};
-  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-`;
-
-const PanelTitle = styled.p`
-  font-size: ${font.size.sm};
-  font-weight: ${font.weight.semibold};
-  color: ${colors.textPrimary};
-  margin-bottom: ${spacing[3]};
-`;
-
-const FieldGrid = styled.div`
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-  gap: ${spacing[3]};
-  margin-bottom: ${spacing[3]};
-`;
-
-const FieldGroup = styled.div`display: flex; flex-direction: column; gap: 4px;`;
-
-const FieldLabel = styled.label`
-  font-size: ${font.size.xs};
-  font-weight: ${font.weight.semibold};
-  color: ${colors.textMuted};
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-`;
-
-const FieldInput = styled.input`
-  padding: 7px 10px;
-  font-size: ${font.size.sm};
-  font-family: inherit;
-  border: 1px solid ${colors.border};
-  border-radius: ${radius.md};
-  background: ${colors.surface};
-  color: ${colors.textPrimary};
-  outline: none;
-  text-align: right;
-  &:focus { border-color: ${colors.primary}; box-shadow: 0 0 0 2px ${colors.primaryLight}; }
-  &:disabled { opacity: 0.5; background: ${colors.bg}; }
-`;
-
-const Divider = styled.div`
-  height: 1px;
-  background: ${colors.border};
-  margin: ${spacing[3]} 0;
-`;
-
-const HelperText = styled.p`
-  font-size: ${font.size.xs};
-  color: ${colors.textMuted};
-  margin-top: ${spacing[1]};
-`;
-
-const SavingDot = styled.span`
-  font-size: ${font.size.xs};
-  color: ${colors.textMuted};
-  font-style: italic;
-`;
+import { Panel, PanelTitle, FieldGrid, FieldGroup, FieldLabel, FieldInput, Divider, HelperText, SavingDot } from './MortgageSettingsPanel.styles';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 

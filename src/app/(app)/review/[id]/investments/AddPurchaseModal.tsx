@@ -1,59 +1,16 @@
 'use client';
 
-import React, { useState } from 'react';
-import styled from 'styled-components';
-import { Input } from '@/components/ui/Input';
+import { useState } from 'react';
 import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
 import { formatDollars, toCents } from '@/lib/money';
 import { theme } from '@/styles/tokens';
-
-const { colors, font, radius, spacing } = theme;
+import { FieldLabel, FieldInput, FieldSelect, TotalLine, ModalFooter } from './AddPurchaseModal.styles';
 import { apiPost, getMarketPrices } from '@/lib/api';
 import type { Purchase, InvestmentAccount, InvestmentCategory } from '@/types/entities';
 import { AccountTypeLabel } from './investmentHelpers';
 
-// ─── Styled components ────────────────────────────────────────────────────────
-
-const FieldLabel = styled.label`
-  display: block;
-  font-size: 10px;
-  font-weight: ${font.weight.semibold};
-  color: ${colors.textMuted};
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  margin-bottom: ${spacing[1]};
-`;
-
-const FieldInput = styled(Input)`width: 100%; margin-bottom: ${spacing[3]};`;
-
-const FieldSelect = styled.select`
-  width: 100%;
-  height: 38px;
-  padding: 0 10px;
-  border: 1px solid ${colors.border};
-  border-radius: ${radius.md};
-  font-size: ${font.size.sm};
-  color: ${colors.textPrimary};
-  background: ${colors.surface};
-  margin-bottom: ${spacing[3]};
-  &:focus { outline: none; border-color: ${colors.primary}; }
-`;
-
-const TotalLine = styled.div`
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 10px 14px;
-  background: ${colors.bg};
-  border: 1px solid ${colors.border};
-  border-radius: ${radius.md};
-  margin-bottom: 18px;
-`;
-
-const ModalFooter = styled.div`display: flex; justify-content: flex-end; gap: 10px;`;
-
-// ─── Add Purchase Modal ───────────────────────────────────────────────────────
+const { colors, font } = theme;
 
 type InvCategoryDef = InvestmentCategory;
 

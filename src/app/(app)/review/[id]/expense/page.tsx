@@ -2,7 +2,6 @@
 
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useParams } from 'next/navigation';
-import styled from 'styled-components';
 import { StepShell } from '@/components/review/StepShell';
 import { useStepNav } from '@/lib/useStepNav';
 import { useReviewStore, useSessionStore } from '@/lib/store';
@@ -13,50 +12,12 @@ import {
 } from '@/lib/api';
 import { theme } from '@/styles/tokens';
 
-const { colors, semanticColors, font, spacing, radius } = theme;
+const { colors, semanticColors, font, spacing } = theme;
 import { LoadingState } from '@/components/shared/LoadingState';
 import { IncomeAccordion } from './IncomeAccordion';
 import { CategoryAccordion } from './CategoryAccordion';
 import type { ExpenseCategory as Category, ExpenseEntry, IncomeEntry } from '@/types/entities';
-
-const GroupSeparator = styled.div`
-  height: 1px;
-  background: ${colors.border};
-  margin: ${spacing[4]} 0;
-  opacity: 0.6;
-`;
-
-const SummaryBar = styled.div.withConfig({
-  shouldForwardProp: (prop) => !['bg', 'borderColor'].includes(prop),
-})<{ bg: string; borderColor: string }>`
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 10px ${spacing[5]};
-  background: ${({ bg }) => bg};
-  border: 1.5px solid ${({ borderColor }) => borderColor};
-  border-radius: ${radius.lg};
-  margin-bottom: ${spacing[2]};
-`;
-
-const SummaryLabel = styled.span.withConfig({
-  shouldForwardProp: (prop) => prop !== 'textColor',
-})<{ textColor: string }>`
-  font-size: ${font.size.sm};
-  font-weight: ${font.weight.bold};
-  color: ${({ textColor }) => textColor};
-  display: flex;
-  align-items: center;
-  gap: ${spacing[2]};
-`;
-
-const SummaryValue = styled.span.withConfig({
-  shouldForwardProp: (prop) => prop !== 'textColor',
-})<{ textColor: string }>`
-  font-size: ${font.size.xl};
-  font-weight: ${font.weight.bold};
-  color: ${({ textColor }) => textColor};
-`;
+import { GroupSeparator, SummaryBar, SummaryLabel, SummaryValue } from './ExpensePage.styles';
 
 export default function ExpensePage() {
   const params = useParams();

@@ -2,15 +2,19 @@
 
 import React, { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import styled from 'styled-components';
 import { theme } from '@/styles/tokens';
-
-const { colors, font, radius, spacing, shadow } = theme;
+import {
+  Page, WelcomeBanner, WelcomeText, WelcomeGreeting, CardRow,
+  ActiveCard, ActiveBadgeRow, ReviewTitle,
+  PrevCard, PrevCardLabel, PrevSelect,
+  EmptyCard, EmptyIcon, EmptyTitle, EmptySubtitle,
+  SectionTitle, ClickableRow, NetChange,
+} from './DashboardPage.styles';
 import { LoadingState } from '@/components/shared/LoadingState';
-import { Card, CardHeader, CardTitle } from '@/components/ui/Card';
+import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
-import { Table, Thead, Th, Td, Tr } from '@/components/ui/Table';
+import { Table, Thead, Th, Td } from '@/components/ui/Table';
 import { NewReviewModal } from '@/components/modals/NewReviewModal';
 import { ProgressBar } from '@/components/ui/ProgressBar';
 import { useReviewStore, useSessionStore } from '@/lib/store';
@@ -18,6 +22,8 @@ import type { ReviewStep } from '@/lib/store';
 import { formatDollars } from '@/lib/money';
 import { apiGet } from '@/lib/api';
 import { MONTH_NAMES_SHORT, MONTH_NAMES_LONG } from '@/lib/fire';
+
+const { colors, font, spacing } = theme;
 
 interface Review {
   id: number;
@@ -32,148 +38,6 @@ interface Review {
   totalIncome: number;
   totalExpenses: number;
 }
-
-// ─── Layout ──────────────────────────────────────────────────────────────────
-
-const Page = styled.div`
-  max-width: 960px;
-  margin: 0 auto;
-  padding: ${spacing[8]} ${spacing[6]};
-`;
-
-// ─── Welcome banner ───────────────────────────────────────────────────────────
-
-const WelcomeBanner = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  background: ${colors.surface};
-  border: 1px solid ${colors.border};
-  border-radius: ${radius.lg};
-  padding: ${spacing[4]} ${spacing[5]};
-  margin-bottom: ${spacing[6]};
-  box-shadow: ${shadow.sm};
-`;
-
-const WelcomeText = styled.div`
-  display: flex;
-  align-items: center;
-  gap: ${spacing[3]};
-`;
-
-const WelcomeGreeting = styled.h1`
-  font-size: ${font.size.xl};
-  font-weight: ${font.weight.bold};
-  color: ${colors.textPrimary};
-`;
-
-// ─── Two-column card row ──────────────────────────────────────────────────────
-
-const CardRow = styled.div`
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: ${spacing[6]};
-  margin-bottom: ${spacing[8]};
-  @media (max-width: 680px) { grid-template-columns: 1fr; }
-`;
-
-// ─── Active review card ───────────────────────────────────────────────────────
-
-const ActiveCard = styled(Card)`
-  border-left: 4px solid ${colors.primary};
-`;
-
-const ActiveBadgeRow = styled.div`
-  display: flex;
-  gap: ${spacing[2]};
-  margin-bottom: ${spacing[3]};
-`;
-
-const ReviewTitle = styled.h2`
-  font-size: ${font.size['2xl']};
-  font-weight: ${font.weight.semibold};
-  color: ${colors.textPrimary};
-  margin-bottom: ${spacing[1]};
-`;
-
-const ReviewMeta = styled.p`
-  font-size: ${font.size.sm};
-  color: ${colors.textMuted};
-  margin-bottom: ${spacing[4]};
-`;
-
-// ─── Previous month card ──────────────────────────────────────────────────────
-
-const PrevCard = styled(Card)`
-  border-left: 4px solid ${colors.textMuted};
-  display: flex;
-  flex-direction: column;
-`;
-
-const PrevCardLabel = styled.p`
-  font-size: ${font.size.xs};
-  font-weight: ${font.weight.semibold};
-  color: ${colors.textMuted};
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  margin-bottom: ${spacing[2]};
-`;
-
-const PrevSelect = styled.select`
-  width: 100%;
-  height: 42px;
-  padding: 0 32px 0 12px;
-  border: 1px solid ${colors.border};
-  border-radius: ${radius.md};
-  background: ${colors.surface} url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%2364748B' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E") no-repeat right 12px center;
-  color: ${colors.textPrimary};
-  font-size: ${font.size.base};
-  font-family: inherit;
-  appearance: none;
-  cursor: pointer;
-  outline: none;
-  margin-bottom: ${spacing[4]};
-  &:focus { border-color: ${colors.primary}; }
-`;
-
-// ─── Empty state ──────────────────────────────────────────────────────────────
-
-const EmptyCard = styled(Card)`
-  text-align: center;
-  padding: ${spacing[10]};
-  border: 2px dashed ${colors.border};
-  background: transparent;
-  box-shadow: none;
-`;
-
-const EmptyIcon = styled.div`font-size: 36px; margin-bottom: ${spacing[3]};`;
-const EmptyTitle = styled.h2`font-size: ${font.size.xl}; font-weight: ${font.weight.semibold}; color: ${colors.textPrimary}; margin-bottom: ${spacing[2]};`;
-const EmptySubtitle = styled.p`font-size: ${font.size.sm}; color: ${colors.textMuted}; margin-bottom: ${spacing[5]};`;
-
-// ─── History table ────────────────────────────────────────────────────────────
-
-const SectionTitle = styled.h2`
-  font-size: ${font.size.xl};
-  font-weight: ${font.weight.semibold};
-  color: ${colors.textPrimary};
-  margin-bottom: ${spacing[4]};
-`;
-
-const ClickableRow = styled(Tr)`cursor: pointer;`;
-
-const NetChange = styled.span.withConfig({
-  shouldForwardProp: (prop) => prop !== 'positive',
-})<{ positive: boolean }>`
-  font-weight: ${font.weight.semibold};
-  color: ${({ positive }) => positive ? colors.success : colors.danger};
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-`;
-
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-
-// ─── Component ────────────────────────────────────────────────────────────────
 
 export default function DashboardPage() {
   const router = useRouter();

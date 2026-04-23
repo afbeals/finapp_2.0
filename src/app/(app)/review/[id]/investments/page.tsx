@@ -2,14 +2,18 @@
 
 import { useEffect, useState, useMemo, useCallback } from 'react';
 import { useParams } from 'next/navigation';
-import styled from 'styled-components';
 import { StepShell } from '@/components/review/StepShell';
 import { useStepNav } from '@/lib/useStepNav';
 import { useReviewStore } from '@/lib/store';
 import { formatDollars, toDollars } from '@/lib/money';
 import { theme } from '@/styles/tokens';
 
-const { colors, semanticColors, font, spacing, radius } = theme;
+const { colors, semanticColors, font, spacing } = theme;
+
+import {
+  SplitBarWrap, SplitBar, SplitSegment, SplitLegend, LegendDot,
+  MarketStrip, MarketTag, MarketItem, MarketName, MarketVal,
+} from './InvestmentsPage.styles';
 import { LoadingState } from '@/components/shared/LoadingState';
 import { KpiGrid, KpiCard } from '@/components/shared/KpiGrid';
 import { SectionHeader } from '@/components/shared/SectionHeader';
@@ -54,75 +58,6 @@ import {
 } from './investmentHelpers';
 
 type InvCategoryDef = InvestmentCategory;
-
-// ─── Styled components (page-level only) ─────────────────────────────────────
-
-const SplitBarWrap = styled.div`
-  background: ${colors.surface};
-  border: 1px solid ${colors.border};
-  border-radius: ${radius.lg};
-  padding: 14px 16px;
-  margin-bottom: ${spacing[5]};
-  box-shadow: 0 1px 3px rgba(0,0,0,0.04);
-`;
-
-const SplitBar = styled.div`
-  display: flex;
-  height: 14px;
-  border-radius: 7px;
-  overflow: hidden;
-  margin: 8px 0 6px;
-`;
-
-const SplitSegment = styled.div.withConfig({ shouldForwardProp: (p) => p !== 'pct' && p !== 'bg' })<{ pct: number; bg: string }>`
-  width: ${({ pct }) => pct}%;
-  background: ${({ bg }) => bg};
-  transition: width 0.4s ease;
-`;
-
-const SplitLegend = styled.div`
-  display: flex;
-  gap: 20px;
-  font-size: 11px;
-  color: ${colors.textMuted};
-`;
-
-const LegendDot = styled.span.withConfig({ shouldForwardProp: (p) => p !== 'bg' })<{ bg: string }>`
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  &::before { content: ''; display: inline-block; width: 10px; height: 10px; border-radius: 2px; background: ${({ bg }) => bg}; }
-`;
-
-const MarketStrip = styled.div`
-  background: ${colors.navbar};
-  border-radius: ${radius.lg};
-  padding: 12px 20px;
-  display: flex;
-  align-items: center;
-  justify-content: space-evenly;
-  gap: 16px;
-  margin-bottom: ${spacing[5]};
-  flex-wrap: wrap;
-`;
-
-const MarketTag = styled.span`
-  font-size: 10px;
-  color: ${colors.textDisabled};
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  margin-right: 4px;
-`;
-
-const MarketItem = styled.div`display: flex; flex-direction: column; gap: 1px;`;
-const MarketName = styled.span`font-size: 10px; color: ${colors.textDisabled}; text-transform: uppercase; letter-spacing: 0.04em;`;
-const MarketVal = styled.span.withConfig({ shouldForwardProp: (p) => p !== 'up' })<{ up?: boolean }>`
-  font-size: ${font.size.sm};
-  font-weight: 600;
-  color: ${({ up }) => up === undefined ? colors.bg : up ? semanticColors.successBright : semanticColors.dangerBright};
-`;
-
-// ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function InvestmentsPage() {
   const params = useParams();

@@ -2,102 +2,29 @@
 
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import styled from 'styled-components';
+import { theme } from '@/styles/tokens';
+import {
+  Page, Banner, BannerText, Header, Title, Subtitle,
+  SummaryGrid, StatCard, StatLabel, StatValue,
+  StepList, StepRow, StepLabel,
+} from './HistoryDetailPage.styles';
 import { Card, CardTitle } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { EnableEditModal } from '@/components/modals/EnableEditModal';
 import { useReviewStore } from '@/lib/store';
 import { formatDollars } from '@/lib/money';
-import { theme } from '@/styles/tokens';
-
-const { colors, font, radius, spacing, semanticColors } = theme;
 import { LoadingState } from '@/components/shared/LoadingState';
 import { apiGet, getReviewIncome, getReviewExpenses, getReviewSavings, getReviewInvestments } from '@/lib/api';
 import { MONTH_NAMES_LONG } from '@/lib/fire';
+
+const { colors, font, spacing, semanticColors } = theme;
 
 const STEP_LABELS: Record<string, string> = {
   expense: 'Expense Entry', monthly: 'Monthly Summary', savings: 'Savings',
   loans: 'Loans', investments: 'Investments', portfolio: 'Portfolio & FIRE',
   vaults: 'Vaults', finalize: 'Finalize',
 };
-
-const Page = styled.div`
-  max-width: 960px;
-  margin: 0 auto;
-  padding: ${spacing[8]} ${spacing[6]};
-`;
-
-const Banner = styled.div<{ $editing: boolean }>`
-  background: ${({ $editing }) => $editing ? colors.warningLight : semanticColors.infoBg};
-  border: 1px solid ${({ $editing }) => $editing ? semanticColors.warningBorderStrong : semanticColors.infoBorder};
-  border-radius: ${radius.md};
-  padding: 12px ${spacing[4]};
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: ${spacing[6]};
-`;
-
-const BannerText = styled.span`
-  font-size: ${font.size.sm};
-  color: ${colors.textSecondary};
-`;
-
-const Header = styled.div`
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  margin-bottom: ${spacing[6]};
-`;
-
-const Title = styled.h1`
-  font-size: ${font.size['3xl']};
-  font-weight: 700;
-  color: ${colors.textPrimary};
-  margin-bottom: 4px;
-`;
-
-const Subtitle = styled.p`
-  font-size: ${font.size.base};
-  color: ${colors.textMuted};
-`;
-
-const SummaryGrid = styled.div`
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  gap: ${spacing[4]};
-  margin-bottom: ${spacing[6]};
-`;
-
-const StatCard = styled(Card).withConfig({
-  shouldForwardProp: (prop) => prop !== 'accent',
-})<{ accent?: string }>`
-  border-left: 4px solid ${({ accent }) => accent ?? colors.primary};
-`;
-
-const StatLabel = styled.p`font-size: ${font.size.sm}; color: ${colors.textMuted}; margin-bottom: 4px;`;
-const StatValue = styled.p.withConfig({ shouldForwardProp: (p) => p !== 'textColor' })<{ textColor?: string }>`
-  font-size: ${font.size['2xl']}; font-weight: 700;
-  color: ${({ textColor }) => textColor ?? colors.textPrimary};
-`;
-
-const StepList = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-`;
-
-const StepRow = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 10px ${spacing[4]};
-  border-radius: ${radius.md};
-  background: ${colors.bg};
-`;
-
-const StepLabel = styled.span`font-weight: ${font.weight.semibold};`;
 
 interface StepObj { stepKey: string; status: string }
 
@@ -106,7 +33,7 @@ interface ReviewData {
   periodYear: number;
   periodMonth: number;
   type: 'MONTHLY' | 'QUARTERLY';
-  status: string; // string from API, cast to ReviewStatus when passing to store
+  status: string;
   completedAt: string | null;
   currentStep: string;
   lockedForEdit: boolean;

@@ -1,51 +1,17 @@
 'use client';
 
 import React from 'react';
-import styled from 'styled-components';
-import { Card, CardTitle } from '@/components/ui/Card';
+import { CardTitle } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { theme } from '@/styles/tokens';
-
-const { colors, font, spacing } = theme;
+import { Page, PageTitle, Section, ExportBox, SubText } from './ConfigPage.styles';
 import { LoadingState } from '@/components/shared/LoadingState';
 import { useConfigData } from './useConfigData';
 import { MembersSection } from './MembersSection';
 import { ExpenseCategoriesSection } from './ExpenseCategoriesSection';
 import { InvestmentsConfigSection } from './InvestmentsConfigSection';
 
-// ─── Styled components ────────────────────────────────────────────────────────
-
-const Page = styled.div`
-  max-width: 960px;
-  margin: 0 auto;
-  padding: ${spacing[8]} ${spacing[6]};
-`;
-
-const PageTitle = styled.h1`
-  font-size: ${font.size['3xl']};
-  font-weight: 700;
-  color: ${colors.textPrimary};
-  margin-bottom: ${spacing[8]};
-`;
-
-const Section = styled(Card)`
-  margin-bottom: ${spacing[6]};
-`;
-
-const ExportBox = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: ${spacing[4]};
-`;
-
-const SubText = styled.p`
-  font-size: ${font.size.sm};
-  color: ${colors.textMuted};
-  margin-top: 2px;
-`;
-
-// ─── Page component ───────────────────────────────────────────────────────────
+const { colors, spacing } = theme;
 
 export default function ConfigPage() {
   const {

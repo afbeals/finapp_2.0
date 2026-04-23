@@ -1,172 +1,26 @@
 'use client';
 
 import React, { useMemo } from 'react';
-import styled from 'styled-components';
 import { formatDollars, toDollars } from '@/lib/money';
 import { InlineEdit } from '@/components/shared/InlineEdit';
 import { theme } from '@/styles/tokens';
 
-const { colors, font, spacing, radius, semanticColors } = theme;
+const { colors } = theme;
 import { MONTH_NAMES_SHORT } from '@/lib/fire';
 import type { SavingsAccount, SavingsSnapshot, HistoricalSnapshot } from '@/types/entities';
 import type { ReviewPeriod } from '@/types/review';
 export type { ReviewPeriod };
-
+import {
+  AccountRow, AccountRowHeader, AccountIcon, AccountName, AccountMeta, MetaItem,
+  MetaLabel, MetaValue, ChevronIcon, ExpandedPanel, EditingBadge, SnapKpiRow,
+  SnapKpi, SnapKpiLabel, SnapKpiValue, HistoryTable, HistoryThead, HistoryTh,
+  HistoryTr, HistoryTd, GoalPercent, CurrentDot, MutedDash, EmptyTd,
+  DepositSpan, GrowthSpan, AddRowBtn,
+} from './AccountCard.styles';
 
 export interface HistoricalSnapshotWithBalance extends HistoricalSnapshot {
   computedEndBalance: number;
 }
-
-const AccountRow = styled.div`
-  background: ${colors.surface};
-  border: 1px solid ${colors.border};
-  border-radius: ${radius.lg};
-  margin-bottom: ${spacing[2]};
-  overflow: visible;
-`;
-
-const AccountRowHeader = styled.button.withConfig({
-  shouldForwardProp: (p) => p !== 'expanded',
-})<{ expanded: boolean }>`
-  width: 100%;
-  display: flex;
-  align-items: center;
-  gap: ${spacing[4]};
-  padding: ${spacing[4]} ${spacing[5]};
-  background: ${({ expanded }) => expanded ? colors.primaryLight : colors.surface};
-  border: none;
-  cursor: pointer;
-  text-align: left;
-  border-radius: ${({ expanded }) => expanded ? `${radius.lg} ${radius.lg} 0 0` : radius.lg};
-  transition: background 120ms ease;
-  &:hover { background: ${colors.bg}; }
-`;
-
-const AccountIcon = styled.span`font-size: ${font.size['2xl']}; flex-shrink: 0;`;
-
-const AccountName = styled.span`
-  flex: 1;
-  font-size: ${font.size.base};
-  font-weight: ${font.weight.bold};
-  color: ${colors.textPrimary};
-  text-align: left;
-`;
-
-const AccountMeta = styled.div`display: flex; align-items: center; gap: ${spacing[5]};`;
-
-const MetaItem = styled.div`display: flex; flex-direction: column; align-items: flex-end; gap: 2px;`;
-
-const MetaLabel = styled.span`font-size: ${font.size.xs}; color: ${colors.textMuted};`;
-
-const MetaValue = styled.span.withConfig({
-  shouldForwardProp: (p) => p !== 'textColor',
-})<{ textColor?: string }>`
-  font-size: ${font.size.sm};
-  font-weight: ${font.weight.semibold};
-  color: ${({ textColor }) => textColor ?? colors.textPrimary};
-`;
-
-const ChevronIcon = styled.span.withConfig({
-  shouldForwardProp: (p) => p !== 'open',
-})<{ open: boolean }>`
-  font-size: ${font.size.sm};
-  color: ${colors.textMuted};
-  transform: ${({ open }) => open ? 'rotate(90deg)' : 'rotate(0deg)'};
-  transition: transform 180ms ease;
-  flex-shrink: 0;
-  margin-left: ${spacing[2]};
-`;
-
-const ExpandedPanel = styled.div`border-top: 1px solid ${colors.border}; background: ${colors.bg};`;
-
-const EditingBadge = styled.span`
-  font-size: ${font.size.xs}; font-weight: ${font.weight.medium};
-  padding: 2px 8px; border-radius: ${radius.full};
-  background: ${colors.primaryLight}; color: ${semanticColors.primaryTextDark}; border: 1px solid ${colors.primary};
-  margin-left: ${spacing[2]};
-`;
-
-const SnapKpiRow = styled.div`
-  display: flex; gap: ${spacing[3]}; padding: 14px ${spacing[5]}; flex-wrap: wrap;
-`;
-
-const SnapKpi = styled.div`
-  background: ${colors.surface}; border: 1px solid ${colors.border};
-  border-radius: ${radius.md}; padding: 10px 14px; min-width: 120px; flex: 1;
-`;
-
-const SnapKpiLabel = styled.p`
-  font-size: ${font.size.xxs}; font-weight: ${font.weight.semibold}; color: ${colors.textMuted};
-  text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 4px;
-`;
-
-const SnapKpiValue = styled.div.withConfig({
-  shouldForwardProp: (p) => p !== 'textColor',
-})<{ textColor?: string }>`
-  font-size: ${font.size.lg}; font-weight: ${font.weight.bold};
-  color: ${({ textColor }) => textColor ?? colors.textPrimary};
-`;
-
-const HistoryTable = styled.table`width: 100%; border-collapse: collapse;`;
-const HistoryThead = styled.thead`background: ${colors.bg};`;
-const HistoryTh = styled.th`
-  padding: 8px ${spacing[4]}; font-size: ${font.size.xs}; font-weight: ${font.weight.semibold};
-  color: ${colors.textMuted}; text-align: center; border-bottom: 1px solid ${colors.border};
-  &:first-child { text-align: left; }
-`;
-const HistoryTr = styled.tr.withConfig({
-  shouldForwardProp: (p) => p !== 'isCurrentMonth',
-})<{ isCurrentMonth: boolean }>`
-  background: ${({ isCurrentMonth }) => isCurrentMonth ? colors.primaryLight : colors.surface};
-  &:nth-child(even) { background: ${({ isCurrentMonth }) => isCurrentMonth ? colors.primaryLight : colors.bg}; }
-  &:last-child td { border-bottom: none; }
-`;
-const HistoryTd = styled.td.withConfig({ shouldForwardProp: (p) => p !== 'bold' })<{ bold?: boolean }>`
-  padding: 10px ${spacing[4]}; font-size: ${font.size.sm}; color: ${colors.textPrimary};
-  border-bottom: 1px solid ${colors.border}; text-align: center;
-  font-weight: ${({ bold }) => bold ? font.weight.semibold : font.weight.normal};
-  &:first-child { text-align: left; font-weight: ${font.weight.medium}; }
-`;
-
-const GoalPercent = styled.span`
-  margin-left: 8px;
-  color: ${colors.primary};
-  font-weight: ${font.weight.semibold};
-`;
-
-const CurrentDot = styled.span`
-  margin-left: 6px;
-  font-size: ${font.size.xs};
-  color: ${colors.primary};
-  font-weight: ${font.weight.semibold};
-`;
-
-const MutedDash = styled.span`color: ${colors.textMuted};`;
-
-const EmptyTd = styled(HistoryTd)`
-  text-align: center;
-  color: ${colors.textMuted};
-  font-style: italic;
-`;
-
-const DepositSpan = styled.span.withConfig({ shouldForwardProp: (p) => p !== 'zero' })<{ zero: boolean }>`
-  color: ${({ zero }) => zero ? colors.textMuted : colors.textPrimary};
-`;
-
-const GrowthSpan = styled.span.withConfig({ shouldForwardProp: (p) => p !== 'positive' })<{ positive: boolean }>`
-  color: ${({ positive }) => positive ? colors.success : colors.danger};
-  font-weight: ${font.weight.medium};
-`;
-
-const AddRowBtn = styled.button`
-  width: 100%; padding: 9px ${spacing[4]};
-  border: none; border-top: 1px dashed ${colors.border};
-  background: transparent; color: ${colors.primary};
-  font-size: ${font.size.sm}; font-weight: ${font.weight.medium};
-  cursor: pointer; text-align: left;
-  display: flex; align-items: center; gap: 6px;
-  &:hover { background: ${colors.primaryLight}; }
-`;
 
 interface AccountCardProps {
   account: SavingsAccount;

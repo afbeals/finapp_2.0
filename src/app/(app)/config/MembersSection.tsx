@@ -1,15 +1,15 @@
 'use client';
 
 import React, { useState } from 'react';
-import styled from 'styled-components';
 import { CardTitle } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Input, Label, FormGroup } from '@/components/ui/Input';
 import { Modal } from '@/components/ui/Modal';
 import { theme } from '@/styles/tokens';
-
-const { colors, font, spacing } = theme;
+import { MemberRow, MemberInfo, ColorDot, MemberName, MemberEmail } from './MembersSection.styles';
 import { createMember } from '@/lib/api';
+
+const { colors, font } = theme;
 import type { Member } from '@/types/entities';
 import { SectionCard } from './components/SectionCard';
 import { ColorPickerField } from './components/ColorPickerField';
@@ -20,45 +20,6 @@ interface MembersSectionProps {
   members: MemberWithEmail[];
   setMembers: React.Dispatch<React.SetStateAction<MemberWithEmail[]>>;
 }
-
-// ─── Styled components ────────────────────────────────────────────────────────
-
-const MemberRow = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 10px 0;
-  border-bottom: 1px solid ${colors.border};
-  &:last-child { border-bottom: none; }
-`;
-
-const MemberInfo = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 12px;
-`;
-
-const ColorDot = styled.div.withConfig({
-  shouldForwardProp: (prop) => prop !== 'color',
-})<{ color: string }>`
-  width: 14px;
-  height: 14px;
-  border-radius: 50%;
-  background: ${({ color }) => color};
-  flex-shrink: 0;
-`;
-
-const MemberName = styled.span`
-  font-size: ${font.size.base};
-  font-weight: 600;
-  color: ${colors.textPrimary};
-`;
-
-const MemberEmail = styled.span`
-  font-size: ${font.size.sm};
-  color: ${colors.textMuted};
-  margin-left: 8px;
-`;
 
 // ─── Component ────────────────────────────────────────────────────────────────
 

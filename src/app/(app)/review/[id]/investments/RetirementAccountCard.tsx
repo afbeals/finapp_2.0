@@ -1,204 +1,21 @@
 'use client';
 
 import React, { useMemo } from 'react';
-import styled from 'styled-components';
 import { formatDollars, toDollars } from '@/lib/money';
 import { InlineEdit } from '@/components/shared/InlineEdit';
 import { theme } from '@/styles/tokens';
-
-const { colors, font, spacing, radius, semanticColors } = theme;
+import {
+  Card, CardHeaderBtn, Icon, TitleCol, Name, SubRow, TypeBadge, SubText, OwnerChip,
+  Meta, MetaItem, MetaLabel, MetaValue, Chevron, Panel, KpiRow, Kpi, KpiLabel, KpiValue,
+  Actions, ActionBtn, HistoryTable, Thead, Th, Tr, Td, EmptyTd, GrowthSpan, CurrentDot, AddRowBtn,
+} from './RetirementAccountCard.styles';
 import { MONTH_NAMES_SHORT } from '@/lib/fire';
 import { accountTypeLabel } from '@/app/(app)/config/configHelpers';
 import type { InvestmentAccount, HistoricalRetirementSnapshot } from '@/types/entities';
 
+const { colors } = theme;
+
 type ReviewPeriodLite = { id: number; periodYear: number; periodMonth: number };
-
-const Card = styled.div`
-  background: ${colors.surface};
-  border: 1px solid ${colors.border};
-  border-radius: ${radius.lg};
-  margin-bottom: ${spacing[2]};
-  overflow: visible;
-`;
-
-const CardHeaderBtn = styled.button.withConfig({
-  shouldForwardProp: (p) => p !== 'expanded',
-})<{ expanded: boolean }>`
-  width: 100%;
-  display: flex;
-  align-items: center;
-  gap: ${spacing[4]};
-  padding: ${spacing[4]} ${spacing[5]};
-  background: ${({ expanded }) => (expanded ? colors.primaryLight : colors.surface)};
-  border: none;
-  cursor: pointer;
-  text-align: left;
-  border-radius: ${({ expanded }) => (expanded ? `${radius.lg} ${radius.lg} 0 0` : radius.lg)};
-  &:hover { background: ${colors.bg}; }
-`;
-
-const Icon = styled.span`font-size: ${font.size['2xl']}; flex-shrink: 0;`;
-
-const TitleCol = styled.div`
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  text-align: left;
-`;
-
-const Name = styled.span`
-  font-size: ${font.size.base};
-  font-weight: ${font.weight.bold};
-  color: ${colors.textPrimary};
-`;
-
-const SubRow = styled.div`
-  display: flex;
-  align-items: center;
-  gap: ${spacing[2]};
-  flex-wrap: wrap;
-`;
-
-const TypeBadge = styled.span`
-  font-size: ${font.size.xxs};
-  font-weight: ${font.weight.semibold};
-  color: ${semanticColors.successTextMedium};
-  background: ${semanticColors.successBg};
-  padding: 2px 8px;
-  border-radius: ${radius.full};
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-`;
-
-const SubText = styled.span`font-size: ${font.size.xs}; color: ${colors.textMuted};`;
-
-const OwnerChip = styled.span.withConfig({ shouldForwardProp: (p) => p !== 'chipColor' })<{ chipColor: string }>`
-  font-size: ${font.size.xxs};
-  font-weight: ${font.weight.medium};
-  color: ${({ chipColor }) => chipColor};
-  background: ${({ chipColor }) => chipColor + '22'};
-  padding: 2px 8px;
-  border-radius: ${radius.full};
-`;
-
-const Meta = styled.div`display: flex; align-items: center; gap: ${spacing[5]};`;
-const MetaItem = styled.div`display: flex; flex-direction: column; align-items: flex-end; gap: 2px;`;
-const MetaLabel = styled.span`font-size: ${font.size.xs}; color: ${colors.textMuted};`;
-const MetaValue = styled.span.withConfig({ shouldForwardProp: (p) => p !== 'textColor' })<{ textColor?: string }>`
-  font-size: ${font.size.sm};
-  font-weight: ${font.weight.semibold};
-  color: ${({ textColor }) => textColor ?? colors.textPrimary};
-`;
-
-const Chevron = styled.span.withConfig({ shouldForwardProp: (p) => p !== 'open' })<{ open: boolean }>`
-  font-size: ${font.size.sm};
-  color: ${colors.textMuted};
-  transform: ${({ open }) => (open ? 'rotate(90deg)' : 'rotate(0deg)')};
-  transition: transform 180ms ease;
-  flex-shrink: 0;
-  margin-left: ${spacing[2]};
-`;
-
-const Panel = styled.div`border-top: 1px solid ${colors.border}; background: ${colors.bg};`;
-
-const KpiRow = styled.div`
-  display: flex; gap: ${spacing[3]}; padding: 14px ${spacing[5]}; flex-wrap: wrap;
-`;
-
-const Kpi = styled.div`
-  background: ${colors.surface};
-  border: 1px solid ${colors.border};
-  border-radius: ${radius.md};
-  padding: 10px 14px;
-  min-width: 140px;
-  flex: 1;
-`;
-
-const KpiLabel = styled.p`
-  font-size: ${font.size.xxs};
-  font-weight: ${font.weight.semibold};
-  color: ${colors.textMuted};
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  margin-bottom: 4px;
-`;
-
-const KpiValue = styled.div.withConfig({ shouldForwardProp: (p) => p !== 'textColor' })<{ textColor?: string }>`
-  font-size: ${font.size.lg};
-  font-weight: ${font.weight.bold};
-  color: ${({ textColor }) => textColor ?? colors.textPrimary};
-`;
-
-const Actions = styled.div`
-  display: flex;
-  justify-content: space-between;
-  gap: ${spacing[2]};
-  padding: ${spacing[3]} ${spacing[5]};
-  border-top: 1px dashed ${colors.border};
-`;
-
-const ActionBtn = styled.button.withConfig({ shouldForwardProp: (p) => p !== 'tone' })<{ tone?: 'danger' | 'primary' }>`
-  border: none;
-  background: transparent;
-  color: ${({ tone }) => (tone === 'danger' ? colors.danger : colors.primary)};
-  font-size: ${font.size.sm};
-  font-weight: ${font.weight.medium};
-  cursor: pointer;
-  padding: 6px 10px;
-  border-radius: ${radius.sm};
-  &:hover { background: ${({ tone }) => (tone === 'danger' ? '#fee2e2' : colors.primaryLight)}; }
-`;
-
-const HistoryTable = styled.table`width: 100%; border-collapse: collapse;`;
-const Thead = styled.thead`background: ${colors.bg};`;
-const Th = styled.th`
-  padding: 8px ${spacing[4]};
-  font-size: ${font.size.xs};
-  font-weight: ${font.weight.semibold};
-  color: ${colors.textMuted};
-  text-align: center;
-  border-bottom: 1px solid ${colors.border};
-  &:first-child { text-align: left; }
-`;
-const Tr = styled.tr.withConfig({ shouldForwardProp: (p) => p !== 'isCurrentMonth' })<{ isCurrentMonth: boolean }>`
-  background: ${({ isCurrentMonth }) => (isCurrentMonth ? colors.primaryLight : colors.surface)};
-  &:nth-child(even) { background: ${({ isCurrentMonth }) => (isCurrentMonth ? colors.primaryLight : colors.bg)}; }
-  &:last-child td { border-bottom: none; }
-`;
-const Td = styled.td.withConfig({ shouldForwardProp: (p) => p !== 'bold' })<{ bold?: boolean }>`
-  padding: 10px ${spacing[4]};
-  font-size: ${font.size.sm};
-  color: ${colors.textPrimary};
-  border-bottom: 1px solid ${colors.border};
-  text-align: center;
-  font-weight: ${({ bold }) => (bold ? font.weight.semibold : font.weight.normal)};
-  &:first-child { text-align: left; font-weight: ${font.weight.medium}; }
-`;
-const EmptyTd = styled(Td)`
-  text-align: center;
-  color: ${colors.textMuted};
-  font-style: italic;
-`;
-const GrowthSpan = styled.span.withConfig({ shouldForwardProp: (p) => p !== 'positive' })<{ positive: boolean }>`
-  color: ${({ positive }) => (positive ? colors.success : colors.danger)};
-  font-weight: ${font.weight.medium};
-`;
-const CurrentDot = styled.span`
-  margin-left: 6px;
-  font-size: ${font.size.xs};
-  color: ${colors.primary};
-  font-weight: ${font.weight.semibold};
-`;
-const AddRowBtn = styled.button`
-  width: 100%; padding: 9px ${spacing[4]};
-  border: none; border-top: 1px dashed ${colors.border};
-  background: transparent; color: ${colors.primary};
-  font-size: ${font.size.sm}; font-weight: ${font.weight.medium};
-  cursor: pointer; text-align: left;
-  display: flex; align-items: center; gap: 6px;
-  &:hover { background: ${colors.primaryLight}; }
-`;
 
 interface Props {
   account: InvestmentAccount;

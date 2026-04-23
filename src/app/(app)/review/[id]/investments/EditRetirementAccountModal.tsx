@@ -1,46 +1,17 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import styled from 'styled-components';
 import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
 import { Input, Label, Select, FormGroup } from '@/components/ui/Input';
 import { theme } from '@/styles/tokens';
-
-const { colors, spacing, radius, font } = theme;
+import { Actions, OwnerChips, OwnerChip, Body } from './EditRetirementAccountModal.styles';
 import { ACCOUNT_TYPES } from '@/app/(app)/config/configHelpers';
 import type { InvestmentAccount, Member } from '@/types/entities';
 
+const { colors } = theme;
+
 const RETIREMENT_TYPE_VALUES = ACCOUNT_TYPES.filter((t) => t.value !== 'TAXABLE');
-
-const Actions = styled.div`
-  display: flex;
-  justify-content: flex-end;
-  gap: ${spacing[2]};
-  padding: ${spacing[5]} ${spacing[6]} ${spacing[6]};
-`;
-
-const OwnerChips = styled.div`
-  display: flex;
-  flex-wrap: wrap;
-  gap: ${spacing[2]};
-`;
-
-const OwnerChip = styled.button.withConfig({
-  shouldForwardProp: (p) => p !== 'selected' && p !== 'chipColor',
-})<{ selected: boolean; chipColor: string }>`
-  font-size: ${font.size.sm};
-  font-weight: ${font.weight.medium};
-  padding: 6px 12px;
-  border-radius: ${radius.full};
-  border: 1.5px solid ${({ selected, chipColor }) => (selected ? chipColor : colors.border)};
-  background: ${({ selected, chipColor }) => (selected ? chipColor + '22' : colors.surface)};
-  color: ${({ selected, chipColor }) => (selected ? chipColor : colors.textPrimary)};
-  cursor: pointer;
-  &:hover { border-color: ${({ chipColor }) => chipColor}; }
-`;
-
-const Body = styled.div`padding: ${spacing[5]} ${spacing[6]} 0;`;
 
 export interface RetirementAccountFormValues {
   name: string;

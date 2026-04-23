@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import styled from 'styled-components';
 import { StepShell } from '@/components/review/StepShell';
 import { Card, CardTitle } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
@@ -13,55 +12,16 @@ import { formatDollars } from '@/lib/money';
 import { getReviewIncome, getReviewExpenses, getReviewSavings, getReviewInvestments, apiPatch } from '@/lib/api';
 import { theme } from '@/styles/tokens';
 
-const { colors, font, radius, spacing, semanticColors } = theme;
+const { colors, font, spacing, semanticColors } = theme;
 import { LoadingState } from '@/components/shared/LoadingState';
 import { MONTH_NAMES_LONG } from '@/lib/fire';
+import { SummaryGrid, SummaryCard, Label, Value, StepList, StepRow, CompleteBox, CompleteIcon } from './FinalizePage.styles';
 
 const STEP_LABELS: Record<string, string> = {
   expense: 'Expense Entry', monthly: 'Monthly Summary', savings: 'Savings',
   loans: 'Loans', investments: 'Investments', portfolio: 'Portfolio & FIRE',
   vaults: 'Vaults', finalize: 'Finalize',
 };
-
-const SummaryGrid = styled.div`
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: ${spacing[4]};
-  margin-bottom: ${spacing[6]};
-  @media (max-width: 640px) { grid-template-columns: 1fr; }
-`;
-
-const SummaryCard = styled(Card).withConfig({
-  shouldForwardProp: (prop) => prop !== 'accent',
-})<{ accent?: string }>`
-  border-left: 4px solid ${({ accent }) => accent ?? colors.primary};
-`;
-
-const Label = styled.p`font-size: ${font.size.sm}; color: ${colors.textMuted}; margin-bottom: ${spacing[1]};`;
-const Value = styled.p`font-size: ${font.size['2xl']}; font-weight: 700; color: ${colors.textPrimary};`;
-
-const StepList = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  margin-bottom: ${spacing[6]};
-`;
-
-const StepRow = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 10px ${spacing[4]};
-  border-radius: ${radius.md};
-  background: ${colors.bg};
-`;
-
-const CompleteBox = styled.div`
-  text-align: center;
-  padding: ${spacing[10]};
-`;
-
-const CompleteIcon = styled.div`font-size: 56px; margin-bottom: ${spacing[4]};`;
 
 interface StepObj { stepKey: string; status: string }
 

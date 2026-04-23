@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState, useMemo, useCallback } from 'react';
+import React, { useEffect, useState, useMemo, useCallback, useRef } from 'react';
 import { useParams } from 'next/navigation';
 import { StepShell } from '@/components/review/StepShell';
 import { STEP_META } from '@/components/review/stepMetadata';
@@ -50,6 +50,9 @@ export default function VaultsPage() {
   const [treasuryAmount, setTreasuryAmount] = useState(0);
   const [treasuryPcts, setTreasuryPcts] = useState<Record<number, number>>({});
   const [groupOrderOverrides, setGroupOrderOverrides] = useState<Record<string, number>>({});
+  // Separate display state that lags behind by ~700ms so sections reorder smoothly
+  const [displayOverrides, setDisplayOverrides] = useState<Record<string, number>>({});
+  const reorderTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [newFixedCategory, setNewFixedCategory] = useState<string>('');
   const [deleteCategoryName, setDeleteCategoryName] = useState<string | null>(null);
 
@@ -67,8 +70,11 @@ export default function VaultsPage() {
       const overrides: Record<string, number> = {};
       for (const o of orders ?? []) overrides[o.category] = o.groupOrder;
       setGroupOrderOverrides(overrides);
+      setDisplayOverrides(overrides);
     }).catch(() => setLoadError(true)).finally(() => setLoading(false));
   }, [reviewId]);
+
+  useEffect(() => () => { if (reorderTimerRef.current) clearTimeout(reorderTimerRef.current); }, []);
 
   const patchVault = useCallback(async (id: number, patch: Partial<Vault>, save = false) => {
     const prev = vaults.find((v) => v.id === id);
@@ -161,11 +167,22 @@ export default function VaultsPage() {
   }, []);
 
   const handleGroupOrderChange = useCallback(async (category: string, newOrder: number) => {
+    // Persist the new order immediately
     setGroupOrderOverrides((prev) => ({ ...prev, [category]: newOrder }));
+    // Debounce the visual reorder so the section doesn't jump while typing
+    if (reorderTimerRef.current) clearTimeout(reorderTimerRef.current);
+    reorderTimerRef.current = setTimeout(() => {
+      setDisplayOverrides((prev) => ({ ...prev, [category]: newOrder }));
+    }, 700);
     try {
       await patchVaultCategoryOrder(category, newOrder);
     } catch {
       setGroupOrderOverrides((prev) => {
+        const next = { ...prev };
+        delete next[category];
+        return next;
+      });
+      setDisplayOverrides((prev) => {
         const next = { ...prev };
         delete next[category];
         return next;
@@ -192,13 +209,16 @@ export default function VaultsPage() {
     await goNext();
   }
 
+  const allCategories = useMemo(() => {
+    const cats = [
+      ...CAT_ORDER.filter((c) => fixedByCategory[c]),
+      ...Object.keys(fixedByCategory).filter((c) => !CAT_ORDER.includes(c)),
+    ];
+    return [...cats].sort((a, b) => resolveGroupOrder(a, displayOverrides) - resolveGroupOrder(b, displayOverrides));
+  }, [fixedByCategory, displayOverrides]);
+
   if (loading) return <LoadingState centered />;
   if (loadError) return <ErrorState centered message="Couldn't load vaults — please refresh." />;
-
-  const allCategories = [
-    ...CAT_ORDER.filter((c) => fixedByCategory[c]),
-    ...Object.keys(fixedByCategory).filter((c) => !CAT_ORDER.includes(c)),
-  ];
 
   return (
     <StepShell

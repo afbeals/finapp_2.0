@@ -3,7 +3,8 @@
 import type {
   Loan, LoanSnapshot,
   SavingsAccount, SavingsSnapshot, HistoricalSnapshot,
-  InvestmentAccount, InvestmentCategory, HoldingSnapshot, Purchase,
+  InvestmentAccount, InvestmentCategory, HoldingSnapshot,
+  RetirementSnapshot, HistoricalRetirementSnapshot,
   ExpenseEntry, IncomeEntry, ExpenseCategory,
   Vault, VaultSnapshot,
   Member,
@@ -45,8 +46,10 @@ export interface SavingsHistoryResponse {
 
 export interface InvestmentsResponse {
   accounts: InvestmentAccount[];
-  snapshots: Record<number, HoldingSnapshot>;
-  purchases: Purchase[];
+  snapshots: HoldingSnapshot[];
+  retirementSnapshots: RetirementSnapshot[];
+  allRetirementSnapshots: HistoricalRetirementSnapshot[];
+  allReviews: { id: number; periodYear: number; periodMonth: number }[];
 }
 
 export interface InvestmentCategoriesResponse {

@@ -45,8 +45,9 @@ export async function DELETE(req: NextRequest, { params }: Params) {
   const purchaseCount = await prisma.purchase.count({ where: { accountId: id } });
   const body = await req.json().catch(() => ({}));
   const transferToId: number | undefined = body?.transferToId;
+  const force: boolean = body?.force === true;
 
-  if (purchaseCount > 0 && !transferToId) return conflict({ inUse: true, purchaseCount });
+  if (purchaseCount > 0 && !transferToId && !force) return conflict({ inUse: true, purchaseCount });
 
   if (purchaseCount > 0 && transferToId) {
     const target = await prisma.investmentAccount.findUnique({ where: { id: transferToId } });

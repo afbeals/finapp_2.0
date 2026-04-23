@@ -113,10 +113,11 @@ model Review {
   steps          ReviewStep[]
   incomeEntries  IncomeEntry[]
   expenseEntries ExpenseEntry[]
-  savingsSnapshots SavingsSnapshot[]
-  loanSnapshots    LoanSnapshot[]
-  holdingSnapshots HoldingSnapshot[]
-  vaultSnapshots   VaultSnapshot[]
+  savingsSnapshots    SavingsSnapshot[]
+  loanSnapshots       LoanSnapshot[]
+  holdingSnapshots    HoldingSnapshot[]
+  retirementSnapshots RetirementSnapshot[]
+  vaultSnapshots      VaultSnapshot[]
 }
 
 model ReviewStep {
@@ -261,9 +262,23 @@ model InvestmentAccount {
   institution   String                @default("")
   ownerMemberId Int?
 
-  household Household  @relation(fields: [householdId], references: [id], onDelete: Cascade)
-  owner     Member?    @relation(fields: [ownerMemberId], references: [id])
-  purchases Purchase[]
+  household           Household            @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  owner               Member?              @relation(fields: [ownerMemberId], references: [id])
+  purchases           Purchase[]
+  retirementSnapshots RetirementSnapshot[]
+}
+
+// One balance per non-TAXABLE account per review — entered directly by the user.
+model RetirementSnapshot {
+  id        Int @id @default(autoincrement())
+  accountId Int
+  reviewId  Int
+  balance   Int // cents
+
+  account InvestmentAccount @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  review  Review            @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+
+  @@unique([accountId, reviewId])
 }
 
 // Each row = one purchase lot (buy event). Multiple purchases of the same ticker

@@ -102,6 +102,17 @@ export interface HoldingSnapshot {
   gainLoss: number;
 }
 
+export interface RetirementSnapshot {
+  id: number;
+  accountId: number;
+  reviewId: number;
+  balance: number;
+}
+
+export interface HistoricalRetirementSnapshot extends RetirementSnapshot {
+  review: { id: number; periodYear: number; periodMonth: number };
+}
+
 // ─── Expenses ─────────────────────────────────────────────────────────────────
 
 export interface ExpenseCategory {

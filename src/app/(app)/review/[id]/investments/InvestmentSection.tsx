@@ -216,6 +216,8 @@ export interface SectionProps {
   readOnly: boolean;
   categoryColorMap: Record<string, { bg: string; fg: string }>;
   onAddPurchase: (defaultAccountId: number) => void;
+  onEditAccount?: (accountId: number) => void;
+  onDeleteAccount?: (accountId: number) => void;
 }
 
 export function InvestmentSection({
@@ -227,6 +229,8 @@ export function InvestmentSection({
   readOnly,
   categoryColorMap,
   onAddPurchase,
+  onEditAccount,
+  onDeleteAccount,
 }: SectionProps) {
   const [open, setOpen] = useState(true);
   const [search, setSearch] = useState('');
@@ -292,6 +296,32 @@ export function InvestmentSection({
 
       {open && (
         <ExpandedWrap>
+          {(onEditAccount || onDeleteAccount) && accounts.length > 0 && (
+            <div style={{ marginBottom: 12, display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+              {accounts.map((a) => {
+                const b = acctColorMap[a.id];
+                return (
+                  <div key={a.id} style={{ display: 'flex', alignItems: 'center', gap: 4, background: b.bg, borderRadius: 6, padding: '4px 10px' }}>
+                    <span style={{ fontSize: 12, fontWeight: 600, color: b.fg }}>{a.name}</span>
+                    {onEditAccount && (
+                      <button
+                        onClick={() => onEditAccount(a.id)}
+                        style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '0 2px', fontSize: 11, color: b.fg, opacity: 0.8 }}
+                        title="Edit account"
+                      >✏️</button>
+                    )}
+                    {onDeleteAccount && (
+                      <button
+                        onClick={() => onDeleteAccount(a.id)}
+                        style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '0 2px', fontSize: 11, color: b.fg, opacity: 0.8 }}
+                        title="Delete account"
+                      >🗑️</button>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
           <SubHeader>
             <FilterInput
               placeholder="Filter by name or ticker..."

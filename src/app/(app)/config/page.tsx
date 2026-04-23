@@ -50,12 +50,10 @@ export default function ConfigPage() {
     members,
     expenseCategories,
     invCategories,
-    accounts,
     loading,
     setMembers,
     setExpenseCategories,
     setInvCategories,
-    setAccounts,
   } = useConfigData();
 
   function handleExport() {
@@ -78,9 +76,6 @@ export default function ConfigPage() {
       <InvestmentsConfigSection
         invCategories={invCategories}
         setInvCategories={setInvCategories}
-        accounts={accounts}
-        setAccounts={setAccounts}
-        members={members}
       />
 
       {/* Data */}

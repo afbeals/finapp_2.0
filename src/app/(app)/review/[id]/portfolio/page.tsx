@@ -66,8 +66,9 @@ export default function PortfolioPage() {
       getReviewSavings(reviewId),
       apiGet<{ reviews: { periodYear: number; totalIncome: number }[] }>('/api/reviews'),
     ]).then(([inv, inc, exp, sav, allReviews]) => {
-      const snapArr = Object.values(inv.snapshots ?? {});
-      setTotalPortfolio(snapArr.reduce((s, sn) => s + sn.value, 0));
+      const taxableValue = (inv.snapshots ?? []).reduce((s, sn) => s + sn.value, 0);
+      const retirementValue = (inv.retirementSnapshots ?? []).reduce((s, sn) => s + sn.balance, 0);
+      setTotalPortfolio(taxableValue + retirementValue);
       setTotalIncome((inc.entries ?? []).reduce((s, e) => s + e.amount, 0));
       setTotalExpenses((exp.entries ?? []).reduce((s, e) => s + e.amount, 0));
 

@@ -145,6 +145,11 @@ export const updateInvestmentAccount = (id: number, data: Partial<InvestmentAcco
 export const deleteInvestmentAccount = (id: number, transferToId?: number): Promise<{ ok?: boolean; inUse?: boolean; purchaseCount?: number }> =>
   apiDelete(`/api/config/investment-accounts/${id}`, transferToId != null ? { transferToId } : undefined);
 
+export const upsertRetirementSnapshot = (
+  data: { accountId: number; reviewId: number; balance: number },
+): Promise<{ snapshot: { id: number; accountId: number; reviewId: number; balance: number; review: { id: number; periodYear: number; periodMonth: number } } }> =>
+  apiPut('/api/retirement-snapshots', data);
+
 export const createInvestmentCategory = (data: Partial<InvestmentCategory>): Promise<{ category: InvestmentCategory }> =>
   apiPost('/api/config/investment-categories', data);
 

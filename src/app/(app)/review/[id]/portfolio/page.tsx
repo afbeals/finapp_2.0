@@ -9,7 +9,7 @@ import { useStepNav } from '@/lib/useStepNav';
 import { useReviewStore } from '@/lib/store';
 import { formatDollarsWhole } from '@/lib/money';
 import { fireNumber } from '@/lib/fire';
-import { getReviewIncome, getReviewExpenses, getReviewInvestments, getReviewSavings, apiGet } from '@/lib/api';
+import { getReviewIncome, getReviewExpenses, getReviewInvestments, getReviewSavings, getReviewLoans, apiGet } from '@/lib/api';
 import { theme } from '@/styles/tokens';
 
 const { colors, spacing } = theme;
@@ -55,6 +55,7 @@ export default function PortfolioPage() {
 
   const [totalPortfolio, setTotalPortfolio] = useState(0);
   const [hysa, setHysa] = useState(0);
+  const [totalLoanBalance, setTotalLoanBalance] = useState(0);
   const [totalIncome, setTotalIncome] = useState(0);
   const [totalExpenses, setTotalExpenses] = useState(0);
   const [ytdIncome, setYtdIncome] = useState(0);
@@ -67,11 +68,14 @@ export default function PortfolioPage() {
       getReviewIncome(reviewId),
       getReviewExpenses(reviewId),
       getReviewSavings(reviewId),
+      getReviewLoans(reviewId),
       apiGet<{ reviews: { periodYear: number; totalIncome: number }[] }>('/api/reviews'),
-    ]).then(([inv, inc, exp, sav, allReviews]) => {
+    ]).then(([inv, inc, exp, sav, loanData, allReviews]) => {
       const taxableValue = (inv.snapshots ?? []).reduce((s, sn) => s + sn.value, 0);
       const retirementValue = (inv.retirementSnapshots ?? []).reduce((s, sn) => s + sn.balance, 0);
       setTotalPortfolio(taxableValue + retirementValue);
+      const loanBalances = (loanData.snapshots ?? []).reduce((s, sn) => s + sn.balance, 0);
+      setTotalLoanBalance(loanBalances);
       setTotalIncome((inc.entries ?? []).reduce((s, e) => s + e.amount, 0));
       setTotalExpenses((exp.entries ?? []).reduce((s, e) => s + e.amount, 0));
 
@@ -94,8 +98,8 @@ export default function PortfolioPage() {
     }).finally(() => setLoading(false));
   }, [reviewId]);
 
-  // Asset allocation: investments + HYSA + yearly income
-  const netWorth = useMemo(() => totalPortfolio + hysa, [totalPortfolio, hysa]);
+  // Net worth = investments + HYSA − outstanding loans
+  const netWorth = useMemo(() => totalPortfolio + hysa - totalLoanBalance, [totalPortfolio, hysa, totalLoanBalance]);
 
   const allocationItems = useMemo(() => [
     { label: 'Investments', value: totalPortfolio, color: colors.primary },
@@ -139,7 +143,10 @@ export default function PortfolioPage() {
             <KpiLabel>Net Worth</KpiLabel>
             <KpiValue>{formatDollarsWhole(netWorth)}</KpiValue>
             <KpiSub>↑ {formatDollarsWhole(ytdNetWorthGrowth)} YTD</KpiSub>
-            <div style={{ marginTop: 8 }}><ProgressBar value={Math.min(100, (netWorth / Math.max(1, fireTarget)) * 100 * 2)} color={colors.primary} height={6} /></div>
+            {totalLoanBalance > 0 && (
+              <KpiSub style={{ color: colors.danger }}>Liabilities: −{formatDollarsWhole(totalLoanBalance)}</KpiSub>
+            )}
+            <div style={{ marginTop: 8 }}><ProgressBar value={Math.min(100, (netWorth / Math.max(1, fireTarget)) * 100)} color={colors.primary} height={6} /></div>
           </KpiBody>
         </KpiCard>
 
@@ -181,7 +188,6 @@ export default function PortfolioPage() {
               <PanelTitle>FIRE Calculator</PanelTitle>
               <PanelSubtitle>Financial Independence, Retire Early (4% Rule)</PanelSubtitle>
             </div>
-            <span style={{ fontSize: 16, color: colors.textMuted, cursor: 'default' }} title="The FIRE number = 25× your annual expenses. Based on the 4% safe withdrawal rate.">ⓘ</span>
           </PanelHead>
           <PanelBody>
             <FireWidget totalPortfolioValue={totalPortfolio} actualYearlyExpenses={actualYearlyExpenses} />

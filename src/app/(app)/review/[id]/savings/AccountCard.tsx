@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useMemo } from 'react';
-import { formatDollars, toDollars } from '@/lib/money';
+import { formatDollars, toDollars, currencyFormatter } from '@/lib/money';
 import { InlineEdit } from '@/components/shared/InlineEdit';
 import { theme } from '@/styles/tokens';
 
@@ -99,6 +99,7 @@ export const AccountCard = React.memo(function AccountCard({
                   <InlineEdit
                     value={toDollars(startingBalance).toFixed(2)}
                     type="number"
+                    formatter={currencyFormatter}
                     onSave={(v) => onSaveRowField(account.id, firstRowReviewId, 'startingBalance', v)}
                   />
                 )}
@@ -138,6 +139,7 @@ export const AccountCard = React.memo(function AccountCard({
                   <InlineEdit
                     value={goal > 0 ? toDollars(goal).toFixed(2) : ''}
                     type="number"
+                    formatter={currencyFormatter}
                     placeholder="Set a goal…"
                     onSave={(v) => onSaveAccountField(account.id, 'goal', v)}
                   />
@@ -171,6 +173,7 @@ export const AccountCard = React.memo(function AccountCard({
                         <InlineEdit
                           value={toDollars(row.deposits).toFixed(2)}
                           type="number"
+                          formatter={currencyFormatter}
                           onSave={(v) => onSaveRowField(account.id, row.reviewId, 'deposits', v)}
                         />
                       ) : (
@@ -184,6 +187,7 @@ export const AccountCard = React.memo(function AccountCard({
                         <InlineEdit
                           value={toDollars(row.interest).toFixed(2)}
                           type="number"
+                          formatter={currencyFormatter}
                           color={colors.success}
                           onSave={(v) => onSaveRowField(account.id, row.reviewId, 'interest', v)}
                         />

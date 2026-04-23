@@ -8,7 +8,7 @@ const { colors, semanticColors, font } = theme;
 import type { Vault, Member } from '@/types/entities';
 import { TrashBtn } from '@/components/shared/TrashBtn';
 import {
-  SectionWrap, SectionHeaderRow, Chevron, SectionLabel, SubtotalBadge,
+  SectionWrap, SectionHeaderRow, Chevron, LabelGroup, SectionLabel, SubtotalBadge,
   AddRowBtn, TableWrap, FTable, FThead, FTh, FTr, FTd,
   RawNameCell, CellSelect, NumInput, OrderInput, DueInput, OwnerBadge,
 } from './FixedSection.styles';
@@ -45,19 +45,21 @@ export function FixedSection({ category, groupOrder, vaults, members, readOnly, 
     <SectionWrap>
       <SectionHeaderRow bg={pal.header} borderColor={pal.border} onClick={() => setOpen((v) => !v)}>
         <Chevron open={open}>▶</Chevron>
-        <SectionLabel textColor={pal.text}>{category}</SectionLabel>
-        {!readOnly && onGroupOrderChange && (
-          <OrderInput
-            type="number" min="1"
-            defaultValue={groupOrder}
-            title="Group order"
-            onClick={(e) => e.stopPropagation()}
-            onBlur={(e) => {
-              const val = parseInt(e.target.value) || groupOrder;
-              if (val !== groupOrder) onGroupOrderChange(category, val);
-            }}
-          />
-        )}
+        <LabelGroup>
+          <SectionLabel textColor={pal.text}>{category}</SectionLabel>
+          {!readOnly && onGroupOrderChange && (
+            <OrderInput
+              type="number" min="1"
+              defaultValue={groupOrder}
+              title="Group order"
+              onClick={(e) => e.stopPropagation()}
+              onBlur={(e) => {
+                const val = parseInt(e.target.value) || groupOrder;
+                if (val !== groupOrder) onGroupOrderChange(category, val);
+              }}
+            />
+          )}
+        </LabelGroup>
         <SubtotalBadge bg={pal.bg} textColor={pal.text}>Subtotal: {formatDollars(subtotal)}</SubtotalBadge>
       </SectionHeaderRow>
 

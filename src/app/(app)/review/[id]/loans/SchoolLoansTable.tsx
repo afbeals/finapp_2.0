@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useMemo } from 'react';
-import { formatDollars, toCents, toDollars } from '@/lib/money';
+import { formatDollars, toCents, toDollars, currencyFormatter } from '@/lib/money';
 import { amortizationSchedule, monthlyPayment, totalInterest, payoffDateStr } from '@/lib/fire';
 import { InlineEdit } from '@/components/shared/InlineEdit';
 import { theme } from '@/styles/tokens';
@@ -124,6 +124,7 @@ export const SchoolLoansTable = React.memo(function SchoolLoansTable({
                   ) : (
                     <InlineEdit
                       value={toDollars(snap.balance).toFixed(2)}
+                      formatter={currencyFormatter}
                       onSave={(v) => onPatchSnapshot(loan.id, { balance: toCents(parseFloat(v) || 0) })}
                       color={isHighest ? semanticColors.dangerTextDark : undefined}
                       readOnly={readOnly}
@@ -149,6 +150,7 @@ export const SchoolLoansTable = React.memo(function SchoolLoansTable({
                   ) : (
                     <InlineEdit
                       value={toDollars(snap.extraPayment).toFixed(2)}
+                      formatter={currencyFormatter}
                       onSave={(v) => onPatchSnapshot(loan.id, { extraPayment: toCents(parseFloat(v) || 0) })}
                       color={semanticColors.warningText}
                       readOnly={readOnly}

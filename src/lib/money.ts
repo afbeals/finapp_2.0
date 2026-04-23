@@ -55,6 +55,16 @@ export function toNumber(s: string, fallback = 0): number {
   return Number.isNaN(n) ? fallback : n;
 }
 
+/**
+ * Formatter for InlineEdit type="currency" display mode.
+ * Pass as formatter={(v) => currencyFormatter(v)} to show $1,234.56 while
+ * the edit input stays as a plain number.
+ */
+export function currencyFormatter(v: string): string {
+  const cents = toCents(parseFloat(v) || 0);
+  return formatDollars(cents);
+}
+
 /** Parse a dollar string like "$1,234.56" to cents */
 export function parseDollarsToCents(input: string): number {
   const cleaned = input.replace(/[$,\s]/g, '');

@@ -109,7 +109,7 @@ export const ClearBtn = styled.button`
 `;
 
 export const TrAllocationBadge = styled.div.withConfig({ shouldForwardProp: (p) => p !== 'valid' })<{ valid: boolean }>`
-  margin-left: auto; font-size: ${font.size.sm}; font-weight: ${font.weight.semibold};
+  margin-left: auto; margin-right: 0; font-size: ${font.size.sm}; font-weight: ${font.weight.semibold};
   color: ${({ valid }) => valid ? semanticColors.successText : colors.danger};
   background: ${({ valid }) => valid ? colors.successLight : colors.dangerLight};
   padding: 4px 12px; border-radius: ${radius.full};

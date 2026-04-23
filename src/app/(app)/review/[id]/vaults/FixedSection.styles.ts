@@ -20,8 +20,12 @@ export const Chevron = styled.span.withConfig({ shouldForwardProp: (p) => p !== 
   transform: ${({ open }) => open ? 'rotate(90deg)' : 'none'}; transition: transform ${transition.base};
 `;
 
+export const LabelGroup = styled.div`
+  display: flex; align-items: center; gap: 4px;
+`;
+
 export const SectionLabel = styled.span.withConfig({ shouldForwardProp: (p) => p !== 'textColor' })<{ textColor: string }>`
-  font-size: ${font.size.sm}; font-weight: ${font.weight.bold}; color: ${({ textColor }) => textColor}; min-width: 120px;
+  font-size: ${font.size.sm}; font-weight: ${font.weight.bold}; color: ${({ textColor }) => textColor};
 `;
 
 export const SubtotalBadge = styled.span.withConfig({ shouldForwardProp: (p) => !['bg', 'textColor'].includes(p) })<{ bg: string; textColor: string }>`

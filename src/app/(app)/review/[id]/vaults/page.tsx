@@ -6,7 +6,7 @@ import { StepShell } from '@/components/review/StepShell';
 import { STEP_META } from '@/components/review/stepMetadata';
 import { useStepNav } from '@/lib/useStepNav';
 import { useReviewStore } from '@/lib/store';
-import { formatDollars, toCents, toDollars } from '@/lib/money';
+import { formatDollars, toCents, toDollars, currencyFormatter } from '@/lib/money';
 import { theme } from '@/styles/tokens';
 
 const { colors, semanticColors, font, spacing } = theme;
@@ -226,7 +226,7 @@ export default function VaultsPage() {
       })}
 
       {!readOnly && (
-        <AddRowBtn onClick={() => handleAddVault('FIXED', CAT_ORDER[0])}>
+        <AddRowBtn onClick={() => handleAddVault('FIXED', allCategories[0] ?? CAT_ORDER[0])}>
           + Add fixed vault
         </AddRowBtn>
       )}
@@ -246,13 +246,13 @@ export default function VaultsPage() {
             onChange={(e) => setTreasuryAmount(toCents(parseFloat(e.target.value) || 0))}
             disabled={readOnly}
           />
-          {!readOnly && (
-            <ClearBtn type="button" onClick={handleClearTreasury}>Clear</ClearBtn>
-          )}
           <span style={{ fontSize: font.size.sm, color: semanticColors.amberText }}>Enter amount to distribute</span>
           <TrAllocationBadge valid={Math.abs(totalTreasuryPct - 100) < 0.1 || totalTreasuryPct === 0}>
             Total: {totalTreasuryPct.toFixed(0)}%
           </TrAllocationBadge>
+          {!readOnly && (
+            <ClearBtn type="button" onClick={handleClearTreasury}>Clear</ClearBtn>
+          )}
         </TrAmountBox>
 
         <TableWrap>
@@ -313,6 +313,7 @@ export default function VaultsPage() {
                         <InlineEdit
                           type="currency"
                           value={v.target != null ? toDollars(v.target).toFixed(2) : '0'}
+                          formatter={currencyFormatter}
                           onSave={(val) => {
                             const target = toCents(parseFloat(val) || 0);
                             patchVault(v.id, { target }, true);
@@ -329,6 +330,7 @@ export default function VaultsPage() {
                         <InlineEdit
                           type="currency"
                           value={toDollars(v.currentBalance).toFixed(2)}
+                          formatter={currencyFormatter}
                           onSave={(val) => {
                             const currentBalance = toCents(parseFloat(val) || 0);
                             patchVault(v.id, { currentBalance }, true);

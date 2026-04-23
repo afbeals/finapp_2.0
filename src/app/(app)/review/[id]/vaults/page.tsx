@@ -12,10 +12,11 @@ import { theme } from '@/styles/tokens';
 const { colors, semanticColors, font, spacing } = theme;
 import { LoadingState } from '@/components/shared/LoadingState';
 import { TrashBtn } from '@/components/shared/TrashBtn';
+import { InlineEdit } from '@/components/shared/InlineEdit';
 import {
   SectionTitle, SummaryBar, SummaryTotal, SummaryTotalLabel, SummaryTotalValue, SummaryDivider,
   CatChip, CatChipLabel, CatChipVal, AddRowBtn, TableWrap, FTable, FThead, FTh,
-  RawNameCell, CellInput, TreasuryWrap, TrAmountBox, TrAmountLabel,
+  RawNameCell, CellInput, ClearBtn, TreasuryWrap, TrAmountBox, TrAmountLabel,
   TrAmountInput, TrAllocationBadge, TTr, TTd, PctInput,
 } from './VaultsPage.styles';
 import { getReviewVaults, getMembers, deleteVault, createVault, putReviewVaults } from '@/lib/api';
@@ -131,6 +132,15 @@ export default function VaultsPage() {
     setTreasuryPcts((prev) => ({ ...prev, [vaultId]: Math.max(0, Math.min(100, pct)) }));
   }
 
+  function handleClearTreasury() {
+    setTreasuryAmount(0);
+    setTreasuryPcts((prev) => {
+      const cleared: Record<number, number> = {};
+      for (const k of Object.keys(prev)) cleared[Number(k)] = 0;
+      return cleared;
+    });
+  }
+
   async function handleSave() {
     const snapshots: VaultSnapshot[] = [
       ...fixedVaults.map((v) => ({ vaultId: v.id, amount: monthlyAmount(v) })),
@@ -225,6 +235,9 @@ export default function VaultsPage() {
             onChange={(e) => setTreasuryAmount(toCents(parseFloat(e.target.value) || 0))}
             disabled={readOnly}
           />
+          {!readOnly && (
+            <ClearBtn type="button" onClick={handleClearTreasury}>Clear</ClearBtn>
+          )}
           <span style={{ fontSize: font.size.sm, color: semanticColors.amberText }}>Enter amount to distribute</span>
           <TrAllocationBadge valid={Math.abs(totalTreasuryPct - 100) < 0.1 || totalTreasuryPct === 0}>
             Total: {totalTreasuryPct.toFixed(0)}%
@@ -283,11 +296,35 @@ export default function VaultsPage() {
 
                     {/* Goal */}
                     <TTd right muted>
-                      {v.target != null ? formatDollars(v.target) : <span style={{ fontStyle: 'italic' }}>Variable</span>}
+                      {readOnly ? (
+                        v.target != null ? formatDollars(v.target) : <span style={{ fontStyle: 'italic' }}>Variable</span>
+                      ) : (
+                        <InlineEdit
+                          type="currency"
+                          value={v.target != null ? toDollars(v.target).toFixed(2) : '0'}
+                          onSave={(val) => {
+                            const target = toCents(parseFloat(val) || 0);
+                            patchVault(v.id, { target }, true);
+                          }}
+                        />
+                      )}
                     </TTd>
 
                     {/* Current */}
-                    <TTd right green={isFunded} muted={!isFunded}>{formatDollars(v.currentBalance)}</TTd>
+                    <TTd right green={isFunded} muted={!isFunded}>
+                      {readOnly ? (
+                        formatDollars(v.currentBalance)
+                      ) : (
+                        <InlineEdit
+                          type="currency"
+                          value={toDollars(v.currentBalance).toFixed(2)}
+                          onSave={(val) => {
+                            const currentBalance = toCents(parseFloat(val) || 0);
+                            patchVault(v.id, { currentBalance }, true);
+                          }}
+                        />
+                      )}
+                    </TTd>
 
                     {/* Remaining — computed */}
                     <TTd right bold green={isFunded}>

@@ -100,6 +100,14 @@ export const TrAmountInput = styled.input`
   background: ${colors.surface}; text-align: right;
   &:focus { outline: none; border-color: ${semanticColors.amberHover}; }
 `;
+export const ClearBtn = styled.button`
+  height: 30px; padding: 0 12px;
+  background: transparent; border: 1px solid ${colors.border};
+  border-radius: ${radius.md}; font-size: ${font.size.sm};
+  color: ${colors.textMuted}; cursor: pointer;
+  &:hover { background: ${colors.dangerLight}; border-color: ${colors.danger}; color: ${colors.danger}; }
+`;
+
 export const TrAllocationBadge = styled.div.withConfig({ shouldForwardProp: (p) => p !== 'valid' })<{ valid: boolean }>`
   margin-left: auto; font-size: ${font.size.sm}; font-weight: ${font.weight.semibold};
   color: ${({ valid }) => valid ? semanticColors.successText : colors.danger};

@@ -56,7 +56,6 @@
     "eslint": "^9",
     "eslint-config-next": "16.2.4",
     "happy-dom": "^20.9.0",
-    "jsdom": "^27.0.1",
     "tsx": "^4.21.0",
     "typescript": "^5",
     "vitest": "^4.1.5"

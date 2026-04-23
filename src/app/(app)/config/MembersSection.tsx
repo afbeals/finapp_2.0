@@ -6,7 +6,9 @@ import { CardTitle } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Input, Label, FormGroup } from '@/components/ui/Input';
 import { Modal } from '@/components/ui/Modal';
-import { colors, font, spacing } from '@/styles/tokens';
+import { theme } from '@/styles/tokens';
+
+const { colors, font, spacing } = theme;
 import { createMember } from '@/lib/api';
 import type { Member } from '@/types/entities';
 import { SectionCard } from './components/SectionCard';

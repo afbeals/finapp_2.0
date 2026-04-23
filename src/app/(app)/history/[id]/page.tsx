@@ -9,7 +9,9 @@ import { Button } from '@/components/ui/Button';
 import { EnableEditModal } from '@/components/modals/EnableEditModal';
 import { useReviewStore } from '@/lib/store';
 import { formatDollars } from '@/lib/money';
-import { colors, font, radius, spacing, semanticColors } from '@/styles/tokens';
+import { theme } from '@/styles/tokens';
+
+const { colors, font, radius, spacing, semanticColors } = theme;
 import { LoadingState } from '@/components/shared/LoadingState';
 import { apiGet, getReviewIncome, getReviewExpenses, getReviewSavings, getReviewInvestments } from '@/lib/api';
 import { MONTH_NAMES_LONG } from '@/lib/fire';

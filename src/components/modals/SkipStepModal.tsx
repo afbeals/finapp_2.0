@@ -3,7 +3,9 @@
 import styled from 'styled-components';
 import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
-import { colors, font } from '@/styles/tokens';
+import { theme } from '@/styles/tokens';
+
+const { colors, font } = theme;
 
 const Body = styled.p`
   font-size: ${font.size.base};

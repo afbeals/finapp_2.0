@@ -1,7 +1,9 @@
 'use client';
 
 import styled, { css } from 'styled-components';
-import { colors, font, radius, transition, semanticColors } from '@/styles/tokens';
+import { theme } from '@/styles/tokens';
+
+const { colors, font, radius, transition, semanticColors } = theme;
 
 type Variant = 'primary' | 'secondary' | 'ghost' | 'danger';
 type Size = 'sm' | 'md' | 'lg';

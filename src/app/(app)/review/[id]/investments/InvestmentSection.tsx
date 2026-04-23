@@ -3,7 +3,9 @@
 import React, { useState } from 'react';
 import styled from 'styled-components';
 import { formatDollars, toDollars } from '@/lib/money';
-import { colors, semanticColors, font, spacing, radius, shadow } from '@/styles/tokens';
+import { theme } from '@/styles/tokens';
+
+const { colors, semanticColors, font, spacing, radius, shadow } = theme;
 import type { InvestmentAccount } from '@/types/entities';
 import {
   type Position,

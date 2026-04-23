@@ -7,7 +7,9 @@ import { Navbar } from '@/components/layout/Navbar';
 import { apiGet } from '@/lib/api';
 import { useSessionStore } from '@/lib/store';
 import type { Member } from '@/lib/store/sessionSlice';
-import { colors } from '@/styles/tokens';
+import { theme } from '@/styles/tokens';
+
+const { colors } = theme;
 import { LoadingState } from '@/components/shared/LoadingState';
 import { ErrorBoundary } from '@/components/shared/ErrorBoundary';
 

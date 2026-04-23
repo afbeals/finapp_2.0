@@ -4,7 +4,9 @@ import React, { useMemo } from 'react';
 import styled from 'styled-components';
 import { formatDollars, toDollars } from '@/lib/money';
 import { InlineEdit } from '@/components/shared/InlineEdit';
-import { colors, font, spacing, radius, semanticColors } from '@/styles/tokens';
+import { theme } from '@/styles/tokens';
+
+const { colors, font, spacing, radius, semanticColors } = theme;
 import { MONTH_NAMES_SHORT } from '@/lib/fire';
 import { accountTypeLabel } from '@/app/(app)/config/configHelpers';
 import type { InvestmentAccount, HistoricalRetirementSnapshot } from '@/types/entities';

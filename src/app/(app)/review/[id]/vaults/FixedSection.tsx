@@ -3,7 +3,9 @@
 import React, { useState } from 'react';
 import styled from 'styled-components';
 import { formatDollars, toCents, toDollars } from '@/lib/money';
-import { colors, semanticColors, font, spacing, radius } from '@/styles/tokens';
+import { theme } from '@/styles/tokens';
+
+const { colors, semanticColors, font, spacing, radius } = theme;
 import type { Vault, Member } from '@/types/entities';
 import { EditCell } from './EditCell';
 import {

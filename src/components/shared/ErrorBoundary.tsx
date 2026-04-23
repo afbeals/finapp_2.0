@@ -2,7 +2,9 @@
 
 import React from 'react';
 import styled from 'styled-components';
-import { colors, font, radius, spacing, semanticColors } from '@/styles/tokens';
+import { theme } from '@/styles/tokens';
+
+const { colors, font, radius, spacing, semanticColors } = theme;
 import { ApiError } from '@/lib/api';
 
 const Wrap = styled.div`

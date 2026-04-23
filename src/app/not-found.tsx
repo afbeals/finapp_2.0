@@ -1,5 +1,7 @@
 import Link from 'next/link';
-import { colors, font, radius } from '@/styles/tokens';
+import { theme } from '@/styles/tokens';
+
+const { colors, font, radius } = theme;
 
 export default function NotFound() {
   return (

@@ -9,7 +9,9 @@ import { useReviewStore } from '@/lib/store';
 import { formatDollarsWhole } from '@/lib/money';
 import { fireNumber } from '@/lib/fire';
 import { getReviewIncome, getReviewExpenses, getReviewInvestments, getReviewSavings, apiGet } from '@/lib/api';
-import { colors, spacing } from '@/styles/tokens';
+import { theme } from '@/styles/tokens';
+
+const { colors, spacing } = theme;
 import { LoadingState } from '@/components/shared/LoadingState';
 import { ProgressBar } from '@/components/ui/ProgressBar';
 import { PanelCard, PanelHead, PanelTitle, PanelSubtitle, PanelBody } from '@/components/ui/Card';

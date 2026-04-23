@@ -5,7 +5,9 @@ import styled from 'styled-components';
 import { Modal } from '@/components/ui/Modal';
 import { amortizationSchedule, MONTH_NAMES_SHORT } from '@/lib/fire';
 import { formatDollars } from '@/lib/money';
-import { colors, font, radius, semanticColors } from '@/styles/tokens';
+import { theme } from '@/styles/tokens';
+
+const { colors, font, radius, semanticColors } = theme;
 
 // ─── Table styles ─────────────────────────────────────────────────────────────
 

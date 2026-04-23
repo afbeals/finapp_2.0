@@ -2,7 +2,9 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import styled from 'styled-components';
-import { colors, font, radius } from '@/styles/tokens';
+import { theme } from '@/styles/tokens';
+
+const { colors, font, radius } = theme;
 
 interface InlineEditProps {
   value: string;

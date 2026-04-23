@@ -2,7 +2,9 @@
 
 import React from 'react';
 import styled from 'styled-components';
-import { colors, radius } from '@/styles/tokens';
+import { theme } from '@/styles/tokens';
+
+const { colors, radius } = theme;
 import { TableScroll, DTable, DThead, DTh, DTr, DTd } from './parts';
 
 export { TableScroll, DTable, DThead, DTh, DTr, DTd } from './parts';

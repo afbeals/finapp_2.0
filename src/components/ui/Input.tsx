@@ -1,7 +1,9 @@
 'use client';
 
 import styled, { css } from 'styled-components';
-import { colors, radius, font, spacing, transition } from '@/styles/tokens';
+import { theme } from '@/styles/tokens';
+
+const { colors, radius, font, spacing, transition } = theme;
 
 interface InputProps {
   hasError?: boolean;

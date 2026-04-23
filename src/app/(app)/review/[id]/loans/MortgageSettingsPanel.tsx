@@ -3,7 +3,9 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import styled from 'styled-components';
 import { toCents, toDollars } from '@/lib/money';
-import { colors, font, spacing, radius } from '@/styles/tokens';
+import { theme } from '@/styles/tokens';
+
+const { colors, font, spacing, radius } = theme;
 import type { Loan } from '@/types/entities';
 
 // ─── Styled components ────────────────────────────────────────────────────────

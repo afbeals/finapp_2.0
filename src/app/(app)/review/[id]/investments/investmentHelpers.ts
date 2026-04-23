@@ -1,5 +1,7 @@
 import { formatDollars } from '@/lib/money';
-import { colors, semanticColors } from '@/styles/tokens';
+import { theme } from '@/styles/tokens';
+
+const { colors, semanticColors } = theme;
 import type { Purchase, InvestmentAccount, InvestmentCategory } from '@/types/entities';
 
 // A position = all purchase lots for one ticker within a section, aggregated

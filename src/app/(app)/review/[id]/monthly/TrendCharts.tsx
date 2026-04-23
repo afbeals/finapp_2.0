@@ -8,7 +8,9 @@ import {
 } from 'recharts';
 import { Card, CardTitle } from '@/components/ui/Card';
 import { formatDollarsWhole } from '@/lib/money';
-import { colors, spacing } from '@/styles/tokens';
+import { theme } from '@/styles/tokens';
+
+const { colors, spacing } = theme;
 
 // ─── Styled components ────────────────────────────────────────────────────────
 

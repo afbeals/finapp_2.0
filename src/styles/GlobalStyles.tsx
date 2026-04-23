@@ -1,7 +1,9 @@
 'use client';
 
 import { createGlobalStyle } from 'styled-components';
-import { colors, font } from './tokens';
+import { theme } from './tokens';
+
+const { colors, font } = theme;
 
 const GlobalStyles = createGlobalStyle`
   *, *::before, *::after {

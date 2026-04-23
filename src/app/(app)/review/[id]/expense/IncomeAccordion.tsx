@@ -3,7 +3,9 @@
 import React, { useState } from 'react';
 import { formatDollars, toCents } from '@/lib/money';
 import { createIncomeEntry } from '@/lib/api';
-import { colors, semanticColors } from '@/styles/tokens';
+import { theme } from '@/styles/tokens';
+
+const { colors, semanticColors } = theme;
 import type { Member, IncomeEntry } from '@/types/entities';
 import {
   AccordionSection, AccordionHeader, AccordionIcon, AccordionName,

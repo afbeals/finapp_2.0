@@ -3,7 +3,9 @@
 import React, { useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import styled from 'styled-components';
-import { colors, font, radius, spacing, semanticColors } from '@/styles/tokens';
+import { theme } from '@/styles/tokens';
+
+const { colors, font, radius, spacing, semanticColors } = theme;
 import { MONTH_NAMES_SHORT } from '@/lib/fire';
 import { useReviewStore } from '@/lib/store';
 import { SkipStepModal } from '@/components/modals/SkipStepModal';

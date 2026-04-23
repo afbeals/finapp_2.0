@@ -7,7 +7,9 @@ import { useStepNav } from '@/lib/useStepNav';
 import { useReviewStore } from '@/lib/store';
 import { toCents, toDollars } from '@/lib/money';
 import { getReviewLoans, patchLoanSnapshot, patchLoan as apiPatchLoan } from '@/lib/api';
-import { colors } from '@/styles/tokens';
+import { theme } from '@/styles/tokens';
+
+const { colors } = theme;
 import { LoadingState } from '@/components/shared/LoadingState';
 import { SectionHeader } from '@/components/shared/SectionHeader';
 import { AmortizationModal } from '@/components/shared/AmortizationModal';

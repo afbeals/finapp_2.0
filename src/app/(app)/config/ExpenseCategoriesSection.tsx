@@ -4,7 +4,9 @@ import React from 'react';
 import { Button } from '@/components/ui/Button';
 import { Input, Label, FormGroup } from '@/components/ui/Input';
 import { Modal } from '@/components/ui/Modal';
-import { colors, font } from '@/styles/tokens';
+import { theme } from '@/styles/tokens';
+
+const { colors, font } = theme;
 import {
   createExpenseCategory,
   updateExpenseCategory,

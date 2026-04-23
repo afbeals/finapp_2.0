@@ -4,7 +4,9 @@ import React, { useState } from 'react';
 import styled from 'styled-components';
 import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
-import { colors, font, radius, spacing } from '@/styles/tokens';
+import { theme } from '@/styles/tokens';
+
+const { colors, font, radius, spacing } = theme;
 import { MONTH_NAMES_LONG } from '@/lib/fire';
 import type { ReviewStep } from '@/lib/store';
 

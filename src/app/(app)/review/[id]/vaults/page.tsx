@@ -7,7 +7,9 @@ import { StepShell } from '@/components/review/StepShell';
 import { useStepNav } from '@/lib/useStepNav';
 import { useReviewStore } from '@/lib/store';
 import { formatDollars, toCents, toDollars } from '@/lib/money';
-import { colors, semanticColors, font, spacing, radius, shadow } from '@/styles/tokens';
+import { theme } from '@/styles/tokens';
+
+const { colors, semanticColors, font, spacing, radius, shadow } = theme;
 import { LoadingState } from '@/components/shared/LoadingState';
 import { getReviewVaults, getMembers, deleteVault, createVault, putReviewVaults } from '@/lib/api';
 import type { Vault, VaultSnapshot, Member } from '@/types/entities';

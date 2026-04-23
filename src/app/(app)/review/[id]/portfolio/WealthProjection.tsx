@@ -7,7 +7,9 @@ import {
 } from 'recharts';
 import { formatDollarsWhole, toCents, toDollars, toNumber } from '@/lib/money';
 import { MONTH_NAMES_SHORT } from '@/lib/fire';
-import { colors, semanticColors, font, spacing, radius } from '@/styles/tokens';
+import { theme } from '@/styles/tokens';
+
+const { colors, semanticColors, font, spacing, radius } = theme;
 import { PanelCard, PanelHead, PanelTitle, PanelSubtitle } from '@/components/ui/Card';
 
 // ─── Styled components ────────────────────────────────────────────────────────

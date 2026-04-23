@@ -1,7 +1,9 @@
 'use client';
 
 import styled from 'styled-components';
-import { colors, font } from '@/styles/tokens';
+import { theme } from '@/styles/tokens';
+
+const { colors, font } = theme;
 
 export const Table = styled.table`
   width: 100%;

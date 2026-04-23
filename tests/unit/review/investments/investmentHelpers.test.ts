@@ -8,7 +8,9 @@ import {
   fmtPct,
   portPct,
 } from '@/app/(app)/review/[id]/investments/investmentHelpers';
-import { colors, semanticColors } from '@/styles/tokens';
+import { theme } from '@/styles/tokens';
+
+const { colors, semanticColors } = theme;
 import type { InvestmentAccount, InvestmentCategory, Purchase } from '@/types/entities';
 
 // ─── Minimal stub factories ────────────────────────────────────────────────────

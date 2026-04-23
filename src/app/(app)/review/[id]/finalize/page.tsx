@@ -11,7 +11,9 @@ import { useReviewStore } from '@/lib/store';
 import { useStepNav } from '@/lib/useStepNav';
 import { formatDollars } from '@/lib/money';
 import { getReviewIncome, getReviewExpenses, getReviewSavings, getReviewInvestments, apiPatch } from '@/lib/api';
-import { colors, font, radius, spacing, semanticColors } from '@/styles/tokens';
+import { theme } from '@/styles/tokens';
+
+const { colors, font, radius, spacing, semanticColors } = theme;
 import { LoadingState } from '@/components/shared/LoadingState';
 import { MONTH_NAMES_LONG } from '@/lib/fire';
 

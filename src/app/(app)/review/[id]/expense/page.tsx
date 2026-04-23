@@ -11,7 +11,9 @@ import {
   getReviewExpenses, getReviewIncome, getExpenseCategories,
   deleteIncomeEntry, deleteExpenseEntry, apiPatch,
 } from '@/lib/api';
-import { colors, semanticColors, font, spacing, radius } from '@/styles/tokens';
+import { theme } from '@/styles/tokens';
+
+const { colors, semanticColors, font, spacing, radius } = theme;
 import { LoadingState } from '@/components/shared/LoadingState';
 import { IncomeAccordion } from './IncomeAccordion';
 import { CategoryAccordion } from './CategoryAccordion';

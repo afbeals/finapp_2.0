@@ -3,7 +3,9 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import styled from 'styled-components';
-import { colors, font, radius, shadow, spacing } from '@/styles/tokens';
+import { theme } from '@/styles/tokens';
+
+const { colors, font, radius, shadow, spacing } = theme;
 import { Button } from '@/components/ui/Button';
 import type { Member } from '@/types/entities';
 

@@ -4,7 +4,9 @@ import React from 'react';
 import styled from 'styled-components';
 import { Card, CardTitle } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
-import { spacing } from '@/styles/tokens';
+import { theme } from '@/styles/tokens';
+
+const { spacing } = theme;
 
 export const Section = styled(Card)`
   margin-bottom: ${spacing[6]};

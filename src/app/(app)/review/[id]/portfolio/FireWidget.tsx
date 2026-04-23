@@ -4,7 +4,9 @@ import React, { useState } from 'react';
 import styled from 'styled-components';
 import { formatDollarsWhole, toCents, toDollars, toNumber } from '@/lib/money';
 import { fireNumber, yearsToFire } from '@/lib/fire';
-import { colors, semanticColors, font, spacing, radius } from '@/styles/tokens';
+import { theme } from '@/styles/tokens';
+
+const { colors, semanticColors, font, spacing, radius } = theme;
 import { ProgressBar } from '@/components/ui/ProgressBar';
 
 // ─── FIRE Calculator styled components ───────────────────────────────────────

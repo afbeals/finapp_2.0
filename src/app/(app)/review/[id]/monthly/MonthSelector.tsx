@@ -3,7 +3,9 @@
 import React from 'react';
 import styled from 'styled-components';
 import { MONTH_NAMES_SHORT } from '@/lib/fire';
-import { colors, font, spacing, radius } from '@/styles/tokens';
+import { theme } from '@/styles/tokens';
+
+const { colors, font, spacing, radius } = theme;
 
 // ─── Styled components ────────────────────────────────────────────────────────
 

@@ -5,7 +5,9 @@ import styled from 'styled-components';
 import { PieChart, Pie, Cell, Tooltip } from 'recharts';
 import { formatDollarsWhole } from '@/lib/money';
 import { MONTH_NAMES_SHORT } from '@/lib/fire';
-import { colors, font, spacing, radius } from '@/styles/tokens';
+import { theme } from '@/styles/tokens';
+
+const { colors, font, spacing, radius } = theme;
 import type { ExpenseCategory } from '@/types/entities';
 
 // ─── Styled components ────────────────────────────────────────────────────────

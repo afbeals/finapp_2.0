@@ -1,7 +1,9 @@
 'use client';
 
 import styled from 'styled-components';
-import { colors, font, semanticColors } from '@/styles/tokens';
+import { theme } from '@/styles/tokens';
+
+const { colors, font, semanticColors } = theme;
 
 // ─── Scroll wrapper ───────────────────────────────────────────────────────────
 

@@ -2,7 +2,9 @@
 
 import React from 'react';
 import styled from 'styled-components';
-import { font, radius } from '@/styles/tokens';
+import { theme } from '@/styles/tokens';
+
+const { font, radius } = theme;
 
 const Chip = styled.span.withConfig({ shouldForwardProp: (p) => !['bg', 'fg'].includes(p) })<{ bg: string; fg: string }>`
   display: inline-block;

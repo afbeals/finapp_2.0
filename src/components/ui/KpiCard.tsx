@@ -1,7 +1,9 @@
 'use client';
 
 import styled from 'styled-components';
-import { colors, font, radius, shadow, spacing } from '@/styles/tokens';
+import { theme } from '@/styles/tokens';
+
+const { colors, font, radius, shadow, spacing } = theme;
 
 export const KpiCard = styled.div`
   background: ${colors.surface};

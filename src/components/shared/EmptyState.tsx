@@ -2,7 +2,9 @@
 
 import React from 'react';
 import styled from 'styled-components';
-import { colors, font } from '@/styles/tokens';
+import { theme } from '@/styles/tokens';
+
+const { colors, font } = theme;
 
 const Wrap = styled.div`
   padding: 24px 16px;

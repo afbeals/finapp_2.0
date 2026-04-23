@@ -9,7 +9,9 @@ import {
   CAT_GROUPS,
   FREQUENCIES,
 } from '@/app/(app)/review/[id]/vaults/vaultHelpers';
-import { colors, semanticColors } from '@/styles/tokens';
+import { theme } from '@/styles/tokens';
+
+const { colors, semanticColors } = theme;
 import type { Vault, VaultOwner } from '@/types/entities';
 
 // Note: `patchApi` is a side-effectful wrapper around updateVault (an API call).

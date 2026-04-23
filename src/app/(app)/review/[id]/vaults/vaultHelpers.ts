@@ -1,6 +1,8 @@
 import { toDollars } from '@/lib/money';
 import { updateVault } from '@/lib/api';
-import { semanticColors, colors } from '@/styles/tokens';
+import { theme } from '@/styles/tokens';
+
+const { semanticColors, colors } = theme;
 import type { Vault, VaultOwner } from '@/types/entities';
 
 // ─── Raw-name derivation ──────────────────────────────────────────────────────

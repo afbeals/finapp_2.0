@@ -2,7 +2,9 @@
 
 import React, { useState } from 'react';
 import styled from 'styled-components';
-import { colors, font, radius, shadow, spacing } from '@/styles/tokens';
+import { theme } from '@/styles/tokens';
+
+const { colors, font, radius, shadow, spacing } = theme;
 import { apiGet } from '@/lib/api';
 import { InlineEdit } from '@/components/shared/InlineEdit';
 import { formatDollars, toCents, toNumber } from '@/lib/money';

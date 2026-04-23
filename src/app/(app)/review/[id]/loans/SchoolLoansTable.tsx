@@ -5,7 +5,9 @@ import styled from 'styled-components';
 import { formatDollars, toCents, toDollars } from '@/lib/money';
 import { amortizationSchedule, monthlyPayment, totalInterest, payoffDateStr } from '@/lib/fire';
 import { InlineEdit } from '@/components/shared/InlineEdit';
-import { colors, font, spacing, radius, semanticColors } from '@/styles/tokens';
+import { theme } from '@/styles/tokens';
+
+const { colors, font, spacing, radius, semanticColors } = theme;
 import { Badge } from '@/components/ui/Badge';
 import type { Loan, LoanSnapshot } from '@/types/entities';
 

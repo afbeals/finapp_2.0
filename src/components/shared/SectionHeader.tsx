@@ -2,7 +2,9 @@
 
 import React from 'react';
 import styled from 'styled-components';
-import { colors, font, spacing } from '@/styles/tokens';
+import { theme } from '@/styles/tokens';
+
+const { colors, font, spacing } = theme;
 
 const Wrap = styled.div`
   display: flex;

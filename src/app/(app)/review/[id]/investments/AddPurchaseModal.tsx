@@ -6,7 +6,9 @@ import { Input } from '@/components/ui/Input';
 import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
 import { formatDollars, toCents } from '@/lib/money';
-import { colors, font, radius, spacing } from '@/styles/tokens';
+import { theme } from '@/styles/tokens';
+
+const { colors, font, radius, spacing } = theme;
 import { apiPost, getMarketPrices } from '@/lib/api';
 import type { Purchase, InvestmentAccount, InvestmentCategory } from '@/types/entities';
 import { AccountTypeLabel } from './investmentHelpers';

@@ -2,7 +2,9 @@
 
 import React from 'react';
 import styled, { keyframes } from 'styled-components';
-import { colors, radius } from '@/styles/tokens';
+import { theme } from '@/styles/tokens';
+
+const { colors, radius } = theme;
 
 const pulse = keyframes`
   0%, 100% { opacity: 0.4; }

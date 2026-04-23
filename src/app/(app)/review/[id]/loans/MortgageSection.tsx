@@ -14,7 +14,9 @@ import {
 import { KpiGrid, KpiCard } from '@/components/shared/KpiGrid';
 import { SectionHeader } from '@/components/shared/SectionHeader';
 import { Button } from '@/components/ui/Button';
-import { colors, semanticColors, font, spacing, radius } from '@/styles/tokens';
+import { theme } from '@/styles/tokens';
+
+const { colors, semanticColors, font, spacing, radius } = theme;
 import type { Loan, LoanSnapshot } from '@/types/entities';
 import { MortgageSettingsPanel } from './MortgageSettingsPanel';
 

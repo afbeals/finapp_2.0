@@ -1,7 +1,9 @@
 'use client';
 
 import styled from 'styled-components';
-import { colors, radius } from '@/styles/tokens';
+import { theme } from '@/styles/tokens';
+
+const { colors, radius } = theme;
 
 const Track = styled.div.withConfig({
   shouldForwardProp: (prop) => prop !== 'height',

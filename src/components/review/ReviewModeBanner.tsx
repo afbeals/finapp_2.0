@@ -2,7 +2,9 @@
 
 import React from 'react';
 import styled from 'styled-components';
-import { colors, font, spacing, semanticColors } from '@/styles/tokens';
+import { theme } from '@/styles/tokens';
+
+const { colors, font, spacing, semanticColors } = theme;
 import { Button } from '@/components/ui/Button';
 import { useReviewStore } from '@/lib/store';
 

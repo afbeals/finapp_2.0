@@ -8,7 +8,9 @@ import { useStepNav } from '@/lib/useStepNav';
 import { useReviewStore } from '@/lib/store';
 import { formatDollars, toCents } from '@/lib/money';
 import { apiPatch, apiPost, apiPut, apiGet } from '@/lib/api';
-import { colors, font, spacing, radius } from '@/styles/tokens';
+import { theme } from '@/styles/tokens';
+
+const { colors, font, spacing, radius } = theme;
 import { LoadingState } from '@/components/shared/LoadingState';
 import { SectionHeader } from '@/components/shared/SectionHeader';
 import { KpiGrid, KpiCard } from '@/components/shared/KpiGrid';

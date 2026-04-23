@@ -3,7 +3,9 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import styled from 'styled-components';
-import { colors, font, radius, spacing, shadow } from '@/styles/tokens';
+import { theme } from '@/styles/tokens';
+
+const { colors, font, radius, spacing, shadow } = theme;
 import { LoadingState } from '@/components/shared/LoadingState';
 import { Card, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';

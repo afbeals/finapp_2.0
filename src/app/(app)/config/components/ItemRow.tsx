@@ -3,7 +3,9 @@
 import React from 'react';
 import styled from 'styled-components';
 import { Button } from '@/components/ui/Button';
-import { colors, spacing } from '@/styles/tokens';
+import { theme } from '@/styles/tokens';
+
+const { colors, spacing } = theme;
 
 export const ItemRowContainer = styled.div`
   display: flex;

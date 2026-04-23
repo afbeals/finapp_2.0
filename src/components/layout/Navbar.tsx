@@ -4,7 +4,9 @@ import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import styled from 'styled-components';
-import { colors, font, radius, semanticColors, shadow, spacing } from '@/styles/tokens';
+import { theme } from '@/styles/tokens';
+
+const { colors, font, radius, semanticColors, shadow, spacing } = theme;
 import { useSessionStore } from '@/lib/store';
 import { apiPost } from '@/lib/api';
 

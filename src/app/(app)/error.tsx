@@ -2,7 +2,9 @@
 
 import { useEffect } from 'react';
 import Link from 'next/link';
-import { colors, font, radius } from '@/styles/tokens';
+import { theme } from '@/styles/tokens';
+
+const { colors, font, radius } = theme;
 
 interface Props {
   error: Error & { digest?: string };

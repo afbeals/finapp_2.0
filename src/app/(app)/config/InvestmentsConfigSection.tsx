@@ -6,7 +6,9 @@ import { CardTitle } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Input, Label, FormGroup } from '@/components/ui/Input';
 import { Modal } from '@/components/ui/Modal';
-import { colors, font, spacing, radius } from '@/styles/tokens';
+import { theme } from '@/styles/tokens';
+
+const { colors, font, spacing, radius } = theme;
 import {
   createInvestmentCategory,
   updateInvestmentCategory,

@@ -4,7 +4,9 @@ import React from 'react';
 import styled from 'styled-components';
 import { Card } from '@/components/ui/Card';
 import { formatDollars } from '@/lib/money';
-import { colors, semanticColors, font, spacing, radius } from '@/styles/tokens';
+import { theme } from '@/styles/tokens';
+
+const { colors, semanticColors, font, spacing, radius } = theme;
 import type { ExpenseEntry, IncomeEntry } from '@/types/entities';
 
 // ─── Styled components ────────────────────────────────────────────────────────

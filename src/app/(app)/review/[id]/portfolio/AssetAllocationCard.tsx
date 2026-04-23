@@ -4,7 +4,9 @@ import React, { useMemo } from 'react';
 import styled from 'styled-components';
 import { PieChart, Pie, Cell } from 'recharts';
 import { formatDollarsWhole } from '@/lib/money';
-import { colors, font, radius } from '@/styles/tokens';
+import { theme } from '@/styles/tokens';
+
+const { colors, font, radius } = theme;
 import { PanelCard, PanelHead, PanelTitle, PanelSubtitle, PanelBody } from '@/components/ui/Card';
 
 // ─── Styled components ────────────────────────────────────────────────────────

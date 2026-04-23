@@ -5,7 +5,9 @@ import styled from 'styled-components';
 import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
 import { Input, Label, Select, FormGroup } from '@/components/ui/Input';
-import { colors, spacing, radius, font } from '@/styles/tokens';
+import { theme } from '@/styles/tokens';
+
+const { colors, spacing, radius, font } = theme;
 import { ACCOUNT_TYPES } from '@/app/(app)/config/configHelpers';
 import type { InvestmentAccount, Member } from '@/types/entities';
 

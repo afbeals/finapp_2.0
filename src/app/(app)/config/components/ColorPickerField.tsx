@@ -2,7 +2,9 @@
 
 import React from 'react';
 import { Label, FormGroup } from '@/components/ui/Input';
-import { colors, font, spacing } from '@/styles/tokens';
+import { theme } from '@/styles/tokens';
+
+const { colors, font, spacing } = theme;
 
 interface ColorPickerFieldProps {
   value: string;

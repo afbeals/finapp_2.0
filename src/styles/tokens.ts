@@ -1,4 +1,4 @@
-export const colors = {
+const colors = {
   navbar: '#0F172A',
   navbarText: '#E2E8F0',
   primary: '#3B82F6',
@@ -23,7 +23,7 @@ export const colors = {
   malia: '#EC4899',
 } as const;
 
-export const radius = {
+const radius = {
   sm: '6px',
   md: '8px',
   lg: '12px',
@@ -31,7 +31,7 @@ export const radius = {
   full: '9999px',
 } as const;
 
-export const spacing = {
+const spacing = {
   1: '4px',
   2: '8px',
   3: '12px',
@@ -44,7 +44,7 @@ export const spacing = {
   16: '64px',
 } as const;
 
-export const font = {
+const font = {
   family: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
   size: {
     micro: '9px',
@@ -72,28 +72,28 @@ export const font = {
   },
 } as const;
 
-export const shadow = {
+const shadow = {
   sm: '0 1px 2px rgba(15, 23, 42, 0.06)',
   md: '0 4px 6px rgba(15, 23, 42, 0.07), 0 2px 4px rgba(15, 23, 42, 0.04)',
   lg: '0 10px 15px rgba(15, 23, 42, 0.10), 0 4px 6px rgba(15, 23, 42, 0.05)',
   xl: '0 20px 25px rgba(15, 23, 42, 0.10), 0 8px 10px rgba(15, 23, 42, 0.04)',
 } as const;
 
-export const transition = {
+const transition = {
   fast: '100ms ease',
   base: '150ms ease',
   slow: '250ms ease',
 } as const;
 
 // Breakpoints (min-width)
-export const bp = {
+const bp = {
   sm: '640px',
   md: '768px',
   lg: '1024px',
   xl: '1280px',
 } as const;
 
-export const semanticColors = {
+const semanticColors = {
   // Success
   successText:     '#15803D', // green-700
   successTextDark: '#166534', // green-800
@@ -175,3 +175,21 @@ export const semanticColors = {
   // Orange (investment badge palette)
   orangeTextDark: '#C2410C', // orange-700
 } as const;
+
+// ─── Theme object ─────────────────────────────────────────────────────────────
+
+export const theme = {
+  name: 'default',
+  pageWidth: '1280px',
+  colors,
+  semanticColors,
+  radius,
+  spacing,
+  font,
+  shadow,
+  transition,
+  bp,
+} as const;
+
+export type Theme = typeof theme;
+

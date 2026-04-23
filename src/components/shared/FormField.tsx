@@ -2,7 +2,9 @@
 
 import React from 'react';
 import styled from 'styled-components';
-import { colors, font, radius } from '@/styles/tokens';
+import { theme } from '@/styles/tokens';
+
+const { colors, font, radius } = theme;
 
 export const FieldGroup = styled.div`display: flex; flex-direction: column; gap: 4px;`;
 

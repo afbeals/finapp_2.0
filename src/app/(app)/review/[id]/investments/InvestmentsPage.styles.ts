@@ -1,7 +1,7 @@
 import styled from 'styled-components';
 import { theme } from '@/styles/tokens';
 
-const { colors, semanticColors, font, spacing, radius } = theme;
+const { colors, semanticColors, font, spacing, radius, shadow, transition } = theme;
 
 export const SplitBarWrap = styled.div`
   background: ${colors.surface};
@@ -9,13 +9,13 @@ export const SplitBarWrap = styled.div`
   border-radius: ${radius.lg};
   padding: 14px 16px;
   margin-bottom: ${spacing[5]};
-  box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+  box-shadow: ${shadow.xs};
 `;
 
 export const SplitBar = styled.div`
   display: flex;
   height: 14px;
-  border-radius: 7px;
+  border-radius: ${radius.md};
   overflow: hidden;
   margin: 8px 0 6px;
 `;
@@ -23,7 +23,7 @@ export const SplitBar = styled.div`
 export const SplitSegment = styled.div.withConfig({ shouldForwardProp: (p) => p !== 'pct' && p !== 'bg' })<{ pct: number; bg: string }>`
   width: ${({ pct }) => pct}%;
   background: ${({ bg }) => bg};
-  transition: width 0.4s ease;
+  transition: width ${transition.exit};
 `;
 
 export const SplitLegend = styled.div`
@@ -64,6 +64,6 @@ export const MarketItem = styled.div`display: flex; flex-direction: column; gap:
 export const MarketName = styled.span`font-size: 10px; color: ${colors.textDisabled}; text-transform: uppercase; letter-spacing: 0.04em;`;
 export const MarketVal = styled.span.withConfig({ shouldForwardProp: (p) => p !== 'up' })<{ up?: boolean }>`
   font-size: ${font.size.sm};
-  font-weight: 600;
+  font-weight: ${font.weight.semibold};
   color: ${({ up }) => up === undefined ? colors.bg : up ? semanticColors.successBright : semanticColors.dangerBright};
 `;

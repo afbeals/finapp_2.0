@@ -1,7 +1,7 @@
 import styled from 'styled-components';
 import { theme } from '@/styles/tokens';
 
-const { colors, font, spacing, radius } = theme;
+const { colors, font, spacing, radius, shadow } = theme;
 
 export const MonthSelectorCard = styled.div`
   background: ${colors.surface};
@@ -9,7 +9,7 @@ export const MonthSelectorCard = styled.div`
   border-radius: ${radius.lg};
   padding: 14px 16px;
   margin-bottom: ${spacing[6]};
-  box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+  box-shadow: ${shadow.xs};
 `;
 
 export const MonthSelectorTop = styled.div`

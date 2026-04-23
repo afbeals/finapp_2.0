@@ -1,21 +1,21 @@
 import styled from 'styled-components';
 import { theme } from '@/styles/tokens';
 
-const { colors, semanticColors, font, spacing, radius } = theme;
+const { colors, semanticColors, font, spacing, radius, transition } = theme;
 
 export const ProgressWrap = styled.div`margin-bottom: ${spacing[3]};`;
 export const ProgressLabel = styled.div`font-size: ${font.size.xs}; color: ${colors.textMuted}; margin-bottom: 6px;`;
 export const ProgressTrack = styled.div`height: 10px; background: ${colors.border}; border-radius: ${radius.full}; overflow: hidden;`;
 export const ProgressFill = styled.div.withConfig({ shouldForwardProp: (p) => p !== 'pct' && p !== 'color' })<{ pct: number; color: string }>`
   height: 100%; width: ${({ pct }) => pct}%; background: ${({ color }) => color};
-  border-radius: ${radius.full}; transition: width 400ms ease;
+  border-radius: ${radius.full}; transition: width ${transition.exit};
 `;
 
 export const SplitBar = styled.div`display: flex; height: 10px; border-radius: ${radius.full}; overflow: hidden; margin: 6px 0 4px;`;
 export const SplitSegment = styled.div.withConfig({ shouldForwardProp: (p) => p !== 'pct' && p !== 'bg' })<{ pct: number; bg: string }>`
   width: ${({ pct }) => pct}%;
   background: ${({ bg }) => bg};
-  transition: width 400ms ease;
+  transition: width ${transition.exit};
 `;
 export const SplitLegend = styled.div`display: flex; gap: 14px; font-size: ${font.size.xs}; color: ${colors.textMuted};`;
 export const SplitDot = styled.span.withConfig({ shouldForwardProp: (p) => p !== 'bg' })<{ bg: string }>`

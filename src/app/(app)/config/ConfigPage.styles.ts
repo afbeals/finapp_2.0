@@ -2,7 +2,7 @@ import styled from 'styled-components';
 import { theme } from '@/styles/tokens';
 import { Card } from '@/components/ui/Card';
 
-const { colors, font, spacing } = theme;
+const { colors, font, spacing, radius } = theme;
 
 export const Page = styled.div`
   max-width: 960px;
@@ -12,7 +12,7 @@ export const Page = styled.div`
 
 export const PageTitle = styled.h1`
   font-size: ${font.size['3xl']};
-  font-weight: 700;
+  font-weight: ${font.weight.bold};
   color: ${colors.textPrimary};
   margin-bottom: ${spacing[8]};
 `;

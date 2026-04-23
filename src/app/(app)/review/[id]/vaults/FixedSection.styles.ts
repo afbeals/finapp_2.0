@@ -1,12 +1,12 @@
 import styled from 'styled-components';
 import { theme } from '@/styles/tokens';
 
-const { colors, font, spacing, radius } = theme;
+const { colors, font, spacing, radius, shadow, transition } = theme;
 
 export const SectionWrap = styled.div`
   background: ${colors.surface}; border: 1px solid ${colors.border};
   border-radius: ${radius.lg}; margin-bottom: ${spacing[4]};
-  box-shadow: 0 1px 3px rgba(0,0,0,0.04); overflow: hidden;
+  box-shadow: ${shadow.xs}; overflow: hidden;
 `;
 
 export const SectionHeaderRow = styled.div.withConfig({ shouldForwardProp: (p) => !['bg', 'borderColor'].includes(p) })<{ bg: string; borderColor: string }>`
@@ -16,18 +16,18 @@ export const SectionHeaderRow = styled.div.withConfig({ shouldForwardProp: (p) =
 `;
 
 export const Chevron = styled.span.withConfig({ shouldForwardProp: (p) => p !== 'open' })<{ open: boolean }>`
-  font-size: 10px; color: ${colors.textMuted};
-  transform: ${({ open }) => open ? 'rotate(90deg)' : 'none'}; transition: transform 0.15s;
+  font-size: ${font.size.xxs}; color: ${colors.textMuted};
+  transform: ${({ open }) => open ? 'rotate(90deg)' : 'none'}; transition: transform ${transition.base};
 `;
 
 export const SectionLabel = styled.span.withConfig({ shouldForwardProp: (p) => p !== 'textColor' })<{ textColor: string }>`
-  font-size: ${font.size.sm}; font-weight: 700; color: ${({ textColor }) => textColor}; min-width: 120px;
+  font-size: ${font.size.sm}; font-weight: ${font.weight.bold}; color: ${({ textColor }) => textColor}; min-width: 120px;
 `;
 
 export const SubtotalBadge = styled.span.withConfig({ shouldForwardProp: (p) => !['bg', 'textColor'].includes(p) })<{ bg: string; textColor: string }>`
-  margin-left: auto; font-size: ${font.size.sm}; font-weight: 600;
+  margin-left: auto; font-size: ${font.size.sm}; font-weight: ${font.weight.semibold};
   color: ${({ textColor }) => textColor}; background: ${({ bg }) => bg};
-  padding: 3px 10px; border-radius: 99px;
+  padding: 3px 10px; border-radius: ${radius.full};
 `;
 
 export const AddRowBtn = styled.button`
@@ -45,7 +45,7 @@ export const FTable = styled.table`width: 100%; border-collapse: collapse; font-
 export const FThead = styled.thead`background: ${colors.bg}; position: sticky; top: 0; z-index: 1;`;
 
 export const FTh = styled.th.withConfig({ shouldForwardProp: (p) => !['right', 'w', 'center'].includes(p) })<{ right?: boolean; w?: number; center?: boolean }>`
-  padding: 6px 8px; font-size: 10px; font-weight: 600; color: ${colors.textMuted};
+  padding: 6px 8px; font-size: ${font.size.xxs}; font-weight: ${font.weight.semibold}; color: ${colors.textMuted};
   text-transform: uppercase; letter-spacing: 0.04em;
   text-align: ${({ right, center }) => right ? 'right' : center ? 'center' : 'left'};
   border-bottom: 1px solid ${colors.border}; white-space: nowrap;
@@ -57,7 +57,7 @@ export const FTr = styled.tr`&:not(:last-child) { border-bottom: 1px solid ${col
 export const FTd = styled.td.withConfig({ shouldForwardProp: (p) => !['right', 'bold', 'center', 'muted'].includes(p) })<{ right?: boolean; bold?: boolean; center?: boolean; muted?: boolean }>`
   padding: 6px 8px;
   text-align: ${({ right, center }) => right ? 'right' : center ? 'center' : 'left'};
-  font-weight: ${({ bold }) => bold ? 600 : 'normal'};
+  font-weight: ${({ bold }) => bold ? font.weight.semibold : 'normal'};
   color: ${({ muted }) => muted ? colors.textMuted : colors.textPrimary};
   white-space: nowrap;
 `;
@@ -114,6 +114,6 @@ export const DeleteBtn = styled.button`
 `;
 
 export const OwnerBadge = styled.span.withConfig({ shouldForwardProp: (p) => !['bg', 'fg'].includes(p) })<{ bg: string; fg: string }>`
-  display: inline-block; padding: 2px 8px; border-radius: 99px;
-  font-size: 10px; font-weight: 600; background: ${({ bg }) => bg}; color: ${({ fg }) => fg};
+  display: inline-block; padding: 2px 8px; border-radius: ${radius.full};
+  font-size: ${font.size.xxs}; font-weight: ${font.weight.semibold}; background: ${({ bg }) => bg}; color: ${({ fg }) => fg};
 `;

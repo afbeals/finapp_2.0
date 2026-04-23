@@ -19,7 +19,7 @@ export const SummaryCard = styled(Card).withConfig({
 `;
 
 export const Label = styled.p`font-size: ${font.size.sm}; color: ${colors.textMuted}; margin-bottom: ${spacing[1]};`;
-export const Value = styled.p`font-size: ${font.size['2xl']}; font-weight: 700; color: ${colors.textPrimary};`;
+export const Value = styled.p`font-size: ${font.size['2xl']}; font-weight: ${font.weight.bold}; color: ${colors.textPrimary};`;
 
 export const StepList = styled.div`
   display: flex;

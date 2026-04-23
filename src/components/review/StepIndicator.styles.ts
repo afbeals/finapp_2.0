@@ -1,7 +1,7 @@
 import styled from 'styled-components';
 import { theme } from '@/styles/tokens';
 
-const { colors, font, radius, spacing, semanticColors } = theme;
+const { colors, font, radius, spacing, semanticColors, transition } = theme;
 
 export const Wrapper = styled.div`
   background: ${colors.surface};
@@ -88,7 +88,7 @@ export const Circle = styled.button.withConfig({
   font-size: ${font.size.sm};
   font-weight: ${font.weight.bold};
   cursor: ${({ clickable }) => clickable ? 'pointer' : 'default'};
-  transition: opacity 120ms ease;
+  transition: opacity ${transition.quick};
   flex-shrink: 0;
 
   background: ${({ status }) =>

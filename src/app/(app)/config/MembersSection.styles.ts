@@ -30,7 +30,7 @@ export const ColorDot = styled.div.withConfig({
 
 export const MemberName = styled.span`
   font-size: ${font.size.base};
-  font-weight: 600;
+  font-weight: ${font.weight.semibold};
   color: ${colors.textPrimary};
 `;
 

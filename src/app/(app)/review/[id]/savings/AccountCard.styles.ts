@@ -1,7 +1,7 @@
 import styled from 'styled-components';
 import { theme } from '@/styles/tokens';
 
-const { colors, font, spacing, radius, semanticColors } = theme;
+const { colors, font, spacing, radius, semanticColors, transition } = theme;
 
 export const AccountRow = styled.div`
   background: ${colors.surface};
@@ -24,7 +24,7 @@ export const AccountRowHeader = styled.button.withConfig({
   cursor: pointer;
   text-align: left;
   border-radius: ${({ expanded }) => expanded ? `${radius.lg} ${radius.lg} 0 0` : radius.lg};
-  transition: background 120ms ease;
+  transition: background ${transition.quick};
   &:hover { background: ${colors.bg}; }
 `;
 
@@ -58,7 +58,7 @@ export const ChevronIcon = styled.span.withConfig({
   font-size: ${font.size.sm};
   color: ${colors.textMuted};
   transform: ${({ open }) => open ? 'rotate(90deg)' : 'rotate(0deg)'};
-  transition: transform 180ms ease;
+  transition: transform ${transition.moderate};
   flex-shrink: 0;
   margin-left: ${spacing[2]};
 `;

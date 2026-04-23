@@ -1,7 +1,7 @@
 import styled from 'styled-components';
 import { theme } from '@/styles/tokens';
 
-const { colors, font, spacing, radius, semanticColors } = theme;
+const { colors, font, spacing, radius, semanticColors, transition } = theme;
 
 export const Card = styled.div`
   background: ${colors.surface};
@@ -85,7 +85,7 @@ export const Chevron = styled.span.withConfig({ shouldForwardProp: (p) => p !== 
   font-size: ${font.size.sm};
   color: ${colors.textMuted};
   transform: ${({ open }) => (open ? 'rotate(90deg)' : 'rotate(0deg)')};
-  transition: transform 180ms ease;
+  transition: transform ${transition.moderate};
   flex-shrink: 0;
   margin-left: ${spacing[2]};
 `;
@@ -137,7 +137,7 @@ export const ActionBtn = styled.button.withConfig({ shouldForwardProp: (p) => p 
   cursor: pointer;
   padding: 6px 10px;
   border-radius: ${radius.sm};
-  &:hover { background: ${({ tone }) => (tone === 'danger' ? '#fee2e2' : colors.primaryLight)}; }
+  &:hover { background: ${({ tone }) => (tone === 'danger' ? colors.dangerLight : colors.primaryLight)}; }
 `;
 
 export const HistoryTable = styled.table`width: 100%; border-collapse: collapse;`;

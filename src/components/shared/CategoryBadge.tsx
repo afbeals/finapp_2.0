@@ -6,12 +6,13 @@ import { theme } from '@/styles/tokens';
 
 const { font, radius } = theme;
 
+
 const Chip = styled.span.withConfig({ shouldForwardProp: (p) => !['bg', 'fg'].includes(p) })<{ bg: string; fg: string }>`
   display: inline-block;
   padding: 2px 8px;
   border-radius: ${radius.full};
   font-size: ${font.size.xs};
-  font-weight: 600;
+  font-weight: ${font.weight.semibold};
   background: ${({ bg }) => bg};
   color: ${({ fg }) => fg};
   white-space: nowrap;

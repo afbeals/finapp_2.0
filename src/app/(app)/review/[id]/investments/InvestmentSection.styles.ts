@@ -1,7 +1,7 @@
 import styled from 'styled-components';
 import { theme } from '@/styles/tokens';
 
-const { colors, semanticColors, font, spacing, radius, shadow } = theme;
+const { colors, semanticColors, font, spacing, radius, shadow, transition } = theme;
 
 export const SectionWrap = styled.div`
   background: ${colors.surface};
@@ -28,7 +28,7 @@ export const Chevron = styled.span.withConfig({ shouldForwardProp: (p) => p !== 
   font-size: ${font.size.xs};
   color: ${({ green }) => green ? semanticColors.successTextMedium : colors.primary};
   transform: ${({ open }) => open ? 'rotate(90deg)' : 'none'};
-  transition: transform 0.15s;
+  transition: transform ${transition.base};
   flex-shrink: 0;
 `;
 
@@ -165,9 +165,9 @@ export const CategoryBadge = styled.span.withConfig({ shouldForwardProp: (p) => 
 export const AccountChip = styled.span.withConfig({ shouldForwardProp: (p) => p !== 'bg' && p !== 'fg' })<{ bg: string; fg: string }>`
   display: inline-block;
   padding: 1px 7px;
-  border-radius: 99px;
-  font-size: 10px;
-  font-weight: 500;
+  border-radius: ${radius.full};
+  font-size: ${font.size.xxs};
+  font-weight: ${font.weight.medium};
   background: ${({ bg }) => bg};
   color: ${({ fg }) => fg};
   margin: 1px 2px;

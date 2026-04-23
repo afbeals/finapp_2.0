@@ -1,7 +1,7 @@
 import styled from 'styled-components';
 import { theme } from '@/styles/tokens';
 
-const { colors, semanticColors, font, spacing, radius } = theme;
+const { colors, semanticColors, font, spacing, radius, transition, shadow } = theme;
 
 export const FireGrid = styled.div`display: grid; grid-template-columns: 1fr 1px 1fr; gap: 0;`;
 export const Divider = styled.div`background: ${colors.border}; align-self: stretch;`;
@@ -13,10 +13,10 @@ export const ToggleGroup = styled.div`
 `;
 export const ToggleBtn = styled.button.withConfig({ shouldForwardProp: (p) => p !== 'active' })<{ active: boolean }>`
   flex: 1; padding: 6px; font-size: ${font.size.xs}; font-weight: ${font.weight.semibold};
-  border: none; border-radius: ${radius.sm}; cursor: pointer; transition: all 120ms;
+  border: none; border-radius: ${radius.sm}; cursor: pointer; transition: all ${transition.quick};
   background: ${({ active }) => active ? colors.surface : 'transparent'};
   color: ${({ active }) => active ? colors.textPrimary : colors.textMuted};
-  box-shadow: ${({ active }) => active ? '0 1px 3px rgba(0,0,0,0.1)' : 'none'};
+  box-shadow: ${({ active }) => active ? shadow.xs : 'none'};
 `;
 
 export const FireInputGroup = styled.div`margin-bottom: 12px;`;

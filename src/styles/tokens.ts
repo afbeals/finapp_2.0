@@ -73,6 +73,7 @@ const font = {
 } as const;
 
 const shadow = {
+  xs: '0 1px 3px rgba(0, 0, 0, 0.05)',
   sm: '0 1px 2px rgba(15, 23, 42, 0.06)',
   md: '0 4px 6px rgba(15, 23, 42, 0.07), 0 2px 4px rgba(15, 23, 42, 0.04)',
   lg: '0 10px 15px rgba(15, 23, 42, 0.10), 0 4px 6px rgba(15, 23, 42, 0.05)',
@@ -81,8 +82,12 @@ const shadow = {
 
 const transition = {
   fast: '100ms ease',
+  quick: '120ms ease',
   base: '150ms ease',
+  moderate: '180ms ease',
   slow: '250ms ease',
+  enter: '300ms ease',
+  exit: '400ms ease',
 } as const;
 
 // Breakpoints (min-width)

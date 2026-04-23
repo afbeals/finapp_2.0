@@ -41,9 +41,9 @@ export const InvCatBadge = styled.span.withConfig({
 })<{ bg: string; fg: string }>`
   display: inline-block;
   padding: 2px 10px;
-  border-radius: 99px;
+  border-radius: ${radius.full};
   font-size: ${font.size.xs};
-  font-weight: 600;
+  font-weight: ${font.weight.semibold};
   background: ${({ bg }) => bg};
   color: ${({ fg }) => fg};
   border: 1px solid ${({ fg }) => fg}33;

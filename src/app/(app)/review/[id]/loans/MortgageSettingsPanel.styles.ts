@@ -1,7 +1,7 @@
 import styled from 'styled-components';
 import { theme } from '@/styles/tokens';
 
-const { colors, font, spacing, radius } = theme;
+const { colors, font, spacing, radius, shadow } = theme;
 
 export const Panel = styled.div`
   background: ${colors.surface};
@@ -9,7 +9,7 @@ export const Panel = styled.div`
   border-radius: ${radius.lg};
   padding: ${spacing[4]} ${spacing[5]};
   margin-bottom: ${spacing[4]};
-  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  box-shadow: ${shadow.sm};
 `;
 
 export const PanelTitle = styled.p`

@@ -35,7 +35,7 @@ export const Header = styled.div`
 
 export const Title = styled.h1`
   font-size: ${font.size['3xl']};
-  font-weight: 700;
+  font-weight: ${font.weight.bold};
   color: ${colors.textPrimary};
   margin-bottom: 4px;
 `;
@@ -60,7 +60,7 @@ export const StatCard = styled(Card).withConfig({
 
 export const StatLabel = styled.p`font-size: ${font.size.sm}; color: ${colors.textMuted}; margin-bottom: 4px;`;
 export const StatValue = styled.p.withConfig({ shouldForwardProp: (p) => p !== 'textColor' })<{ textColor?: string }>`
-  font-size: ${font.size['2xl']}; font-weight: 700;
+  font-size: ${font.size['2xl']}; font-weight: ${font.weight.bold};
   color: ${({ textColor }) => textColor ?? colors.textPrimary};
 `;
 

@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import styled from 'styled-components';
 import { theme } from '@/styles/tokens';
 
-const { colors, font, radius, shadow, spacing } = theme;
+const { colors, font, radius, shadow, spacing, transition } = theme;
 import { apiGet } from '@/lib/api';
 import { InlineEdit } from '@/components/shared/InlineEdit';
 import { formatDollars, toCents, toNumber } from '@/lib/money';
@@ -67,7 +67,7 @@ export const AccordionChevron = styled.span.withConfig({
   font-size: 12px;
   color: ${colors.textMuted};
   transform: ${({ open }) => open ? 'rotate(90deg)' : 'rotate(0deg)'};
-  transition: transform 180ms ease;
+  transition: transform ${transition.moderate};
   flex-shrink: 0;
 `;
 

@@ -11,6 +11,15 @@ const patchSchema = z.object({
   paidOff: z.boolean().optional(),
   mortgageInsurance: z.number().int().min(0).optional(),
   otherFees: z.number().int().min(0).optional(),
+  propertyTax: z.number().int().min(0).nullable().optional(),
+  hoa: z.number().int().min(0).nullable().optional(),
+  homeownersInsurance: z.number().int().min(0).nullable().optional(),
+  homeValue: z.number().int().min(0).nullable().optional(),
+  pmiDropBalance: z.number().int().min(0).nullable().optional(),
+  // Steady fields that were previously not patchable
+  principal: z.number().int().min(0).optional(),
+  termMonths: z.number().int().min(1).optional(),
+  startDate: z.string().optional(),
 });
 
 export async function PATCH(req: NextRequest, { params }: Params) {
@@ -25,6 +34,11 @@ export async function PATCH(req: NextRequest, { params }: Params) {
   const parsed = patchSchema.safeParse(body);
   if (!parsed.success) return badRequest('Invalid');
 
-  const updated = await prisma.loan.update({ where: { id: Number(id) }, data: parsed.data });
+  const data: Record<string, unknown> = { ...parsed.data };
+  if (typeof parsed.data.startDate === 'string') {
+    data.startDate = new Date(parsed.data.startDate);
+  }
+
+  const updated = await prisma.loan.update({ where: { id: Number(id) }, data });
   return NextResponse.json({ loan: updated });
 }

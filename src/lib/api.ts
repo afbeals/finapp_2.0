@@ -97,7 +97,7 @@ export const getReviewLoans = (reviewId: string | number): Promise<LoansResponse
 export const patchLoanSnapshot = (reviewId: string | number, loanId: number, fields: Partial<Omit<LoanSnapshot, 'loanId'>>): Promise<{ snapshot: LoanSnapshot }> =>
   apiPatch(`/api/reviews/${reviewId}/loans`, { loanId, ...fields });
 
-export const patchLoan = (loanId: number, fields: Partial<Pick<Loan, 'name' | 'rate' | 'paidOff' | 'mortgageInsurance' | 'otherFees'>>): Promise<{ loan: Loan }> =>
+export const patchLoan = (loanId: number, fields: Partial<Loan>): Promise<{ loan: Loan }> =>
   apiPatch(`/api/loans/${loanId}`, fields);
 
 // Savings

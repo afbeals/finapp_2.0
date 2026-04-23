@@ -218,8 +218,13 @@ model Loan {
   termMonths        Int
   startDate         DateTime
   paidOff           Boolean  @default(false)
-  mortgageInsurance Int      @default(0) // cents/month
-  otherFees         Int      @default(0) // cents/month (HOA, taxes escrow, etc.)
+  mortgageInsurance Int      @default(0) // cents/month (PMI/MIP)
+  otherFees         Int      @default(0) // cents/month catch-all (use line items below when available)
+  propertyTax       Int?                 // cents/month
+  hoa               Int?                 // cents/month
+  homeownersInsurance Int?               // cents/month
+  homeValue         Int?                 // cents (current estimated home value)
+  pmiDropBalance    Int?                 // cents — override threshold for PMI removal (default: homeValue * 0.80)
 
   household     Household      @relation(fields: [householdId], references: [id], onDelete: Cascade)
   loanSnapshots LoanSnapshot[]

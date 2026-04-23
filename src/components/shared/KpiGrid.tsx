@@ -69,10 +69,11 @@ interface KpiGridProps {
   cols?: number;
   children: React.ReactNode;
   className?: string;
+  style?: React.CSSProperties;
 }
 
-export function KpiGrid({ cols = 4, children, className }: KpiGridProps) {
-  return <Grid cols={cols} className={className}>{children}</Grid>;
+export function KpiGrid({ cols = 4, children, className, style }: KpiGridProps) {
+  return <Grid cols={cols} className={className} style={style}>{children}</Grid>;
 }
 
 interface KpiCardProps {

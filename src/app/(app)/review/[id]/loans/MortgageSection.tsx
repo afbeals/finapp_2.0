@@ -1,230 +1,363 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import styled from 'styled-components';
 import { formatDollars, toCents, toDollars } from '@/lib/money';
-import { monthlyPayment, totalInterest, payoffDateStr } from '@/lib/fire';
-import { InlineEdit } from '@/components/shared/InlineEdit';
+import {
+  monthlyPayment,
+  totalInterest,
+  payoffDateStr,
+  amortizationSchedule,
+  pmiDropMonth,
+  MONTH_NAMES_SHORT,
+} from '@/lib/fire';
 import { KpiGrid, KpiCard } from '@/components/shared/KpiGrid';
 import { SectionHeader } from '@/components/shared/SectionHeader';
+import { Button } from '@/components/ui/Button';
 import { colors, semanticColors, font, spacing, radius } from '@/styles/tokens';
 import type { Loan, LoanSnapshot } from '@/types/entities';
+import { MortgageSettingsPanel } from './MortgageSettingsPanel';
 
+// ─── Styled components ────────────────────────────────────────────────────────
 
-const ProgressWrap = styled.div`margin-bottom: ${spacing[4]};`;
+const ProgressWrap = styled.div`margin-bottom: ${spacing[3]};`;
 const ProgressLabel = styled.div`font-size: ${font.size.xs}; color: ${colors.textMuted}; margin-bottom: 6px;`;
 const ProgressTrack = styled.div`height: 10px; background: ${colors.border}; border-radius: ${radius.full}; overflow: hidden;`;
-const ProgressFill = styled.div.withConfig({ shouldForwardProp: (p) => p !== 'pct' })<{ pct: number }>`
-  height: 100%; width: ${({ pct }) => pct}%; background: ${colors.primary};
+const ProgressFill = styled.div.withConfig({ shouldForwardProp: (p) => p !== 'pct' && p !== 'color' })<{ pct: number; color: string }>`
+  height: 100%; width: ${({ pct }) => pct}%; background: ${({ color }) => color};
   border-radius: ${radius.full}; transition: width 400ms ease;
 `;
 
+// ── P/I Split bar (two-tone, no gaps) ─────────────────────────────────────
+const SplitBar = styled.div`display: flex; height: 10px; border-radius: ${radius.full}; overflow: hidden; margin: 6px 0 4px;`;
+const SplitSegment = styled.div.withConfig({ shouldForwardProp: (p) => p !== 'pct' && p !== 'bg' })<{ pct: number; bg: string }>`
+  width: ${({ pct }) => pct}%;
+  background: ${({ bg }) => bg};
+  transition: width 400ms ease;
+`;
+const SplitLegend = styled.div`display: flex; gap: 14px; font-size: ${font.size.xs}; color: ${colors.textMuted};`;
+const SplitDot = styled.span.withConfig({ shouldForwardProp: (p) => p !== 'bg' })<{ bg: string }>`
+  display: inline-flex; align-items: center; gap: 4px;
+  &::before { content: ''; display: inline-block; width: 8px; height: 8px; border-radius: 2px; background: ${({ bg }) => bg}; }
+`;
+const PiCardWrap = styled.div`
+  background: ${colors.surface};
+  border: 1px solid ${colors.border};
+  border-radius: ${radius.lg};
+  padding: ${spacing[3]} ${spacing[4]};
+`;
+
 const PaymentCard = styled.div`
-  background: ${colors.primaryLight}; border: 1px solid ${colors.border}; border-radius: ${radius.lg};
-  padding: ${spacing[4]} ${spacing[5]}; margin-bottom: ${spacing[4]};
+  background: ${colors.primaryLight};
+  border: 1px solid ${colors.border};
+  border-radius: ${radius.lg};
+  padding: ${spacing[4]} ${spacing[5]};
+  margin-bottom: ${spacing[4]};
 `;
+
 const PaymentCardTitle = styled.p`
-  font-size: ${font.size.sm}; font-weight: ${font.weight.bold}; color: ${semanticColors.primaryTextDark}; margin-bottom: 12px;
+  font-size: ${font.size.sm};
+  font-weight: ${font.weight.bold};
+  color: ${semanticColors.primaryTextDark};
+  margin-bottom: ${spacing[3]};
 `;
-const PaymentFields = styled.div`
-  display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: ${spacing[3]};
+
+const PaymentRow = styled.div`
+  display: flex;
+  align-items: flex-end;
+  gap: ${spacing[3]};
+  flex-wrap: wrap;
 `;
-const FieldGroup = styled.div`display: flex; flex-direction: column; gap: 4px;`;
+
+const FieldGroup = styled.div`display: flex; flex-direction: column; gap: 4px; flex: 1; min-width: 160px;`;
 const FieldLabel = styled.label`
-  font-size: ${font.size.xs}; font-weight: ${font.weight.semibold}; color: ${colors.textMuted};
-  text-transform: uppercase; letter-spacing: 0.04em;
+  font-size: ${font.size.xs};
+  font-weight: ${font.weight.semibold};
+  color: ${colors.textMuted};
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
 `;
 const FieldInput = styled.input`
-  padding: 7px 10px; font-size: ${font.size.sm}; font-family: inherit;
-  border: 1px solid ${colors.border}; border-radius: ${radius.md};
-  background: ${colors.surface}; color: ${colors.textPrimary}; outline: none;
-  text-align: right;
+  padding: 8px 12px;
+  font-size: ${font.size.base};
+  font-family: inherit;
+  border: 1px solid ${colors.border};
+  border-radius: ${radius.md};
+  background: ${colors.surface};
+  color: ${colors.textPrimary};
+  outline: none;
   &:focus { border-color: ${colors.primary}; box-shadow: 0 0 0 2px ${colors.primaryLight}; }
   &:disabled { opacity: 0.5; background: ${colors.bg}; }
 `;
-const PaymentSaveBtn = styled.button`
-  margin-top: 12px; padding: 8px 20px; background: ${colors.primary}; color: ${colors.surface};
-  border: none; border-radius: ${radius.md}; font-size: ${font.size.sm};
-  font-weight: ${font.weight.semibold}; cursor: pointer;
-  &:hover { background: ${colors.primaryHover}; }
-  &:disabled { opacity: 0.5; cursor: default; }
+
+const PmiCard = styled.div`
+  background: ${colors.surface};
+  border: 1px solid ${colors.border};
+  border-radius: ${radius.lg};
+  padding: ${spacing[3]} ${spacing[4]};
+  margin-bottom: ${spacing[4]};
 `;
-const InsuranceSettingsCard = styled.div`
-  background: ${colors.bg}; border: 1px solid ${colors.border}; border-radius: ${radius.lg};
-  padding: 14px 18px; margin-bottom: ${spacing[4]};
+
+const PmiTitle = styled.p`
+  font-size: ${font.size.sm};
+  font-weight: ${font.weight.semibold};
+  color: ${colors.textPrimary};
+  margin-bottom: ${spacing[2]};
 `;
-const InsuranceSettingsTitle = styled.p`
-  font-size: ${font.size.sm}; font-weight: ${font.weight.semibold}; color: ${colors.textPrimary}; margin-bottom: 10px;
+
+const GearBtn = styled.button`
+  background: none;
+  border: 1px solid ${colors.border};
+  border-radius: ${radius.md};
+  padding: 4px 10px;
+  font-size: 15px;
+  cursor: pointer;
+  color: ${colors.textMuted};
+  &:hover { background: ${colors.bg}; color: ${colors.textPrimary}; }
 `;
-const InsuranceFields = styled.div`
-  display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: ${spacing[3]};
+
+const ActionsRow = styled.div`
+  display: flex;
+  align-items: center;
+  gap: ${spacing[2]};
 `;
-const CalcTotal = styled.div`
-  margin-top: 10px; padding: 8px 12px; background: ${colors.surface};
-  border: 1px solid ${colors.border}; border-radius: ${radius.md};
-  font-size: ${font.size.sm}; color: ${colors.textPrimary};
-  display: flex; justify-content: space-between; align-items: center;
-`;
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+function monthIndexToDate(startDate: string, paymentsMade: number, offsetMonths: number): string {
+  const d = new Date(startDate);
+  d.setMonth(d.getMonth() + paymentsMade + offsetMonths);
+  return `${MONTH_NAMES_SHORT[d.getMonth()]} ${d.getFullYear()}`;
+}
+
+// ─── Props ────────────────────────────────────────────────────────────────────
 
 interface MortgageSectionProps {
   loan: Loan;
   snap: LoanSnapshot;
-  mortDraft: { paymentAmount: string; principalAmount: string };
-  insDraft: { mortgageInsurance: string; otherFees: string };
+  paymentDraft: string;
+  extraPaymentDraft: string;
   readOnly: boolean;
   savingMortgage: number | null;
-  savingInsurance: number | null;
-  onPatchSnapshot: (loanId: number, fields: Partial<Omit<LoanSnapshot, 'loanId'>>) => Promise<void>;
-  onMortDraftChange: (loanId: number, field: 'paymentAmount' | 'principalAmount', value: string) => void;
-  onInsDraftChange: (loanId: number, field: 'mortgageInsurance' | 'otherFees', value: string) => void;
+  onPaymentDraftChange: (loanId: number, value: string) => void;
+  onExtraPaymentDraftChange: (loanId: number, value: string) => void;
   onSaveMortgagePayment: (loan: Loan) => void;
-  onSaveInsuranceSettings: (loan: Loan) => void;
+  onSaveLoanField: (loanId: number, fields: Partial<Loan>) => Promise<void>;
   onShowAmortization: (loan: Loan) => void;
 }
 
+// ─── Component ────────────────────────────────────────────────────────────────
+
 export const MortgageSection = React.memo(function MortgageSection({
-  loan, snap, mortDraft, insDraft, readOnly,
-  savingMortgage, savingInsurance,
-  onPatchSnapshot, onMortDraftChange, onInsDraftChange,
-  onSaveMortgagePayment, onSaveInsuranceSettings, onShowAmortization,
+  loan,
+  snap,
+  paymentDraft,
+  extraPaymentDraft,
+  readOnly,
+  savingMortgage,
+  onPaymentDraftChange,
+  onExtraPaymentDraftChange,
+  onSaveMortgagePayment,
+  onSaveLoanField,
+  onShowAmortization,
 }: MortgageSectionProps) {
-  const pct = Math.min(100, ((loan.principal - snap.balance) / loan.principal) * 100);
-  const remMonths = Math.max(0, loan.termMonths - snap.paymentsMade);
+  const [showSettings, setShowSettings] = useState(false);
+
+  const extraPrincipalCents = toCents(parseFloat(extraPaymentDraft) || 0);
+
+  // ── Derived amortization math ──────────────────────────────────────────────
+  const schedule = amortizationSchedule(loan.principal, loan.rate, loan.termMonths, extraPrincipalCents);
+  const pmtIdx = Math.min(snap.paymentsMade, schedule.length) - 1; // last payment row (0-based)
+  const currentRow = schedule[Math.min(snap.paymentsMade, schedule.length - 1)] ?? schedule[schedule.length - 1];
+  const lastPaymentRow = pmtIdx >= 0 ? schedule[pmtIdx] : null;
+
+  const derivedBalance = currentRow?.balance ?? loan.principal;
+  const scheduledRemMonths = schedule.filter((_, i) => i >= snap.paymentsMade).length;
+  const remMonths = Math.max(0, scheduledRemMonths);
   const basePmt = monthlyPayment(loan.principal, loan.rate, loan.termMonths);
-  const principalPaid = loan.principal - snap.balance;
-  const interestPaidEst = Math.max(0, snap.paymentsMade * basePmt - principalPaid);
-  const totalInterestLife = totalInterest(loan.principal, loan.rate, loan.termMonths);
+  const totalInterestLife = schedule.reduce((s, r) => s + r.interest, 0);
+  const pct = Math.min(100, ((loan.principal - derivedBalance) / loan.principal) * 100);
   const payoffStr = payoffDateStr(loan.startDate, snap.paymentsMade, remMonths);
-  const ins = loan.mortgageInsurance ?? 0;
-  const fees = loan.otherFees ?? 0;
-  const totalMonthlyPmt = basePmt + ins + fees;
+
+  // ── Monthly totals ─────────────────────────────────────────────────────────
+  const pmi = loan.mortgageInsurance ?? 0;
+  const hasFeeBreakdown = (loan.propertyTax ?? 0) + (loan.hoa ?? 0) + (loan.homeownersInsurance ?? 0) > 0;
+  const monthlyFees = hasFeeBreakdown
+    ? (loan.propertyTax ?? 0) + (loan.hoa ?? 0) + (loan.homeownersInsurance ?? 0)
+    : (loan.otherFees ?? 0);
+  const totalMonthly = basePmt + pmi + monthlyFees;
+
+  // ── LTV + PMI drop ─────────────────────────────────────────────────────────
+  const homeValue = loan.homeValue ?? null;
+  const ltv = homeValue && homeValue > 0 ? (derivedBalance / homeValue) * 100 : null;
+  const showPmiDrop = pmi > 0 && homeValue !== null;
+  const pmiTarget = loan.pmiDropBalance ?? (homeValue ? Math.round(homeValue * 0.80) : null);
+  const pmiDropPmt = pmiTarget !== null
+    ? pmiDropMonth(loan.principal, loan.rate, loan.termMonths, pmiTarget)
+    : -1;
+  const pmiDropStr = pmiDropPmt > 0
+    ? monthIndexToDate(loan.startDate, 0, pmiDropPmt)
+    : 'Already eligible';
+  const pmiToGo = pmiTarget !== null ? Math.max(0, derivedBalance - pmiTarget) : 0;
+  const pmiPct = pmiTarget !== null && homeValue !== null
+    ? Math.min(100, ((homeValue - derivedBalance) / (homeValue - pmiTarget)) * 100)
+    : 0;
 
   return (
     <>
-      <SectionHeader title={`🏠 Mortgage — ${loan.name}`} />
+      <SectionHeader
+        title={`🏠 Mortgage — ${loan.name}`}
+        actions={
+          <ActionsRow>
+            <GearBtn
+              onClick={() => setShowSettings((v) => !v)}
+              title="Loan settings"
+            >
+              ⚙️
+            </GearBtn>
+          </ActionsRow>
+        }
+      />
 
-      <KpiGrid cols={4}>
-        <KpiCard
-          label="Remaining Balance"
-          tone="primary"
-          span2
-          largeValue
-          value={
-            <InlineEdit
-              value={toDollars(snap.balance).toFixed(2)}
-              onSave={(v) => onPatchSnapshot(loan.id, { balance: toCents(parseFloat(v) || 0) })}
-              color={colors.primary}
-              readOnly={readOnly}
-            />
-          }
-          sub={`Payment #${snap.paymentsMade} of ${loan.termMonths}`}
-        />
-        <KpiCard label="Original Loan" value={formatDollars(loan.principal)} />
-        <KpiCard label="Interest Rate" tone="success" value={`${(loan.rate * 100).toFixed(3)}%`} />
-        <KpiCard label="P&I Payment" value={formatDollars(basePmt)} />
-        <KpiCard label="Total Monthly (w/ fees)" tone="success" value={formatDollars(totalMonthlyPmt)} sub="P&I + MI + Other" />
-        <KpiCard label="Principal Paid" tone="primary" value={formatDollars(Math.max(0, principalPaid))} />
-        <KpiCard label="Interest Paid (Est.)" tone="warning" value={formatDollars(interestPaidEst)} />
-        <KpiCard label="Term Remaining" value={`${remMonths} months`} />
-        <KpiCard label="Payoff Date" value={payoffStr} />
-        <KpiCard label="Total Interest (Life)" tone="danger" value={formatDollars(totalInterestLife)} />
-      </KpiGrid>
-
-      <ProgressWrap>
-        <ProgressLabel>
-          Loan Progress: {pct.toFixed(0)}% Complete ({snap.paymentsMade} of {loan.termMonths} payments)
-        </ProgressLabel>
-        <ProgressTrack><ProgressFill pct={pct} /></ProgressTrack>
-      </ProgressWrap>
-
-      {!readOnly && (
-        <InsuranceSettingsCard>
-          <InsuranceSettingsTitle>Monthly Fee Settings</InsuranceSettingsTitle>
-          <InsuranceFields>
-            <FieldGroup>
-              <FieldLabel>Mortgage Insurance (PMI/MIP)</FieldLabel>
-              <FieldInput
-                type="number" step="0.01" placeholder="0.00"
-                value={insDraft.mortgageInsurance}
-                onChange={(e) => onInsDraftChange(loan.id, 'mortgageInsurance', e.target.value)}
-              />
-            </FieldGroup>
-            <FieldGroup>
-              <FieldLabel>Other Fees (HOA, Taxes Escrow, etc.)</FieldLabel>
-              <FieldInput
-                type="number" step="0.01" placeholder="0.00"
-                value={insDraft.otherFees}
-                onChange={(e) => onInsDraftChange(loan.id, 'otherFees', e.target.value)}
-              />
-            </FieldGroup>
-          </InsuranceFields>
-          <CalcTotal>
-            <span style={{ color: colors.textMuted }}>Auto-calculated total</span>
-            <span style={{ fontWeight: font.weight.bold }}>
-              {formatDollars(basePmt)} P&amp;I
-              {' + '}{formatDollars(toCents(parseFloat(insDraft.mortgageInsurance) || 0))} MI
-              {' + '}{formatDollars(toCents(parseFloat(insDraft.otherFees) || 0))} other
-              {' = '}<span style={{ color: colors.success }}>
-                {formatDollars(basePmt + toCents(parseFloat(insDraft.mortgageInsurance) || 0) + toCents(parseFloat(insDraft.otherFees) || 0))}
-              </span>/mo
-            </span>
-          </CalcTotal>
-          <button
-            onClick={() => onSaveInsuranceSettings(loan)}
-            disabled={savingInsurance === loan.id}
-            style={{
-              marginTop: 10, padding: '6px 16px', background: colors.surface,
-              border: `1px solid ${colors.border}`, borderRadius: radius.md,
-              fontSize: font.size.sm, cursor: 'pointer', color: colors.textPrimary,
-            }}
-          >
-            {savingInsurance === loan.id ? 'Saving…' : 'Save Fee Settings'}
-          </button>
-        </InsuranceSettingsCard>
-      )}
-
+      {/* ── Record Payment ── */}
       {!readOnly && (
         <PaymentCard>
-          <PaymentCardTitle>📅 Record This Month's Payment</PaymentCardTitle>
-          <PaymentFields>
+          <PaymentCardTitle>📅 Record This Month&apos;s Payment</PaymentCardTitle>
+          <PaymentRow>
             <FieldGroup>
-              <FieldLabel>Total Payment Made</FieldLabel>
+              <FieldLabel>Total Payment Made ($)</FieldLabel>
               <FieldInput
-                type="number" step="0.01"
-                placeholder={`${toDollars(totalMonthlyPmt).toFixed(2)}`}
-                value={mortDraft.paymentAmount}
-                onChange={(e) => onMortDraftChange(loan.id, 'paymentAmount', e.target.value)}
+                type="number"
+                step="0.01"
+                placeholder={toDollars(totalMonthly).toFixed(2)}
+                value={paymentDraft}
+                onChange={(e) => onPaymentDraftChange(loan.id, e.target.value)}
               />
             </FieldGroup>
-            <FieldGroup>
-              <FieldLabel>Principal Portion (optional)</FieldLabel>
+            <FieldGroup style={{ maxWidth: 180 }}>
+              <FieldLabel>Extra Principal ($) <span style={{ fontWeight: 400, textTransform: 'none', letterSpacing: 0 }}>optional</span></FieldLabel>
               <FieldInput
-                type="number" step="0.01" placeholder="Auto-calculated if blank"
-                value={mortDraft.principalAmount}
-                onChange={(e) => onMortDraftChange(loan.id, 'principalAmount', e.target.value)}
+                type="number"
+                step="0.01"
+                placeholder="0.00"
+                value={extraPaymentDraft}
+                onChange={(e) => onExtraPaymentDraftChange(loan.id, e.target.value)}
               />
             </FieldGroup>
-          </PaymentFields>
-          <PaymentSaveBtn
-            onClick={() => onSaveMortgagePayment(loan)}
-            disabled={!mortDraft.paymentAmount || savingMortgage === loan.id}
-          >
-            {savingMortgage === loan.id ? 'Saving…' : '+ Record Payment (adds 1 to payment count)'}
-          </PaymentSaveBtn>
+            <Button
+              onClick={() => onSaveMortgagePayment(loan)}
+              disabled={!paymentDraft || savingMortgage === loan.id}
+            >
+              {savingMortgage === loan.id ? 'Saving…' : 'Submit Payment'}
+            </Button>
+          </PaymentRow>
         </PaymentCard>
       )}
 
+      {/* ── Settings Panel (opens directly below payment input) ── */}
+      {showSettings && (
+        <MortgageSettingsPanel
+          loan={loan}
+          readOnly={readOnly}
+          onSaveLoanField={onSaveLoanField}
+        />
+      )}
+
+      {/* ── Remaining Balance (full width) ── */}
+      <KpiGrid cols={1} style={{ marginBottom: spacing[3] }}>
+        <KpiCard
+          label="Remaining Balance"
+          tone="primary"
+          largeValue
+          value={formatDollars(derivedBalance)}
+          sub={`Payment #${snap.paymentsMade} of ${loan.termMonths}`}
+        />
+      </KpiGrid>
+
+      {/* ── Last Payment P/I Split (full width) ── */}
+      {lastPaymentRow && (
+        <PiCardWrap style={{ marginBottom: spacing[3] }}>
+          <p style={{ fontSize: font.size.xs, fontWeight: font.weight.semibold, color: colors.textMuted, textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: 2 }}>
+            Last Payment Breakdown
+          </p>
+          <p style={{ fontSize: font.size.sm, color: colors.textPrimary, marginBottom: 4 }}>
+            <strong>{formatDollars(lastPaymentRow.payment)}</strong> total &mdash;{' '}
+            <span style={{ color: semanticColors.successText }}>{formatDollars(lastPaymentRow.principal)} principal</span>
+            {' · '}
+            <span style={{ color: colors.danger }}>{formatDollars(lastPaymentRow.interest)} interest</span>
+          </p>
+          <SplitBar>
+            <SplitSegment
+              pct={(lastPaymentRow.principal / lastPaymentRow.payment) * 100}
+              bg={semanticColors.successTextMedium}
+            />
+            <SplitSegment
+              pct={(lastPaymentRow.interest / lastPaymentRow.payment) * 100}
+              bg={colors.danger}
+            />
+          </SplitBar>
+          <SplitLegend>
+            <SplitDot bg={semanticColors.successTextMedium}>
+              Principal {((lastPaymentRow.principal / lastPaymentRow.payment) * 100).toFixed(1)}%
+            </SplitDot>
+            <SplitDot bg={colors.danger}>
+              Interest {((lastPaymentRow.interest / lastPaymentRow.payment) * 100).toFixed(1)}%
+            </SplitDot>
+          </SplitLegend>
+        </PiCardWrap>
+      )}
+
+      {/* ── Remaining KPIs (4 across) ── */}
+      <KpiGrid cols={4}>
+        <KpiCard label="Payoff Date" value={payoffStr} />
+        <KpiCard label="Total Monthly" value={formatDollars(totalMonthly)} sub="P&I + PMI + fees" />
+        <KpiCard label="P&I Payment" value={formatDollars(basePmt)} />
+        <KpiCard label="Total Interest (Life)" tone="danger" value={formatDollars(totalInterestLife)} />
+        {ltv !== null && (
+          <KpiCard label="LTV" value={`${ltv.toFixed(1)}%`} sub={ltv < 80 ? 'PMI eligible to drop' : ''} tone={ltv < 80 ? 'success' : undefined} />
+        )}
+      </KpiGrid>
+
+      {/* ── Loan Progress Bar ── */}
+      <ProgressWrap>
+        <ProgressLabel>
+          Loan Progress: {pct.toFixed(0)}% paid off · {snap.paymentsMade} of {loan.termMonths} payments
+        </ProgressLabel>
+        <ProgressTrack>
+          <ProgressFill pct={pct} color={colors.primary} />
+        </ProgressTrack>
+      </ProgressWrap>
+
+      {/* ── PMI Drop Progress ── */}
+      {showPmiDrop && pmiTarget !== null && (
+        <PmiCard>
+          <PmiTitle>🏷️ PMI Removal Progress</PmiTitle>
+          {pmiToGo > 0 ? (
+            <>
+              <p style={{ fontSize: font.size.sm, color: colors.textPrimary, marginBottom: spacing[2] }}>
+                <strong>{formatDollars(pmiToGo)}</strong> away from dropping PMI · estimated{' '}
+                <strong>{pmiDropStr}</strong>
+              </p>
+              <ProgressTrack>
+                <ProgressFill pct={pmiPct} color={semanticColors.successTextMedium} />
+              </ProgressTrack>
+              <p style={{ fontSize: font.size.xs, color: colors.textMuted, marginTop: 6 }}>
+                Target balance: {formatDollars(pmiTarget)} (LTV 80%)
+              </p>
+            </>
+          ) : (
+            <p style={{ fontSize: font.size.sm, color: semanticColors.successText, fontWeight: font.weight.semibold }}>
+              ✅ Your balance is at or below the PMI drop threshold. Contact your lender to remove PMI.
+            </p>
+          )}
+        </PmiCard>
+      )}
+
+      {/* ── Amortization Button ── */}
       <div style={{ marginBottom: spacing[4] }}>
-        <button
-          onClick={() => onShowAmortization(loan)}
-          style={{
-            padding: '8px 16px', background: colors.primary, color: colors.surface,
-            border: 'none', borderRadius: radius.md, cursor: 'pointer',
-            fontSize: font.size.sm, fontWeight: font.weight.semibold,
-          }}
-        >
+        <Button variant="secondary" onClick={() => onShowAmortization(loan)}>
           📈 View Amortization Schedule
-        </button>
+        </Button>
       </div>
     </>
   );

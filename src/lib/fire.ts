@@ -67,6 +67,21 @@ export function totalInterest(
 }
 
 /**
+ * Returns the payment number (1-based) at which the loan balance first drops to or below
+ * targetBalance (cents). Returns -1 if the balance never reaches the target within the term.
+ */
+export function pmiDropMonth(
+  principal: number,
+  annualRate: number,
+  termMonths: number,
+  targetBalance: number,
+): number {
+  const schedule = amortizationSchedule(principal, annualRate, termMonths);
+  const row = schedule.find((r) => r.balance <= targetBalance);
+  return row ? row.month : -1;
+}
+
+/**
  * Future value of a lump sum + recurring contributions compounded monthly
  * @param presentValue - current portfolio value (cents)
  * @param monthlyContribution - monthly addition (cents)

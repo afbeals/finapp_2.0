@@ -26,6 +26,11 @@ export interface Loan {
   paidOff: boolean;
   mortgageInsurance: number;
   otherFees: number;
+  propertyTax?: number | null;
+  hoa?: number | null;
+  homeownersInsurance?: number | null;
+  homeValue?: number | null;
+  pmiDropBalance?: number | null;
 }
 
 export interface LoanSnapshot {

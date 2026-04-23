@@ -141,12 +141,8 @@ export function StepIndicator() {
               <LegendLabel>Quarterly</LegendLabel>
             </LegendRow>
             <LegendRow>
-              <LegendLine />
-              <LegendLabel>Completed path</LegendLabel>
-            </LegendRow>
-            <LegendRow>
               <LegendLine dashed />
-              <LegendLabel>Quarterly step</LegendLabel>
+              <LegendLabel>Dashed = edge spans a quarterly-only step</LegendLabel>
             </LegendRow>
           </Legend>
 

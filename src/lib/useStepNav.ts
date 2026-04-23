@@ -69,10 +69,19 @@ export function useStepNav(currentKey: string) {
     [markStep, nextKey, reviewId, router, actions],
   );
 
-  const goBack = useCallback(() => {
-    if (prevKey) router.push(`/review/${reviewId}/${prevKey}`);
-    else router.push('/dashboard');
-  }, [prevKey, reviewId, router]);
+  const goBack = useCallback(async () => {
+    if (prevKey) {
+      actions.setCurrentStep(prevKey);
+      await fetch(`/api/reviews/${reviewId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ currentStep: prevKey }),
+      }).catch(() => null);
+      router.push(`/review/${reviewId}/${prevKey}`);
+    } else {
+      router.push('/dashboard');
+    }
+  }, [prevKey, reviewId, router, actions]);
 
   return { nextKey, prevKey, isLast, saving, goNext, goSkip, goBack };
 }

@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { formatDollars, toCents } from '@/lib/money';
+import { formatDollars, toCents, toDollars } from '@/lib/money';
 import { createIncomeEntry } from '@/lib/api';
 import { theme } from '@/styles/tokens';
 
@@ -84,7 +84,7 @@ export const IncomeAccordion = React.memo(function IncomeAccordion({
               {entries.map((e) => (
                 <EntryTr key={e.id}>
                   <EntryTd><EditableCell value={e.name} readOnly={readOnly} onSave={(v) => onUpdate(e.id, 'name', v)} /></EntryTd>
-                  <EntryTd><EditableCell value={formatDollars(e.amount)} isAmount readOnly={readOnly} onSave={(v) => onUpdate(e.id, 'amount', v)} /></EntryTd>
+                  <EntryTd><EditableCell value={toDollars(e.amount).toFixed(2)} isAmount readOnly={readOnly} onSave={(v) => onUpdate(e.id, 'amount', v)} /></EntryTd>
                   <EntryTd><MemberBadge memberColor={e.member.color}>{e.member.name}</MemberBadge></EntryTd>
                   <EntryTd><EditableCell value={e.notes ?? ''} readOnly={readOnly} onSave={(v) => onUpdate(e.id, 'notes', v)} /></EntryTd>
                   <EntryTd>{!readOnly && <TrashBtn onClick={() => onDelete(e.id)}>🗑</TrashBtn>}</EntryTd>

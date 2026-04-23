@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { theme } from '@/styles/tokens';
 import {
@@ -22,6 +22,7 @@ export default function LoginPage() {
   const [pin, setPin] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const submittingRef = useRef(false);
 
   useEffect(() => {
     fetch('/api/households/members')
@@ -46,6 +47,8 @@ export default function LoginPage() {
 
   async function handleSubmit() {
     if (pin.length < PIN_LENGTH || selectedMemberId === null) return;
+    if (submittingRef.current) return;
+    submittingRef.current = true;
     setLoading(true);
     setError('');
 
@@ -69,13 +72,9 @@ export default function LoginPage() {
       setPin('');
     } finally {
       setLoading(false);
+      submittingRef.current = false;
     }
   }
-
-  // Auto-submit when PIN is complete
-  useEffect(() => {
-    if (pin.length === PIN_LENGTH) handleSubmit();
-  }, [pin]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const selectedMember = members.find((m) => m.id === selectedMemberId);
 
@@ -88,54 +87,57 @@ export default function LoginPage() {
           <Subtitle>Beals-Gibson Household</Subtitle>
         </Header>
 
-        <SectionLabel>Who are you?</SectionLabel>
-        <MemberGrid>
-          {members.map((member) => (
-            <MemberButton
-              key={member.id}
-              selected={member.id === selectedMemberId}
-              memberColor={member.color}
-              onClick={() => { setSelectedMemberId(member.id); setPin(''); setError(''); }}
+        <form onSubmit={(e) => { e.preventDefault(); handleSubmit(); }}>
+          <SectionLabel>Who are you?</SectionLabel>
+          <MemberGrid>
+            {members.map((member) => (
+              <MemberButton
+                key={member.id}
+                selected={member.id === selectedMemberId}
+                memberColor={member.color}
+                onClick={() => { setSelectedMemberId(member.id); setPin(''); setError(''); }}
+                type="button"
+              >
+                <Avatar color={member.color}>{member.name[0]}</Avatar>
+                <MemberName>{member.name}</MemberName>
+              </MemberButton>
+            ))}
+          </MemberGrid>
+
+          <PinLabel>
+            Enter PIN{selectedMember ? ` for ${selectedMember.name}` : ''}
+          </PinLabel>
+          <PinDots>
+            {Array.from({ length: PIN_LENGTH }).map((_, i) => (
+              <PinDot key={i} filled={i < pin.length} />
+            ))}
+          </PinDots>
+
+          {error && <ErrorMessage>{error}</ErrorMessage>}
+
+          <Keypad>
+            {['1','2','3','4','5','6','7','8','9'].map((k) => (
+              <KeyButton key={k} type="button" onClick={() => handleKey(k)}>{k}</KeyButton>
+            ))}
+            <KeyButton type="button" onClick={handleBackspace}>⌫</KeyButton>
+            <KeyButton type="button" onClick={() => handleKey('0')}>0</KeyButton>
+            <KeyButton
+              type="submit"
+              style={{ background: pin.length === PIN_LENGTH ? colors.primary : undefined, color: pin.length === PIN_LENGTH ? colors.surface : undefined }}
             >
-              <Avatar color={member.color}>{member.name[0]}</Avatar>
-              <MemberName>{member.name}</MemberName>
-            </MemberButton>
-          ))}
-        </MemberGrid>
+              {loading ? '...' : '→'}
+            </KeyButton>
+          </Keypad>
 
-        <PinLabel>
-          Enter PIN{selectedMember ? ` for ${selectedMember.name}` : ''}
-        </PinLabel>
-        <PinDots>
-          {Array.from({ length: PIN_LENGTH }).map((_, i) => (
-            <PinDot key={i} filled={i < pin.length} />
-          ))}
-        </PinDots>
-
-        {error && <ErrorMessage>{error}</ErrorMessage>}
-
-        <Keypad>
-          {['1','2','3','4','5','6','7','8','9'].map((k) => (
-            <KeyButton key={k} onClick={() => handleKey(k)}>{k}</KeyButton>
-          ))}
-          <KeyButton onClick={handleBackspace}>⌫</KeyButton>
-          <KeyButton onClick={() => handleKey('0')}>0</KeyButton>
-          <KeyButton
-            onClick={handleSubmit}
-            style={{ background: pin.length === PIN_LENGTH ? colors.primary : undefined, color: pin.length === PIN_LENGTH ? colors.surface : undefined }}
+          <Button
+            variant="primary"
+            fullWidth
+            type="submit"
+            disabled={pin.length < PIN_LENGTH || selectedMemberId === null || loading}
           >
-            {loading ? '...' : '→'}
-          </KeyButton>
-        </Keypad>
-
-        <Button
-          variant="primary"
-          fullWidth
-          disabled={pin.length < PIN_LENGTH || selectedMemberId === null || loading}
-          onClick={handleSubmit}
-        >
-          {loading ? 'Signing in…' : 'Sign In'}
-        </Button>
+            {loading ? 'Signing in…' : 'Sign In'}
+          </Button>
+        </form>
       </Card>
     </Page>
   );

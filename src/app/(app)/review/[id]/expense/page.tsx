@@ -3,6 +3,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { StepShell } from '@/components/review/StepShell';
+import { STEP_META } from '@/components/review/stepMetadata';
 import { useStepNav } from '@/lib/useStepNav';
 import { useReviewStore, useSessionStore } from '@/lib/store';
 import { formatDollars, toCents } from '@/lib/money';
@@ -76,8 +77,8 @@ export default function ExpensePage() {
 
   return (
     <StepShell
-      title="Income / Expense Entry"
-      subtitle="Enter your income and expenses for the month"
+      title={STEP_META.expense.title}
+      subtitle={STEP_META.expense.subtitle}
       stepName="Expense Entry"
       onBack={goBack}
       onSkip={goSkip}

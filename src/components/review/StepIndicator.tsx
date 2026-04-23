@@ -7,7 +7,7 @@ import {
   Wrapper, Inner, TitleRow, ProgressTitle, ProgressCounter, ContentRow,
   StepsArea, StepCol, BadgeArea, QuarterlyBadge, Circle, StepLabel, LabelLine,
   ConnectorWrapper, ConnectorLine, Legend, LegendTitle, LegendRow, LegendDot,
-  LegendLabel, LegendSkipBtn, type CircleStatus,
+  LegendLabel, LegendLine, LegendSkipBtn, type CircleStatus,
 } from './StepIndicator.styles';
 import { MONTH_NAMES_SHORT } from '@/lib/fire';
 import { useReviewStore } from '@/lib/store';
@@ -36,7 +36,7 @@ export function StepIndicator() {
   const router = useRouter();
   const params = useParams();
   const reviewId = params.id as string;
-  const { state } = useReviewStore();
+  const { state, actions } = useReviewStore();
   const { activeReview, isEditMode } = state;
   const [showSkip, setShowSkip] = useState(false);
   const { goSkip } = useStepNav(activeReview?.currentStep ?? 'expense');
@@ -55,9 +55,15 @@ export function StepIndicator() {
   const stepNum = currentIndex >= 0 ? currentIndex + 1 : doneCount + 1;
   const periodLabel = `${MONTH_NAMES_SHORT[activeReview.periodMonth - 1]} ${activeReview.periodYear} ${activeReview.type === 'QUARTERLY' ? 'Quarterly' : 'Monthly'} Review Progress`;
 
-  function handleClick(key: string, idx: number) {
+  async function handleClick(key: string, idx: number) {
     const step = stepObjects[idx];
     if (step.status === 'PENDING' && idx > currentIndex && !isEditMode) return;
+    actions.setCurrentStep(key);
+    await fetch(`/api/reviews/${reviewId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ currentStep: key }),
+    }).catch(() => null);
     router.push(`/review/${reviewId}/${key}`);
   }
 
@@ -134,6 +140,14 @@ export function StepIndicator() {
             <LegendRow>
               <LegendDot fill={semanticColors.warningBg} stroke={colors.warning} />
               <LegendLabel>Quarterly</LegendLabel>
+            </LegendRow>
+            <LegendRow>
+              <LegendLine />
+              <LegendLabel>Completed path</LegendLabel>
+            </LegendRow>
+            <LegendRow>
+              <LegendLine dashed />
+              <LegendLabel>Quarterly step</LegendLabel>
             </LegendRow>
           </Legend>
 

@@ -3,6 +3,7 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { useParams } from 'next/navigation';
 import { StepShell } from '@/components/review/StepShell';
+import { STEP_META } from '@/components/review/stepMetadata';
 import { useStepNav } from '@/lib/useStepNav';
 import { useReviewStore } from '@/lib/store';
 import { formatDollars, toCents, toDollars } from '@/lib/money';
@@ -148,8 +149,8 @@ export default function VaultsPage() {
 
   return (
     <StepShell
-      title="Vault Distribution"
-      subtitle="Allocate funds across your bank vaults for the month"
+      title={STEP_META.vaults.title}
+      subtitle={STEP_META.vaults.subtitle}
       stepName="Vaults"
       onBack={goBack}
       onSkip={goSkip}

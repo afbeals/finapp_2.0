@@ -3,6 +3,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { StepShell } from '@/components/review/StepShell';
+import { STEP_META } from '@/components/review/stepMetadata';
 import { useStepNav } from '@/lib/useStepNav';
 import { useReviewStore } from '@/lib/store';
 import { formatDollars, toCents } from '@/lib/money';
@@ -161,8 +162,8 @@ export default function SavingsPage() {
 
   return (
     <StepShell
-      title="Savings Accounts"
-      subtitle="Track HYSA accounts, deposits, and interest earned"
+      title={STEP_META.savings.title}
+      subtitle={STEP_META.savings.subtitle}
       stepName="Savings"
       onBack={goBack}
       onSkip={goSkip}

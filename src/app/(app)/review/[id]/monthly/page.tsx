@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { StepShell } from '@/components/review/StepShell';
+import { STEP_META } from '@/components/review/stepMetadata';
 import { useStepNav } from '@/lib/useStepNav';
 import { useReviewStore } from '@/lib/store';
 import { formatDollarsWhole } from '@/lib/money';
@@ -127,8 +128,8 @@ export default function MonthlySummaryPage() {
 
   return (
     <StepShell
-      title="Monthly Summary"
-      subtitle="Review spending patterns • Select months to compare"
+      title={STEP_META.monthly.title}
+      subtitle={STEP_META.monthly.subtitle}
       stepName="Monthly Summary"
       onBack={goBack}
       onSkip={goSkip}

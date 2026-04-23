@@ -4,6 +4,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useParams } from 'next/navigation';
 import styled from 'styled-components';
 import { StepShell } from '@/components/review/StepShell';
+import { STEP_META } from '@/components/review/stepMetadata';
 import { useStepNav } from '@/lib/useStepNav';
 import { useReviewStore } from '@/lib/store';
 import { formatDollarsWhole } from '@/lib/money';
@@ -120,8 +121,8 @@ export default function PortfolioPage() {
 
   return (
     <StepShell
-      title="Portfolio Overview"
-      subtitle="Net worth summary and retirement planning"
+      title={STEP_META.portfolio.title}
+      subtitle={STEP_META.portfolio.subtitle}
       stepName="Portfolio"
       onBack={goBack}
       onSkip={goSkip}

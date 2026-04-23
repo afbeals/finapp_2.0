@@ -190,6 +190,17 @@ export const LegendLabel = styled.span`
   color: ${colors.textMuted};
 `;
 
+export const LegendLine = styled.div.withConfig({
+  shouldForwardProp: (prop) => prop !== 'dashed',
+})<{ dashed?: boolean }>`
+  width: 18px;
+  height: 2px;
+  flex-shrink: 0;
+  background: ${({ dashed }) => dashed
+    ? `repeating-linear-gradient(to right, ${colors.border} 0, ${colors.border} 3px, transparent 3px, transparent 6px)`
+    : colors.border};
+`;
+
 export const LegendSkipBtn = styled.button`
   flex-shrink: 0;
   align-self: center;

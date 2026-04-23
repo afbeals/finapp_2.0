@@ -3,6 +3,7 @@
 import { useEffect, useState, useMemo, useCallback } from 'react';
 import { useParams } from 'next/navigation';
 import { StepShell } from '@/components/review/StepShell';
+import { STEP_META } from '@/components/review/stepMetadata';
 import { useStepNav } from '@/lib/useStepNav';
 import { useReviewStore } from '@/lib/store';
 import { formatDollars, toDollars } from '@/lib/money';
@@ -359,8 +360,8 @@ export default function InvestmentsPage() {
 
   return (
     <StepShell
-      title="Investments"
-      subtitle="Track and manage investment portfolio"
+      title={STEP_META.investments.title}
+      subtitle={STEP_META.investments.subtitle}
       stepName="Investments"
       onBack={goBack}
       onSkip={goSkip}

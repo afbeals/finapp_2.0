@@ -3,6 +3,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { StepShell } from '@/components/review/StepShell';
+import { STEP_META } from '@/components/review/stepMetadata';
 import { useStepNav } from '@/lib/useStepNav';
 import { useReviewStore } from '@/lib/store';
 import { toCents, toDollars } from '@/lib/money';
@@ -95,8 +96,8 @@ export default function LoansPage() {
 
   return (
     <StepShell
-      title="💳 Loans & Credit"
-      subtitle="Quarterly review of school loans and mortgage"
+      title={STEP_META.loans.title}
+      subtitle={STEP_META.loans.subtitle}
       stepName="Loans"
       onBack={goBack}
       onSkip={goSkip}

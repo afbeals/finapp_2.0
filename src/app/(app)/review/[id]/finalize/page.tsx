@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { StepShell } from '@/components/review/StepShell';
+import { STEP_META } from '@/components/review/stepMetadata';
 import { Card, CardTitle } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
@@ -88,8 +89,8 @@ export default function FinalizePage() {
 
   return (
     <StepShell
-      title="Finalize Review"
-      subtitle="Summary and completion."
+      title={STEP_META.finalize.title}
+      subtitle={STEP_META.finalize.subtitle}
       stepName="Finalize"
       onBack={goBack}
       onNext={handleComplete}

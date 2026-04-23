@@ -1,5 +1,5 @@
 import { toDollars } from '@/lib/money';
-import { updateVault } from '@/lib/api';
+import { updateVault, patchVaultCategoryOrder } from '@/lib/api';
 import { theme } from '@/styles/tokens';
 
 const { semanticColors, colors } = theme;
@@ -81,4 +81,8 @@ export function ownerBadgeColors(owner: VaultOwner | null): { bg: string; fg: st
 
 export function patchApi(id: number, data: Partial<Vault>) {
   return updateVault(id, data);
+}
+
+export function resolveGroupOrder(category: string, overrides: Record<string, number>): number {
+  return overrides[category] ?? CAT_GROUPS[category] ?? 99;
 }

@@ -64,6 +64,7 @@ model Household {
   loans                 Loan[]
   investmentAccounts    InvestmentAccount[]
   vaults                Vault[]
+  vaultCategoryOrders   VaultCategoryOrder[]
 }
 
 model Member {
@@ -351,4 +352,14 @@ model VaultSnapshot {
   review Review @relation(fields: [reviewId], references: [id], onDelete: Cascade)
 
   @@unique([vaultId, reviewId])
+}
+
+model VaultCategoryOrder {
+  householdId Int
+  category    String
+  groupOrder  Int
+
+  household Household @relation(fields: [householdId], references: [id], onDelete: Cascade)
+
+  @@id([householdId, category])
 }

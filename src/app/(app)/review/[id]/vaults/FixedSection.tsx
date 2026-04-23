@@ -33,9 +33,10 @@ export interface FixedSectionProps {
   onUpdate: (id: number, patch: Partial<Vault>, save?: boolean) => void;
   onDelete: (id: number) => void;
   onAdd: (category: string) => void;
+  onGroupOrderChange?: (category: string, groupOrder: number) => void;
 }
 
-export function FixedSection({ category, groupOrder, vaults, members, readOnly, onUpdate, onDelete, onAdd }: FixedSectionProps) {
+export function FixedSection({ category, groupOrder, vaults, members, readOnly, onUpdate, onDelete, onAdd, onGroupOrderChange }: FixedSectionProps) {
   const [open, setOpen] = useState(true);
   const pal = CAT_COLORS[category] ?? { bg: semanticColors.surfaceMuted, border: colors.border, header: colors.bg, text: semanticColors.neutralText, subtext: colors.textMuted };
   const subtotal = vaults.reduce((s, v) => s + monthlyAmount(v), 0);
@@ -45,6 +46,18 @@ export function FixedSection({ category, groupOrder, vaults, members, readOnly, 
       <SectionHeaderRow bg={pal.header} borderColor={pal.border} onClick={() => setOpen((v) => !v)}>
         <Chevron open={open}>▶</Chevron>
         <SectionLabel textColor={pal.text}>{category}</SectionLabel>
+        {!readOnly && onGroupOrderChange && (
+          <OrderInput
+            type="number" min="1"
+            defaultValue={groupOrder}
+            title="Group order"
+            onClick={(e) => e.stopPropagation()}
+            onBlur={(e) => {
+              const val = parseInt(e.target.value) || groupOrder;
+              if (val !== groupOrder) onGroupOrderChange(category, val);
+            }}
+          />
+        )}
         <SubtotalBadge bg={pal.bg} textColor={pal.text}>Subtotal: {formatDollars(subtotal)}</SubtotalBadge>
       </SectionHeaderRow>
 

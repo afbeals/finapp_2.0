@@ -19,16 +19,16 @@ import {
   RawNameCell, CellInput, ClearBtn, TreasuryWrap, TrAmountBox, TrAmountLabel,
   TrAmountInput, TrAllocationBadge, TTr, TTd, PctInput,
 } from './VaultsPage.styles';
-import { getReviewVaults, getMembers, deleteVault, createVault, putReviewVaults } from '@/lib/api';
+import { getReviewVaults, getMembers, deleteVault, createVault, putReviewVaults, getVaultCategoryOrders, patchVaultCategoryOrder } from '@/lib/api';
 import type { Vault, VaultSnapshot, Member } from '@/types/entities';
 import { EditCell } from './EditCell';
 import { FixedSection } from './FixedSection';
 import {
   CAT_ORDER,
-  CAT_GROUPS,
   CAT_COLORS,
   monthlyAmount,
   patchApi,
+  resolveGroupOrder,
 } from './vaultHelpers';
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
@@ -45,17 +45,22 @@ export default function VaultsPage() {
   const [loading, setLoading] = useState(true);
   const [treasuryAmount, setTreasuryAmount] = useState(0);
   const [treasuryPcts, setTreasuryPcts] = useState<Record<number, number>>({});
+  const [groupOrderOverrides, setGroupOrderOverrides] = useState<Record<string, number>>({});
 
   useEffect(() => {
     Promise.all([
       getReviewVaults(reviewId),
       getMembers(),
-    ]).then(([{ vaults: vs }, { members: ms }]) => {
+      getVaultCategoryOrders(),
+    ]).then(([{ vaults: vs }, { members: ms }, { orders }]) => {
       setVaults(vs ?? []);
       setMembers(ms ?? []);
       const pcts: Record<number, number> = {};
       for (const v of vs ?? []) if (v.type === 'VARIABLE') pcts[v.id] = v.treasuryPct;
       setTreasuryPcts(pcts);
+      const overrides: Record<string, number> = {};
+      for (const o of orders ?? []) overrides[o.category] = o.groupOrder;
+      setGroupOrderOverrides(overrides);
     }).finally(() => setLoading(false));
   }, [reviewId]);
 
@@ -132,6 +137,11 @@ export default function VaultsPage() {
     setTreasuryPcts((prev) => ({ ...prev, [vaultId]: Math.max(0, Math.min(100, pct)) }));
   }
 
+  function handleGroupOrderChange(category: string, newOrder: number) {
+    setGroupOrderOverrides((prev) => ({ ...prev, [category]: newOrder }));
+    patchVaultCategoryOrder(category, newOrder);
+  }
+
   function handleClearTreasury() {
     setTreasuryAmount(0);
     setTreasuryPcts((prev) => {
@@ -198,7 +208,7 @@ export default function VaultsPage() {
       </p>
 
       {allCategories.map((cat) => {
-        const groupOrder = CAT_GROUPS[cat] ?? 99;
+        const groupOrder = resolveGroupOrder(cat, groupOrderOverrides);
         return (
           <FixedSection
             key={cat}
@@ -210,6 +220,7 @@ export default function VaultsPage() {
             onUpdate={patchVault}
             onDelete={handleDeleteVault}
             onAdd={(category) => handleAddVault('FIXED', category)}
+            onGroupOrderChange={handleGroupOrderChange}
           />
         );
       })}

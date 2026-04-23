@@ -126,6 +126,12 @@ export const updateVault = (id: number, data: Partial<Vault>): Promise<{ vault: 
 export const deleteVault = (id: number): Promise<{ ok: boolean }> =>
   apiDelete(`/api/vaults/${id}`);
 
+export const getVaultCategoryOrders = (): Promise<{ orders: { category: string; groupOrder: number }[] }> =>
+  apiGet('/api/vault-category-order');
+
+export const patchVaultCategoryOrder = (category: string, groupOrder: number): Promise<{ order: { category: string; groupOrder: number } }> =>
+  apiPatch(`/api/vault-category-order/${encodeURIComponent(category)}`, { groupOrder });
+
 // Investments
 export const getReviewInvestments = (reviewId: string | number): Promise<InvestmentsResponse> =>
   apiGet<InvestmentsResponse>(`/api/reviews/${reviewId}/investments`);

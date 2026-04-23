@@ -27,12 +27,12 @@ export const Tr = styled.tr.withConfig({
   shouldForwardProp: (p) => !['highlight', 'isTotal', 'paidOff'].includes(p),
 })<{ highlight?: boolean; isTotal?: boolean; paidOff?: boolean }>`
   background: ${({ isTotal, highlight, paidOff }) =>
-    isTotal ? semanticColors.purpleLight : paidOff ? colors.bg : highlight ? colors.dangerLight : colors.surface};
-  opacity: ${({ paidOff }) => paidOff ? 0.55 : 1};
-  border-left: ${({ highlight }) => highlight ? `3px solid ${colors.danger}` : '3px solid transparent'};
+    isTotal ? semanticColors.purpleLight : paidOff ? colors.successLight : highlight ? colors.dangerLight : colors.surface};
+  border-left: ${({ highlight, paidOff }) =>
+    paidOff ? `3px solid ${colors.success}` : highlight ? `3px solid ${colors.danger}` : '3px solid transparent'};
   &:not(:last-child) td { border-bottom: 1px solid ${colors.border}; }
   &:nth-child(even) { background: ${({ isTotal, highlight, paidOff }) =>
-    isTotal ? semanticColors.purpleLight : paidOff ? colors.bg : highlight ? colors.dangerLight : colors.bg}; }
+    isTotal ? semanticColors.purpleLight : paidOff ? colors.successLight : highlight ? colors.dangerLight : colors.bg}; }
 `;
 export const Td = styled.td.withConfig({
   shouldForwardProp: (p) => !['right', 'muted', 'danger', 'success', 'purple', 'bold'].includes(p),

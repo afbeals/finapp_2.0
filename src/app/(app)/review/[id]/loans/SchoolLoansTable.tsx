@@ -101,12 +101,16 @@ export const SchoolLoansTable = React.memo(function SchoolLoansTable({
                   </LoanNameCell>
                 </Td>
                 <Td danger={isHighest && !loan.paidOff}>
-                  <InlineEdit
-                    value={toDollars(snap.balance).toFixed(2)}
-                    onSave={(v) => onPatchSnapshot(loan.id, { balance: toCents(parseFloat(v) || 0) })}
-                    color={isHighest && !loan.paidOff ? semanticColors.dangerTextDark : undefined}
-                    readOnly={readOnly || loan.paidOff}
-                  />
+                  {loan.paidOff ? (
+                    <span style={{ textDecoration: 'line-through', color: colors.textMuted }}>{formatDollars(snap.balance)}</span>
+                  ) : (
+                    <InlineEdit
+                      value={toDollars(snap.balance).toFixed(2)}
+                      onSave={(v) => onPatchSnapshot(loan.id, { balance: toCents(parseFloat(v) || 0) })}
+                      color={isHighest ? semanticColors.dangerTextDark : undefined}
+                      readOnly={readOnly}
+                    />
+                  )}
                 </Td>
                 <Td>
                   <InlineEdit
@@ -117,10 +121,14 @@ export const SchoolLoansTable = React.memo(function SchoolLoansTable({
                   />
                   <RateSuffix>%</RateSuffix>
                 </Td>
-                <Td muted>{loan.paidOff ? '—' : `${remMonths} mo`}</Td>
+                <Td muted>{loan.paidOff ? <span style={{ textDecoration: 'line-through' }}>0 mo</span> : `${remMonths} mo`}</Td>
                 <Td>{formatDollars(minPmt)}</Td>
                 <ExtraPayTd active={!loan.paidOff}>
-                  {loan.paidOff ? '—' : (
+                  {loan.paidOff ? (
+                    snap.extraPayment > 0
+                      ? <span style={{ color: semanticColors.warningText }}>{formatDollars(snap.extraPayment)}</span>
+                      : <span style={{ color: colors.textDisabled }}>—</span>
+                  ) : (
                     <InlineEdit
                       value={toDollars(snap.extraPayment).toFixed(2)}
                       onSave={(v) => onPatchSnapshot(loan.id, { extraPayment: toCents(parseFloat(v) || 0) })}
@@ -129,14 +137,14 @@ export const SchoolLoansTable = React.memo(function SchoolLoansTable({
                     />
                   )}
                 </ExtraPayTd>
-                <Td danger={isHighest && !loan.paidOff} muted={!(isHighest && !loan.paidOff)}>
-                  {loan.paidOff ? '—' : formatDollars(totIntWithExtra)}
+                <Td muted={loan.paidOff} danger={isHighest && !loan.paidOff}>
+                  {formatDollars(totIntWithExtra)}
                 </Td>
-                <Td success={saved > 0} muted={saved === 0} bold={saved > 0}>
-                  {loan.paidOff ? '—' : (saved > 0 ? `+${formatDollars(saved)}` : formatDollars(0))}
+                <Td success={!loan.paidOff && saved > 0} muted={loan.paidOff || saved === 0} bold={!loan.paidOff && saved > 0}>
+                  {saved > 0 ? `+${formatDollars(saved)}` : formatDollars(0)}
                 </Td>
-                <Td success={timeSavedMo > 0} muted={timeSavedMo === 0}>
-                  {loan.paidOff ? '—' : (timeSavedMo > 0 ? `${timeSavedMo} mo` : '—')}
+                <Td success={!loan.paidOff && timeSavedMo > 0} muted={loan.paidOff || timeSavedMo === 0}>
+                  {timeSavedMo > 0 ? `${timeSavedMo} mo` : '—'}
                 </Td>
                 <Td>
                   {loan.paidOff ? (

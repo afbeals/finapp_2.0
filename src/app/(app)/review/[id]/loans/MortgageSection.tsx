@@ -65,11 +65,12 @@ export const MortgageSection = React.memo(function MortgageSection({
   onShowAmortization,
 }: MortgageSectionProps) {
   const [showSettings, setShowSettings] = useState(false);
-
-  const extraPrincipalCents = toCents(parseFloat(extraPaymentDraft) || 0);
+  // Applied extra principal: only updates when Submit is clicked, so the
+  // amortization schedule doesn't recompute on every keystroke.
+  const [extraPrincipalApplied, setExtraPrincipalApplied] = useState(snap.extraPayment);
 
   // ── Derived amortization math ──────────────────────────────────────────────
-  const schedule = amortizationSchedule(loan.principal, loan.rate, loan.termMonths, extraPrincipalCents);
+  const schedule = amortizationSchedule(loan.principal, loan.rate, loan.termMonths, extraPrincipalApplied);
   const pmtIdx = Math.min(snap.paymentsMade, schedule.length) - 1; // last payment row (0-based)
   const currentRow = schedule[Math.min(snap.paymentsMade, schedule.length - 1)] ?? schedule[schedule.length - 1];
   const lastPaymentRow = pmtIdx >= 0 ? schedule[pmtIdx] : null;
@@ -148,7 +149,10 @@ export const MortgageSection = React.memo(function MortgageSection({
               />
             </FieldGroup>
             <Button
-              onClick={() => onSaveMortgagePayment(loan)}
+              onClick={() => {
+                setExtraPrincipalApplied(toCents(parseFloat(extraPaymentDraft) || 0));
+                onSaveMortgagePayment(loan);
+              }}
               disabled={!paymentDraft || savingMortgage === loan.id}
             >
               {savingMortgage === loan.id ? 'Saving…' : 'Submit Payment'}

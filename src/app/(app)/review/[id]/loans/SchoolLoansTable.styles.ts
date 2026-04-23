@@ -14,14 +14,14 @@ export const TableScroll = styled.div`
   &::-webkit-scrollbar-thumb { background: ${colors.border}; border-radius: 3px; }
 `;
 export const Table = styled.table`width: max-content; min-width: 100%; border-collapse: collapse;`;
-export const Thead = styled.thead`background: ${colors.bg}; position: sticky; top: 0; z-index: 1;`;
+export const Thead = styled.thead`background: ${colors.navbar}; position: sticky; top: 0; z-index: 1;`;
 export const Th = styled.th.withConfig({ shouldForwardProp: (p) => p !== 'w' })<{ w?: number }>`
   padding: ${spacing[2]} ${spacing[3]};
   font-size: ${font.size.xs}; font-weight: ${font.weight.semibold};
   color: ${colors.textMuted}; text-align: right;
   border-bottom: 1px solid ${colors.border}; white-space: nowrap;
   ${({ w }) => w ? `width: ${w}px; min-width: ${w}px;` : ''}
-  &:first-child { text-align: left; position: sticky; left: 0; background: ${colors.bg}; z-index: 2; }
+  &:first-child { text-align: left; position: sticky; left: 0; background: ${colors.navbar}; z-index: 2; }
 `;
 export const Tr = styled.tr.withConfig({
   shouldForwardProp: (p) => !['highlight', 'isTotal', 'paidOff'].includes(p),

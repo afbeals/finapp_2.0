@@ -31,7 +31,7 @@ export const SchoolLoansTable = React.memo(function SchoolLoansTable({
 
   const totals = useMemo(() => {
     const active = loans.filter((l) => !l.paidOff);
-    if (active.length === 0) return null;
+    if (loans.length === 0) return null;
     const totBal = active.reduce((s, l) => s + (snapshots[l.id]?.balance ?? 0), 0);
     const totMin = active.reduce((s, l) => s + monthlyPayment(l.principal, l.rate, l.termMonths), 0);
     const totExtra = active.reduce((s, l) => s + (snapshots[l.id]?.extraPayment ?? 0), 0);
@@ -40,16 +40,34 @@ export const SchoolLoansTable = React.memo(function SchoolLoansTable({
       const rem = Math.max(0, l.termMonths - (snap?.paymentsMade ?? 0));
       return s + totalInterest(snap?.balance ?? l.principal, l.rate, rem);
     }, 0);
-    const totSaved = active.reduce((s, l) => {
+    // Interest saved + time saved aggregated over ALL loans (including paid-off)
+    const totSaved = loans.reduce((s, l) => {
       const snap = snapshots[l.id];
       if (!snap || snap.extraPayment === 0) return s;
+      if (l.paidOff) {
+        // Use full loan lifecycle for paid-off loans
+        const base = totalInterest(l.principal, l.rate, l.termMonths);
+        const withX = totalInterest(l.principal, l.rate, l.termMonths, snap.extraPayment);
+        return s + Math.max(0, base - withX);
+      }
       const rem = Math.max(0, l.termMonths - snap.paymentsMade);
       const base = totalInterest(snap.balance, l.rate, rem);
       const withX = totalInterest(snap.balance, l.rate, rem, snap.extraPayment);
       return s + Math.max(0, base - withX);
     }, 0);
-    const avgRate = active.reduce((s, l) => s + l.rate, 0) / active.length;
-    return { totBal, totMin, totExtra, totIntAll, totSaved, avgRate };
+    const totMonthsSaved = loans.reduce((s, l) => {
+      const snap = snapshots[l.id];
+      if (!snap || snap.extraPayment === 0) return s;
+      if (l.paidOff) {
+        const schedWithX = amortizationSchedule(l.principal, l.rate, l.termMonths, snap.extraPayment);
+        return s + Math.max(0, l.termMonths - schedWithX.length);
+      }
+      const rem = Math.max(0, l.termMonths - snap.paymentsMade);
+      const schedWithX = amortizationSchedule(snap.balance, l.rate, rem, snap.extraPayment);
+      return s + Math.max(0, rem - schedWithX.length);
+    }, 0);
+    const avgRate = active.length > 0 ? active.reduce((s, l) => s + l.rate, 0) / active.length : 0;
+    return { totBal, totMin, totExtra, totIntAll, totSaved, totMonthsSaved, avgRate };
   }, [loans, snapshots]);
 
   return (
@@ -179,7 +197,8 @@ export const SchoolLoansTable = React.memo(function SchoolLoansTable({
               <Td style={{ color: semanticColors.warningText, fontWeight: font.weight.semibold }}>{totals.totExtra > 0 ? formatDollars(totals.totExtra) : '—'}</Td>
               <Td purple bold>{formatDollars(totals.totIntAll)}</Td>
               <Td success bold>{totals.totSaved > 0 ? formatDollars(totals.totSaved) : '—'}</Td>
-              <Td /><Td /><Td />
+              <Td success bold>{totals.totMonthsSaved > 0 ? `${totals.totMonthsSaved} mo` : '—'}</Td>
+              <Td /><Td />
             </Tr>
           )}
 

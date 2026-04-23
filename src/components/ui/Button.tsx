@@ -77,7 +77,7 @@ const variantStyles = {
 };
 
 export const Button = styled.button.withConfig({
-  shouldForwardProp: (prop) => !['fullWidth', 'loading'].includes(prop),
+  shouldForwardProp: (prop) => !['variant', 'size', 'fullWidth', 'loading'].includes(prop),
 })<ButtonProps>`
   display: inline-flex;
   align-items: center;

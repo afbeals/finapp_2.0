@@ -20,7 +20,9 @@ const variantStyles: Record<BadgeVariant, ReturnType<typeof css>> = {
   quarterly: css`background: ${colors.warningLight}; color: ${semanticColors.warningText};`,
 };
 
-export const Badge = styled.span<BadgeProps>`
+export const Badge = styled.span.withConfig({
+  shouldForwardProp: (prop) => prop !== 'variant',
+})<BadgeProps>`
   display: inline-flex;
   align-items: center;
   gap: ${spacing[1]};

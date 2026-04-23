@@ -70,10 +70,10 @@ export const RawNameCell = styled.span`
 `;
 
 export const CellInput = styled.input`
-  height: 26px; padding: 0 6px; border: 1px solid ${colors.primary};
+  height: 26px; padding: 0 6px; border: 1px solid ${colors.border};
   border-radius: ${radius.sm}; font-size: ${font.size.sm};
   color: ${colors.textPrimary}; background: ${colors.surface}; width: 120px;
-  &:focus { outline: none; }
+  &:focus { outline: none; border-color: ${colors.primary}; }
 `;
 export const DeleteBtn = styled.button`
   display: flex; align-items: center; justify-content: center;

@@ -11,10 +11,11 @@ import { theme } from '@/styles/tokens';
 
 const { colors, semanticColors, font, spacing } = theme;
 import { LoadingState } from '@/components/shared/LoadingState';
+import { TrashBtn } from '@/components/shared/TrashBtn';
 import {
   SectionTitle, SummaryBar, SummaryTotal, SummaryTotalLabel, SummaryTotalValue, SummaryDivider,
   CatChip, CatChipLabel, CatChipVal, AddRowBtn, TableWrap, FTable, FThead, FTh,
-  RawNameCell, CellInput, DeleteBtn, TreasuryWrap, TrAmountBox, TrAmountLabel,
+  RawNameCell, CellInput, TreasuryWrap, TrAmountBox, TrAmountLabel,
   TrAmountInput, TrAllocationBadge, TTr, TTd, PctInput,
 } from './VaultsPage.styles';
 import { getReviewVaults, getMembers, deleteVault, createVault, putReviewVaults } from '@/lib/api';
@@ -183,7 +184,7 @@ export default function VaultsPage() {
       {/* ── Fixed Allocations ── */}
       <SectionTitle>Fixed Allocations</SectionTitle>
       <p style={{ fontSize: font.size.sm, color: colors.textMuted, marginTop: `-${spacing[3]}`, marginBottom: spacing[4] }}>
-        Monthly amounts calculated from goals and timeframes. Raw name = <code style={{ fontSize: 11 }}>[GroupOrder]-[Category]-[Order]-[Who]-[Freq(months)]-[Description]-[Goal]</code>
+        Monthly amounts calculated from goals and timeframes. Raw name = <code style={{ fontSize: 11 }}>[Order]-[Group]-[GroupOrder]-[Who]-[Freq(months)]-[Description]-[Goal]</code>
       </p>
 
       {allCategories.map((cat) => {
@@ -204,10 +205,7 @@ export default function VaultsPage() {
       })}
 
       {!readOnly && (
-        <AddRowBtn
-          style={{ marginBottom: spacing[4], border: `1px dashed ${colors.primary}`, color: colors.primary }}
-          onClick={() => handleAddVault('FIXED', CAT_ORDER[0])}
-        >
+        <AddRowBtn onClick={() => handleAddVault('FIXED', CAT_ORDER[0])}>
           + Add fixed vault
         </AddRowBtn>
       )}
@@ -314,7 +312,7 @@ export default function VaultsPage() {
 
                     {!readOnly && (
                       <TTd center>
-                        <DeleteBtn onClick={() => handleDeleteVault(v.id)} title="Delete vault">×</DeleteBtn>
+                        <TrashBtn onClick={() => handleDeleteVault(v.id)} title="Delete vault">🗑</TrashBtn>
                       </TTd>
                     )}
                   </TTr>

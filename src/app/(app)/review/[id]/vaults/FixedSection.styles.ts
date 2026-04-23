@@ -76,10 +76,10 @@ export const RawNameCell = styled.span`
 `;
 
 export const CellSelect = styled.select`
-  height: 26px; padding: 0 4px; border: 1px solid ${colors.primary};
+  height: 26px; padding: 0 4px; border: 1px solid ${colors.border};
   border-radius: ${radius.sm}; font-size: ${font.size.sm};
   color: ${colors.textPrimary}; background: ${colors.surface}; cursor: pointer;
-  &:focus { outline: none; }
+  &:focus { outline: none; border-color: ${colors.primary}; }
 `;
 
 export const NumInput = styled.input`

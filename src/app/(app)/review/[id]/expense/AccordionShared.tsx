@@ -7,6 +7,7 @@ import { theme } from '@/styles/tokens';
 const { colors, font, radius, shadow, spacing, transition } = theme;
 import { apiGet } from '@/lib/api';
 import { InlineEdit } from '@/components/shared/InlineEdit';
+import { TrashBtn } from '@/components/shared/TrashBtn';
 import { formatDollars, toCents, toNumber } from '@/lib/money';
 import { DTable, DThead, DTh, DTr, DTd } from '@/components/shared/DataTable/parts';
 
@@ -193,16 +194,7 @@ export const AddEntryTrigger = styled.button`
 
 // ─── Delete button ────────────────────────────────────────────────────────────
 
-export const TrashBtn = styled.button`
-  background: none;
-  border: none;
-  cursor: pointer;
-  font-size: ${font.size.md};
-  color: ${colors.textMuted};
-  padding: 2px 4px;
-  border-radius: ${radius.sm};
-  &:hover { color: ${colors.danger}; background: ${colors.dangerLight}; }
-`;
+export { TrashBtn };
 
 // ─── Shared autocomplete input ────────────────────────────────────────────────
 

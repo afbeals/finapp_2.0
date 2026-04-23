@@ -6,10 +6,11 @@ import { theme } from '@/styles/tokens';
 
 const { colors, semanticColors, font } = theme;
 import type { Vault, Member } from '@/types/entities';
+import { TrashBtn } from '@/components/shared/TrashBtn';
 import {
   SectionWrap, SectionHeaderRow, Chevron, SectionLabel, SubtotalBadge,
   AddRowBtn, TableWrap, FTable, FThead, FTh, FTr, FTd,
-  RawNameCell, CellSelect, NumInput, OrderInput, DueInput, DeleteBtn, OwnerBadge,
+  RawNameCell, CellSelect, NumInput, OrderInput, DueInput, OwnerBadge,
 } from './FixedSection.styles';
 import { EditCell } from './EditCell';
 import {
@@ -164,7 +165,7 @@ export function FixedSection({ category, groupOrder, vaults, members, readOnly, 
 
                       {!readOnly && (
                         <FTd center>
-                          <DeleteBtn onClick={() => onDelete(v.id)} title="Delete vault">×</DeleteBtn>
+                          <TrashBtn onClick={() => onDelete(v.id)} title="Delete vault">🗑</TrashBtn>
                         </FTd>
                       )}
                     </FTr>

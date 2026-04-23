@@ -111,32 +111,6 @@ export function InvestmentSection({
 
       {open && (
         <ExpandedWrap>
-          {(onEditAccount || onDeleteAccount) && accounts.length > 0 && (
-            <div style={{ marginBottom: 12, display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-              {accounts.map((a) => {
-                const b = acctColorMap[a.id];
-                return (
-                  <div key={a.id} style={{ display: 'flex', alignItems: 'center', gap: 4, background: b.bg, borderRadius: 6, padding: '4px 10px' }}>
-                    <span style={{ fontSize: 12, fontWeight: 600, color: b.fg }}>{a.name}</span>
-                    {onEditAccount && (
-                      <button
-                        onClick={() => onEditAccount(a.id)}
-                        style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '0 2px', fontSize: 11, color: b.fg, opacity: 0.8 }}
-                        title="Edit account"
-                      >✏️</button>
-                    )}
-                    {onDeleteAccount && (
-                      <button
-                        onClick={() => onDeleteAccount(a.id)}
-                        style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '0 2px', fontSize: 11, color: b.fg, opacity: 0.8 }}
-                        title="Delete account"
-                      >🗑️</button>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          )}
           <SubHeader>
             <FilterInput
               placeholder="Filter by name or ticker..."
@@ -233,16 +207,41 @@ export function InvestmentSection({
             </HTable>
           </TableScroll>
 
-          {isRetirement && accounts.length > 0 && (
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 12 }}>
-              {accounts.map((a, i) => {
-                const b = acctBadge(i);
-                return (
-                  <AccountChip key={a.id} bg={b.bg} fg={b.fg}>
-                    {a.name} · {AccountTypeLabel[a.type] ?? a.type}
-                  </AccountChip>
-                );
-              })}
+          {accounts.length > 0 && (
+            <div style={{ display: 'flex', flexWrap: 'nowrap', gap: 6, marginTop: 12, overflowX: 'auto', scrollbarWidth: 'thin', paddingBottom: 4 }}>
+              {isRetirement
+                ? accounts.map((a, i) => {
+                    const b = acctBadge(i);
+                    return (
+                      <AccountChip key={a.id} bg={b.bg} fg={b.fg} style={{ flexShrink: 0 }}>
+                        {a.name} · {AccountTypeLabel[a.type] ?? a.type}
+                      </AccountChip>
+                    );
+                  })
+                : accounts.map((a) => {
+                    const b = acctColorMap[a.id];
+                    return (
+                      <div key={a.id} style={{ display: 'flex', flexShrink: 0, alignItems: 'center', gap: 4, background: b.bg, borderRadius: 6, padding: '4px 10px' }}>
+                        <span style={{ fontSize: 12, fontWeight: 600, color: b.fg }}>{a.name}</span>
+                        {onEditAccount && (
+                          <button
+                            type="button"
+                            onClick={(e) => { e.stopPropagation(); onEditAccount(a.id); }}
+                            style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '0 2px', fontSize: 11, color: b.fg, opacity: 0.8 }}
+                            title="Edit account"
+                          >✏️</button>
+                        )}
+                        {onDeleteAccount && (
+                          <button
+                            type="button"
+                            onClick={(e) => { e.stopPropagation(); onDeleteAccount(a.id); }}
+                            style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '0 2px', fontSize: 11, color: b.fg, opacity: 0.8 }}
+                            title="Delete account"
+                          >🗑️</button>
+                        )}
+                      </div>
+                    );
+                  })}
             </div>
           )}
         </ExpandedWrap>

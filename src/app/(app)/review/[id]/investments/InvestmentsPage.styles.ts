@@ -56,6 +56,8 @@ export const MarketItemGroup = styled.div`
   display: flex;
   align-items: center;
   gap: ${spacing[6]};
+  flex: 1;
+  justify-content: space-around;
   flex-wrap: wrap;
 `;
 

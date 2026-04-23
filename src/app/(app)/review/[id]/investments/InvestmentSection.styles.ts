@@ -21,7 +21,7 @@ export const SectionHeaderRow = styled.div.withConfig({ shouldForwardProp: (p) =
   user-select: none;
   background: ${({ green }) => green ? semanticColors.successBg : colors.surface};
   border-bottom: 1px solid ${({ green }) => green ? colors.successLight : colors.border};
-  &:hover { background: ${({ green }) => green ? colors.successLight : colors.bg}; }
+  &:hover { background: ${({ green }) => green ? colors.successLight : colors.primaryLight}; }
 `;
 
 export const Chevron = styled.span.withConfig({ shouldForwardProp: (p) => p !== 'open' && p !== 'green' })<{ open: boolean; green?: boolean }>`
@@ -177,6 +177,17 @@ export const PriceSpinner = styled.span`
   font-size: 10px;
   color: ${colors.textMuted};
   font-style: italic;
+`;
+
+export const TagScroller = styled.td`
+  padding: 4px 10px 8px;
+  border-bottom: 1px solid ${colors.border};
+  overflow-x: auto;
+  scrollbar-width: thin;
+  scrollbar-color: ${colors.border} transparent;
+  white-space: nowrap;
+  &::-webkit-scrollbar { height: 4px; }
+  &::-webkit-scrollbar-thumb { background: ${colors.border}; border-radius: 2px; }
 `;
 
 export const AddPurchaseBtn = styled.button`

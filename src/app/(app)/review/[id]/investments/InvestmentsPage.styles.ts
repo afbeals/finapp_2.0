@@ -46,9 +46,16 @@ export const MarketStrip = styled.div`
   padding: 12px 20px;
   display: flex;
   align-items: center;
-  justify-content: space-evenly;
+  justify-content: space-between;
   gap: 16px;
   margin-bottom: ${spacing[5]};
+  flex-wrap: wrap;
+`;
+
+export const MarketItemGroup = styled.div`
+  display: flex;
+  align-items: center;
+  gap: ${spacing[6]};
   flex-wrap: wrap;
 `;
 

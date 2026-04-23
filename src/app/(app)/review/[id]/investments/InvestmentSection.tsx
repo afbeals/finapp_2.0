@@ -6,7 +6,7 @@ import { theme } from '@/styles/tokens';
 import {
   SectionWrap, SectionHeaderRow, Chevron, SectionName, HeaderStats, HStat, HStatLabel, HStatVal,
   ExpandLink, PositionBadge, ExpandedWrap, SubHeader, FilterInput, FilterSelect, CollapseBtn,
-  TableScroll, HTable, HThead, HTh, HTr, HTd, CategoryBadge, AccountChip, PriceSpinner, AddPurchaseBtn,
+  TableScroll, HTable, HThead, HTh, HTr, HTd, CategoryBadge, AccountChip, PriceSpinner, AddPurchaseBtn, TagScroller,
 } from './InvestmentSection.styles';
 import type { InvestmentAccount } from '@/types/entities';
 import {
@@ -160,8 +160,8 @@ export function InvestmentSection({
                 <tr>
                   <HTh>Ticker</HTh>
                   <HTh>{isRetirement ? 'Fund Name' : 'Company'}</HTh>
+                  <HTh>Account(s)</HTh>
                   <HTh>Category</HTh>
-                  {isRetirement && <HTh>Account(s)</HTh>}
                   <HTh right># Lots</HTh>
                   <HTh right>Shares</HTh>
                   <HTh right>Avg Cost/Share</HTh>
@@ -176,9 +176,18 @@ export function InvestmentSection({
               <tbody>
                 {filtered.map((pos) => {
                   return (
-                    <HTr key={pos.ticker}>
+                    <React.Fragment key={pos.ticker}>
+                    <HTr>
                       <HTd bold>{pos.ticker}</HTd>
                       <HTd style={{ color: colors.textMuted, maxWidth: 180, overflow: 'hidden', textOverflow: 'ellipsis' }}>{pos.name}</HTd>
+                      <HTd>
+                        {pos.accountIds.length > 0 ? pos.accountIds.map((aid) => {
+                          const acct = accounts.find((a) => a.id === aid);
+                          if (!acct) return null;
+                          const badge = acctColorMap[aid];
+                          return <AccountChip key={aid} bg={badge.bg} fg={badge.fg}>{acct.name}</AccountChip>;
+                        }) : <span style={{ color: colors.textMuted }}>—</span>}
+                      </HTd>
                       <HTd>
                         {pos.category ? (
                           <CategoryBadge bg={categoryColorFromMap(categoryColorMap, pos.category).bg} fg={categoryColorFromMap(categoryColorMap, pos.category).fg}>{pos.category}</CategoryBadge>
@@ -186,20 +195,6 @@ export function InvestmentSection({
                           <span style={{ color: colors.textMuted }}>—</span>
                         )}
                       </HTd>
-                      {isRetirement && (
-                        <HTd>
-                          {pos.accountIds.map((aid) => {
-                            const acct = accounts.find((a) => a.id === aid);
-                            if (!acct) return null;
-                            const badge = acctColorMap[aid];
-                            return (
-                              <AccountChip key={aid} bg={badge.bg} fg={badge.fg}>
-                                {acct.name}
-                              </AccountChip>
-                            );
-                          })}
-                        </HTd>
-                      )}
                       <HTd right style={{ color: colors.textMuted }}>{pos.lots.length}</HTd>
                       <HTd right>{pos.totalShares.toFixed(3)}</HTd>
                       <HTd right style={{ color: colors.textMuted }}>${toDollars(pos.avgCostPerShare).toFixed(2)}</HTd>
@@ -224,6 +219,7 @@ export function InvestmentSection({
                         {pos.currentPrice > 0 ? portPct(pos.currentValue, sectionValue) : '—'}
                       </HTd>
                     </HTr>
+                    </React.Fragment>
                   );
                 })}
                 {filtered.length === 0 && (

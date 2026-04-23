@@ -13,7 +13,7 @@ const { colors, semanticColors, font, spacing } = theme;
 
 import {
   SplitBarWrap, SplitBar, SplitSegment, SplitLegend, LegendDot,
-  MarketStrip, MarketTag, MarketItem, MarketName, MarketVal,
+  MarketStrip, MarketItemGroup, MarketTag, MarketItem, MarketName, MarketVal,
 } from './InvestmentsPage.styles';
 import { LoadingState } from '@/components/shared/LoadingState';
 import { KpiGrid, KpiCard } from '@/components/shared/KpiGrid';
@@ -407,35 +407,30 @@ export default function InvestmentsPage() {
 
       {/* ── Market Reference ── */}
       <MarketStrip>
-        <MarketTag>Market</MarketTag>
-        <MarketItem>
-          <MarketName>S&amp;P 500 (SPY)</MarketName>
-          <MarketVal up={sp500 !== undefined ? true : undefined}>
-            {sp500 ? `$${toDollars(sp500).toFixed(2)}` : pricesLoading ? '…' : '—'}
-          </MarketVal>
-        </MarketItem>
-        <MarketItem>
-          <MarketName>NASDAQ (QQQ)</MarketName>
-          <MarketVal up={nasdaq !== undefined ? true : undefined}>
-            {nasdaq ? `$${toDollars(nasdaq).toFixed(2)}` : pricesLoading ? '…' : '—'}
-          </MarketVal>
-        </MarketItem>
-        <MarketItem>
-          <MarketName>DJIA (DIA)</MarketName>
-          <MarketVal up={djia !== undefined ? true : undefined}>
-            {djia ? `$${toDollars(djia).toFixed(2)}` : pricesLoading ? '…' : '—'}
-          </MarketVal>
-        </MarketItem>
-        {!pricesLoading && (
-          <span style={{ marginLeft: 'auto', fontSize: 10, color: semanticColors.neutralText }}>
-            Live prices via Yahoo Finance
-          </span>
-        )}
-        {pricesLoading && (
-          <span style={{ marginLeft: 'auto', fontSize: 10, color: colors.textDisabled, fontStyle: 'italic' }}>
-            Fetching live prices…
-          </span>
-        )}
+        <MarketItemGroup>
+          <MarketTag>Market</MarketTag>
+          <MarketItem>
+            <MarketName>S&amp;P 500 (SPY)</MarketName>
+            <MarketVal up={sp500 !== undefined ? true : undefined}>
+              {sp500 ? `$${toDollars(sp500).toFixed(2)}` : pricesLoading ? '…' : '—'}
+            </MarketVal>
+          </MarketItem>
+          <MarketItem>
+            <MarketName>NASDAQ (QQQ)</MarketName>
+            <MarketVal up={nasdaq !== undefined ? true : undefined}>
+              {nasdaq ? `$${toDollars(nasdaq).toFixed(2)}` : pricesLoading ? '…' : '—'}
+            </MarketVal>
+          </MarketItem>
+          <MarketItem>
+            <MarketName>DJIA (DIA)</MarketName>
+            <MarketVal up={djia !== undefined ? true : undefined}>
+              {djia ? `$${toDollars(djia).toFixed(2)}` : pricesLoading ? '…' : '—'}
+            </MarketVal>
+          </MarketItem>
+        </MarketItemGroup>
+        <span style={{ fontSize: 10, color: pricesLoading ? colors.textDisabled : semanticColors.neutralText, fontStyle: pricesLoading ? 'italic' : 'normal' }}>
+          {pricesLoading ? 'Fetching live prices…' : 'Live prices via Yahoo Finance'}
+        </span>
       </MarketStrip>
 
       {/* ── Investment Accounts (Taxable) ── */}
@@ -454,7 +449,7 @@ export default function InvestmentsPage() {
       )}
       {taxableAccounts.length > 0 && (
         <InvestmentSection
-          title=""
+          title={taxableAccounts.length === 1 ? taxableAccounts[0].name : 'Taxable Portfolio'}
           isRetirement={false}
           accounts={taxableAccounts}
           positions={taxablePositions}

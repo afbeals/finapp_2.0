@@ -114,6 +114,7 @@ async function main() {
   await prisma.purchase.deleteMany();
   await prisma.investmentAccount.deleteMany();
   await prisma.investmentCategory.deleteMany();
+  await prisma.vaultCategoryOrder.deleteMany();
   await prisma.vault.deleteMany();
   await prisma.loan.deleteMany();
   await prisma.savingsAccount.deleteMany();
@@ -300,6 +301,18 @@ async function main() {
     vaultRecords.push({ id: created.id, vault: v });
   }
   console.log(`  ✓ ${VAULTS.length} vaults`);
+
+  // ── Vault Category Order ───────────────────────────────────────────────────
+  const seenCategories = new Set<string>();
+  for (const v of VAULTS) {
+    if (!seenCategories.has(v.category)) {
+      seenCategories.add(v.category);
+      await prisma.vaultCategoryOrder.create({
+        data: { householdId: household.id, category: v.category, groupOrder: v.groupOrder },
+      });
+    }
+  }
+  console.log(`  ✓ ${seenCategories.size} vault category orders`);
 
   // ── Reviews ────────────────────────────────────────────────────────────────
   const reviewMonths = [

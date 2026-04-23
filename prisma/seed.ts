@@ -31,6 +31,7 @@ async function main() {
   await prisma.purchase.deleteMany();
   await prisma.investmentAccount.deleteMany();
   await prisma.investmentCategory.deleteMany();
+  await prisma.vaultCategoryOrder.deleteMany();
   await prisma.vault.deleteMany();
   await prisma.loan.deleteMany();
   await prisma.savingsAccount.deleteMany();
@@ -271,6 +272,21 @@ async function main() {
 
   const fixedVaults = [generalBills, carInsuranceABG, vpn, generalAnnual, carInsuranceMalia, personalABG, personalMalia, taxes, maintenance, schoolLoanFund, monthlyContribution];
   const variableVaults = [vTravel, vCamping, vCabin, vHouseDownPayment, vChild1Fund, vChild2Fund, vKickbackABG, vKickbackMalia, vHoldTemp];
+
+  // ─── Vault Category Order ─────────────────────────────────────────────────
+  const categoryOrderEntries = [
+    { category: 'Bills',       groupOrder: 1 },
+    { category: 'Personal',    groupOrder: 2 },
+    { category: 'Pre-Pay',     groupOrder: 3 },
+    { category: 'Replenish',   groupOrder: 4 },
+    { category: 'Investments', groupOrder: 5 },
+    { category: 'Treasury',    groupOrder: 6 },
+  ];
+  for (const entry of categoryOrderEntries) {
+    await prisma.vaultCategoryOrder.create({
+      data: { householdId: household.id, ...entry },
+    });
+  }
 
   // ─── Reviews ─────────────────────────────────────────────────────────────
 

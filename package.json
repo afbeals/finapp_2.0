@@ -3,6 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
+  "engines": {
+    "node": ">=22.12"
+  },
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -15,7 +18,7 @@
     "db:deploy": "prisma migrate deploy",
     "db:backup": "mkdir -p data/backups && cp data/prod.db data/backups/prod-$(date +%Y-%m-%d-%H%M).db",
     "test": "vitest",
-    "test:ci": "NODE_OPTIONS='--experimental-require-module' vitest run",
+    "test:ci": "vitest run",
     "test:ui": "vitest --ui",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",

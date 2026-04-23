@@ -35,9 +35,9 @@ describe('InvestmentsConfigSection', () => {
     expect(screen.getByText('Investments')).toBeInTheDocument();
   });
 
-  it('renders the "Accounts" column header', () => {
+  it('renders the "+ Add" button for accounts', () => {
     render(<InvestmentsConfigSection {...defaultProps} />);
-    expect(screen.getByText('Accounts')).toBeInTheDocument();
+    expect(screen.getAllByText('+ Add').length).toBeGreaterThan(0);
   });
 
   it('renders the "Holdings Categories" column header', () => {

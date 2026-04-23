@@ -37,7 +37,7 @@ export interface FixedSectionProps {
   onGroupOrderChange?: (category: string, groupOrder: number) => void;
 }
 
-export function FixedSection({ category, groupOrder, vaults, members, readOnly, onUpdate, onDelete, onAdd, onDeleteCategory, onGroupOrderChange }: FixedSectionProps) {
+export const FixedSection = React.memo(function FixedSection({ category, groupOrder, vaults, members, readOnly, onUpdate, onDelete, onAdd, onDeleteCategory, onGroupOrderChange }: FixedSectionProps) {
   const [open, setOpen] = useState(true);
   const pal = CAT_COLORS[category] ?? { bg: semanticColors.surfaceMuted, border: colors.border, header: colors.bg, text: semanticColors.neutralText, subtext: colors.textMuted };
   const subtotal = vaults.reduce((s, v) => s + monthlyAmount(v), 0);
@@ -206,4 +206,4 @@ export function FixedSection({ category, groupOrder, vaults, members, readOnly, 
       )}
     </SectionWrap>
   );
-}
+});

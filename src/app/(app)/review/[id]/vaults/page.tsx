@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState, useMemo, useCallback } from 'react';
 import { useParams } from 'next/navigation';
 import { StepShell } from '@/components/review/StepShell';
 import { STEP_META } from '@/components/review/stepMetadata';
@@ -70,7 +70,7 @@ export default function VaultsPage() {
     }).catch(() => setLoadError(true)).finally(() => setLoading(false));
   }, [reviewId]);
 
-  async function patchVault(id: number, patch: Partial<Vault>, save = false) {
+  const patchVault = useCallback(async (id: number, patch: Partial<Vault>, save = false) => {
     const prev = vaults.find((v) => v.id === id);
     setVaults((vs) => vs.map((v) => v.id === id ? { ...v, ...patch } : v));
     if (save) {
@@ -82,21 +82,21 @@ export default function VaultsPage() {
         if (prev) setVaults((vs) => vs.map((v) => v.id === id ? prev : v));
       }
     }
-  }
+  }, [vaults]);
 
-  async function handleDeleteVault(id: number) {
+  const handleDeleteVault = useCallback(async (id: number) => {
     setVaults((prev) => prev.filter((v) => v.id !== id));
     await deleteVault(id);
-  }
+  }, []);
 
-  async function handleDeleteCategory(category: string) {
+  const handleDeleteCategory = useCallback(async (category: string) => {
     const toDelete = vaults.filter((v) => v.type === 'FIXED' && v.category === category);
     setVaults((prev) => prev.filter((v) => !(v.type === 'FIXED' && v.category === category)));
     setDeleteCategoryName(null);
     await Promise.all(toDelete.map((v) => deleteVault(v.id)));
-  }
+  }, [vaults]);
 
-  async function handleAddVault(type: 'FIXED' | 'VARIABLE', category: string) {
+  const handleAddVault = useCallback(async (type: 'FIXED' | 'VARIABLE', category: string) => {
     const targetCategory = category || CAT_ORDER[0];
     const siblings = vaults.filter((v) => v.type === type && v.category === targetCategory);
     const maxOrder = siblings.reduce((m, v) => Math.max(m, v.sortOrder), 0);
@@ -113,7 +113,7 @@ export default function VaultsPage() {
     } catch {
       // createVault failed — nothing to show yet, user will see no change
     }
-  }
+  }, [vaults]);
 
   const fixedVaults = useMemo(() => vaults.filter((v) => v.type === 'FIXED'), [vaults]);
   const variableVaults = useMemo(
@@ -156,11 +156,11 @@ export default function VaultsPage() {
     [variableVaults, treasuryAmounts]
   );
 
-  function updateTreasuryPct(vaultId: number, pct: number) {
+  const updateTreasuryPct = useCallback((vaultId: number, pct: number) => {
     setTreasuryPcts((prev) => ({ ...prev, [vaultId]: Math.max(0, Math.min(100, pct)) }));
-  }
+  }, []);
 
-  async function handleGroupOrderChange(category: string, newOrder: number) {
+  const handleGroupOrderChange = useCallback(async (category: string, newOrder: number) => {
     setGroupOrderOverrides((prev) => ({ ...prev, [category]: newOrder }));
     try {
       await patchVaultCategoryOrder(category, newOrder);
@@ -171,16 +171,16 @@ export default function VaultsPage() {
         return next;
       });
     }
-  }
+  }, []);
 
-  function handleClearTreasury() {
+  const handleClearTreasury = useCallback(() => {
     setTreasuryAmount(0);
     setTreasuryPcts((prev) => {
       const cleared: Record<number, number> = {};
       for (const k of Object.keys(prev)) cleared[Number(k)] = 0;
       return cleared;
     });
-  }
+  }, []);
 
   async function handleSave() {
     const snapshots: VaultSnapshot[] = [

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { theme } from '@/styles/tokens';
 import {
@@ -42,21 +42,16 @@ export function StepIndicator() {
   const [showSkip, setShowSkip] = useState(false);
   const { goSkip } = useStepNav(activeReview?.currentStep ?? 'expense');
 
-  if (!activeReview) return null;
-
-  const steps = activeReview.type === 'QUARTERLY' ? QUARTERLY_STEPS : MONTHLY_STEPS;
-  const stepObjects = steps.map((key) => {
+  const steps = activeReview ? (activeReview.type === 'QUARTERLY' ? QUARTERLY_STEPS : MONTHLY_STEPS) : MONTHLY_STEPS;
+  const stepObjects = activeReview ? steps.map((key) => {
     const found = activeReview.steps.find((s) => s.stepKey === key);
     return { key, status: found?.status ?? 'PENDING' };
-  });
+  }) : [];
+  const currentIndex = activeReview ? steps.indexOf(activeReview.currentStep) : -1;
 
-  const currentIndex = steps.indexOf(activeReview.currentStep);
-  const { stepNum, total: stepTotal, pct } = reviewProgress(activeReview.steps, activeReview.currentStep, steps);
-  const periodLabel = `${MONTH_NAMES_SHORT[activeReview.periodMonth - 1]} ${activeReview.periodYear} ${activeReview.type === 'QUARTERLY' ? 'Quarterly' : 'Monthly'} Review Progress`;
-
-  async function handleClick(key: string, idx: number) {
+  const handleClick = useCallback(async (key: string, idx: number) => {
     const step = stepObjects[idx];
-    if (step.status === 'PENDING' && idx > currentIndex && !isEditMode) return;
+    if (!step || (step.status === 'PENDING' && idx > currentIndex && !isEditMode)) return;
     actions.setCurrentStep(key);
     await fetch(`/api/reviews/${reviewId}`, {
       method: 'PATCH',
@@ -64,7 +59,12 @@ export function StepIndicator() {
       body: JSON.stringify({ currentStep: key }),
     }).catch(() => null);
     router.push(`/review/${reviewId}/${key}`);
-  }
+  }, [stepObjects, currentIndex, isEditMode, actions, reviewId, router]);
+
+  if (!activeReview) return null;
+
+  const { stepNum, total: stepTotal, pct } = reviewProgress(activeReview.steps, activeReview.currentStep, steps);
+  const periodLabel = `${MONTH_NAMES_SHORT[activeReview.periodMonth - 1]} ${activeReview.periodYear} ${activeReview.type === 'QUARTERLY' ? 'Quarterly' : 'Monthly'} Review Progress`;
 
   return (
     <Wrapper>

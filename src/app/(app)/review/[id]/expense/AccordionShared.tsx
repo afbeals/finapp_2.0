@@ -81,12 +81,13 @@ export { DTable as EntryTable, DThead as EntryThead, DTh as EntryTh, DTr as Entr
 // ─── Editable cell — delegates to shared InlineEdit ───────────────────────────
 
 export function EditableCell({
-  value, onSave, isAmount, readOnly,
+  value, onSave, isAmount, readOnly, allowDelta,
 }: {
   value: string;
   onSave: (v: string) => void;
   isAmount?: boolean;
   readOnly: boolean;
+  allowDelta?: boolean;
 }) {
   if (isAmount) {
     return (
@@ -98,6 +99,7 @@ export function EditableCell({
         formatter={(v) => formatDollars(toCents(toNumber(v)))}
         parser={(v) => String(toNumber(v))}
         onSave={onSave}
+        allowDelta={allowDelta}
       />
     );
   }

@@ -103,3 +103,12 @@ export const ActionsRow = styled.div`
   align-items: center;
   gap: ${spacing[2]};
 `;
+
+export const PaidOffBtn = styled.button.withConfig({ shouldForwardProp: (p) => p !== 'active' })<{ active: boolean }>`
+  font-size: 11px; font-weight: ${font.weight.semibold};
+  padding: 4px 10px; border-radius: ${radius.full}; cursor: pointer;
+  border: 1px solid ${({ active }) => active ? colors.successLight : colors.border};
+  background: ${({ active }) => active ? colors.successLight : colors.surface};
+  color: ${({ active }) => active ? semanticColors.successTextDeep : colors.textMuted};
+  &:hover { opacity: 0.8; }
+`;

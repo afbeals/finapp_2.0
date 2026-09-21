@@ -16,6 +16,7 @@ Welcome! This directory contains everything you need to understand and contribut
 | [styling.md](./styling.md) | Styled-components, theme tokens, co-located styles pattern |
 | [testing.md](./testing.md) | Running tests, test environments, writing new tests |
 | [development.md](./development.md) | Local dev setup, environment variables, scripts, common tasks |
+| [deploy-unraid.md](./deploy-unraid.md) | Running the app in Docker on an Unraid server, with a persistent DB and a URL |
 
 ## New computer? Start here
 

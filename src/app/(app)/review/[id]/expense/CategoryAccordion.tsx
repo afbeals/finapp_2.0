@@ -82,7 +82,7 @@ export const CategoryAccordion = React.memo(function CategoryAccordion({
               {entries.map((e) => (
                 <EntryTr key={e.id}>
                   <EntryTd><EditableCell value={e.name} readOnly={readOnly} onSave={(v) => onUpdate(e.id, 'name', v)} /></EntryTd>
-                  <EntryTd><EditableCell value={toDollars(e.amount).toFixed(2)} isAmount readOnly={readOnly} onSave={(v) => onUpdate(e.id, 'amount', v)} /></EntryTd>
+                  <EntryTd><EditableCell value={toDollars(e.amount).toFixed(2)} isAmount allowDelta readOnly={readOnly} onSave={(v) => onUpdate(e.id, 'amount', v)} /></EntryTd>
                   <EntryTd>
                     {e.member
                       ? <MemberBadge memberColor={e.member.color}>{e.member.name}</MemberBadge>

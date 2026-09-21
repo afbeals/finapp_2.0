@@ -27,9 +27,11 @@ interface Props {
   members: Member[];
   initialValues?: Partial<InvestmentAccount>;
   mode: 'add' | 'edit';
+  /** Type to preselect when opening in 'add' mode (e.g. from a section-specific "+ Add" button) */
+  defaultType?: string;
 }
 
-export function EditRetirementAccountModal({ isOpen, onClose, onSubmit, members, initialValues, mode }: Props) {
+export function EditRetirementAccountModal({ isOpen, onClose, onSubmit, members, initialValues, mode, defaultType }: Props) {
   const [name, setName] = useState('');
   const [type, setType] = useState<string>('TRADITIONAL_401K');
   const [institution, setInstitution] = useState('');
@@ -42,11 +44,11 @@ export function EditRetirementAccountModal({ isOpen, onClose, onSubmit, members,
     setType(
       initialValues?.type && initialValues.type !== 'TAXABLE'
         ? initialValues.type
-        : 'TRADITIONAL_401K',
+        : defaultType ?? 'TRADITIONAL_401K',
     );
     setInstitution(initialValues?.institution ?? '');
     setOwnerMemberId(initialValues?.ownerMemberId ?? null);
-  }, [isOpen, initialValues]);
+  }, [isOpen, initialValues, defaultType]);
 
   async function handleSubmit() {
     if (!name.trim()) return;

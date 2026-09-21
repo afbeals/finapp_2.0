@@ -7,7 +7,7 @@ type Params = { params: Promise<{ id: string }> };
 
 const patchSchema = z.object({
   name: z.string().min(1).max(128).optional(),
-  type: z.enum(['TAXABLE', 'TRADITIONAL_401K', 'ROTH_401K', 'TRADITIONAL_IRA', 'ROTH_IRA', 'HSA', 'OTHER']).optional(),
+  type: z.enum(['TAXABLE', 'TRADITIONAL_401K', 'ROTH_401K', 'TRADITIONAL_IRA', 'ROTH_IRA', 'HSA', 'ROBO_ADVISOR', 'OTHER']).optional(),
   institution: z.string().max(128).optional(),
   ownerMemberId: z.number().int().positive().nullable().optional(),
 });

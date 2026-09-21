@@ -3,6 +3,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { toCents, toDollars } from '@/lib/money';
 import { theme } from '@/styles/tokens';
+import { Button } from '@/components/ui/Button';
 
 const { spacing } = theme;
 import type { Loan } from '@/types/entities';
@@ -16,6 +17,7 @@ interface MortgageSettingsPanelProps {
   loan: Loan;
   readOnly: boolean;
   onSaveLoanField: (loanId: number, fields: Partial<Loan>) => Promise<void>;
+  onDelete?: (loanId: number) => void;
 }
 
 type DraftState = {
@@ -52,7 +54,7 @@ function loanToDraft(loan: Loan): DraftState {
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
-export function MortgageSettingsPanel({ loan, readOnly, onSaveLoanField }: MortgageSettingsPanelProps) {
+export function MortgageSettingsPanel({ loan, readOnly, onSaveLoanField, onDelete }: MortgageSettingsPanelProps) {
   const [draft, setDraft] = useState<DraftState>(() => loanToDraft(loan));
   const [saving, setSaving] = useState(false);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -182,6 +184,15 @@ export function MortgageSettingsPanel({ loan, readOnly, onSaveLoanField }: Mortg
       <HelperText>
         PMI drop progress will appear in the summary above when Home Value is set.
       </HelperText>
+
+      {!readOnly && onDelete && (
+        <>
+          <Divider />
+          <Button variant="danger" size="sm" onClick={() => onDelete(loan.id)}>
+            🗑️ Delete This Loan
+          </Button>
+        </>
+      )}
     </Panel>
   );
 }

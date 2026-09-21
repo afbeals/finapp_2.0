@@ -29,7 +29,7 @@ const STEP_LINE2: Record<string, string> = {
   vaults: '', finalize: '',
 };
 
-const QUARTERLY_KEYS = new Set(['loans', 'portfolio']);
+const QUARTERLY_KEYS = new Set(['portfolio']);
 const MONTHLY_STEPS: string[] = [...MONTHLY_STEP_ORDER];
 const QUARTERLY_STEPS: string[] = [...QUARTERLY_STEP_ORDER];
 

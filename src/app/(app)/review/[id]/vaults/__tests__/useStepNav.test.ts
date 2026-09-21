@@ -39,7 +39,7 @@ beforeEach(() => {
 });
 
 describe('useStepNav', () => {
-  describe('goNext (MONTHLY order: expense→monthly→savings→investments→vaults→finalize)', () => {
+  describe('goNext (MONTHLY order: expense→monthly→savings→loans→investments→vaults→finalize)', () => {
     it('marks current step COMPLETE and navigates to next step', async () => {
       const { result } = renderHook(() => useStepNav('expense'));
       await act(() => result.current.goNext());
@@ -65,7 +65,7 @@ describe('useStepNav', () => {
     it('calls setCurrentStep with the next step key', async () => {
       const { result } = renderHook(() => useStepNav('savings'));
       await act(() => result.current.goNext());
-      expect(mockSetCurrentStep).toHaveBeenCalledWith('investments');
+      expect(mockSetCurrentStep).toHaveBeenCalledWith('loans');
     });
   });
 

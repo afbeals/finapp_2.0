@@ -17,7 +17,7 @@ export async function GET() {
 
 const createSchema = z.object({
   name: z.string().min(1).max(128),
-  type: z.enum(['TAXABLE', 'TRADITIONAL_401K', 'ROTH_401K', 'TRADITIONAL_IRA', 'ROTH_IRA', 'HSA', 'OTHER']),
+  type: z.enum(['TAXABLE', 'TRADITIONAL_401K', 'ROTH_401K', 'TRADITIONAL_IRA', 'ROTH_IRA', 'HSA', 'ROBO_ADVISOR', 'OTHER']),
   institution: z.string().max(128).default(''),
   ownerMemberId: z.number().int().positive().nullable().default(null),
 });

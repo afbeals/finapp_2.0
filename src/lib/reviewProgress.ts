@@ -1,6 +1,6 @@
 import type { ReviewStep } from '@/lib/store';
 
-export const MONTHLY_STEP_ORDER = ['expense', 'monthly', 'savings', 'investments', 'vaults', 'finalize'] as const;
+export const MONTHLY_STEP_ORDER = ['expense', 'monthly', 'savings', 'loans', 'investments', 'vaults', 'finalize'] as const;
 export const QUARTERLY_STEP_ORDER = ['expense', 'monthly', 'savings', 'loans', 'investments', 'portfolio', 'vaults', 'finalize'] as const;
 
 export interface ReviewProgress {

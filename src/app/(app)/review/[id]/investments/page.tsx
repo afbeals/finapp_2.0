@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import { useParams } from 'next/navigation';
 import { StepShell } from '@/components/review/StepShell';
 import { STEP_META } from '@/components/review/stepMetadata';
@@ -28,7 +29,7 @@ import { InvestmentSection } from './InvestmentSection';
 import { AddPurchaseModal } from './AddPurchaseModal';
 import { RetirementAccountCard } from './RetirementAccountCard';
 import { EditRetirementAccountModal } from './EditRetirementAccountModal';
-import { fmtGain, fmtPct } from './investmentHelpers';
+import { fmtGain, fmtPct, ROBO_TYPES } from './investmentHelpers';
 
 export default function InvestmentsPage() {
   const params = useParams();
@@ -38,6 +39,7 @@ export default function InvestmentsPage() {
   const readOnly = reviewState.activeReview?.status === 'COMPLETE' && !reviewState.isEditMode;
 
   const d = useInvestmentsData(reviewId);
+  const [addAccountDefaultType, setAddAccountDefaultType] = useState<string | undefined>(undefined);
 
   async function handleSave() {
     await d.buildSavePayload();
@@ -151,7 +153,7 @@ export default function InvestmentsPage() {
 
       {/* ── Retirement Accounts ── */}
       <SectionHeader title="Retirement Accounts" />
-      {d.retirementAccounts.map((account) => (
+      {d.retirementAccounts.filter((a) => !ROBO_TYPES.has(a.type)).map((account) => (
         <RetirementAccountCard
           key={account.id}
           account={account}
@@ -164,12 +166,12 @@ export default function InvestmentsPage() {
           onToggleExpand={d.toggleRetirementExpand}
           onSaveBalance={d.saveRetirementBalance}
           onAddHistoryRow={d.addRetirementHistoryRow}
-          onEdit={(id) => { d.setRetirementModalAccountId(id); d.setRetirementModalMode('edit'); }}
+          onEdit={(id) => d.openRetirementModal('edit', id)}
           onDelete={(id) => d.setDeleteAccountId(id)}
         />
       ))}
 
-      {d.retirementAccounts.length === 0 && (
+      {d.retirementAccounts.filter((a) => !ROBO_TYPES.has(a.type)).length === 0 && (
         <p style={{ color: colors.textMuted, fontStyle: 'italic', marginBottom: spacing[3] }}>
           No retirement accounts yet. Add one below.
         </p>
@@ -177,10 +179,45 @@ export default function InvestmentsPage() {
 
       {!readOnly && (
         <Button
-          onClick={() => { d.setRetirementModalAccountId(null); d.setRetirementModalMode('add'); }}
+          onClick={() => { setAddAccountDefaultType('TRADITIONAL_401K'); d.openRetirementModal('add', null); }}
           style={{ marginTop: spacing[3] }}
         >
           + Add Retirement Account
+        </Button>
+      )}
+
+      {/* ── Robo Investing ── */}
+      <SectionHeader title="Robo Investing" />
+      {d.retirementAccounts.filter((a) => ROBO_TYPES.has(a.type)).map((account) => (
+        <RetirementAccountCard
+          key={account.id}
+          account={account}
+          currentBalance={d.retirementBalanceByAccount[account.id] ?? 0}
+          history={d.retirementHistoryByAccount[account.id] ?? []}
+          allReviews={d.allReviews}
+          currentReviewId={d.reviewIdNum}
+          readOnly={readOnly}
+          isExpanded={d.expandedRetirementIds.has(account.id)}
+          onToggleExpand={d.toggleRetirementExpand}
+          onSaveBalance={d.saveRetirementBalance}
+          onAddHistoryRow={d.addRetirementHistoryRow}
+          onEdit={(id) => d.openRetirementModal('edit', id)}
+          onDelete={(id) => d.setDeleteAccountId(id)}
+        />
+      ))}
+
+      {d.retirementAccounts.filter((a) => ROBO_TYPES.has(a.type)).length === 0 && (
+        <p style={{ color: colors.textMuted, fontStyle: 'italic', marginBottom: spacing[3] }}>
+          No robo-advisor accounts yet. Add one below.
+        </p>
+      )}
+
+      {!readOnly && (
+        <Button
+          onClick={() => { setAddAccountDefaultType('ROBO_ADVISOR'); d.openRetirementModal('add', null); }}
+          style={{ marginTop: spacing[3] }}
+        >
+          + Add Robo Investing Account
         </Button>
       )}
 
@@ -196,11 +233,12 @@ export default function InvestmentsPage() {
 
       <EditRetirementAccountModal
         isOpen={d.retirementModalMode !== null}
-        onClose={() => { d.setRetirementModalMode(null); d.setRetirementModalAccountId(null); }}
+        onClose={d.closeRetirementModal}
         onSubmit={d.handleSubmitRetirementAccount}
         members={d.members}
         initialValues={d.editingAccount}
         mode={d.retirementModalMode ?? 'add'}
+        defaultType={addAccountDefaultType}
       />
 
       <ConfirmModal

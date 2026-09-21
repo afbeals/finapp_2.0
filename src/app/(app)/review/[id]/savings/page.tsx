@@ -7,7 +7,7 @@ import { STEP_META } from '@/components/review/stepMetadata';
 import { useStepNav } from '@/lib/useStepNav';
 import { useReviewStore } from '@/lib/store';
 import { formatDollars, toCents } from '@/lib/money';
-import { apiPatch, apiPost, apiPut, apiGet } from '@/lib/api';
+import { apiPatch, apiPost, apiPut, apiGet, deleteSavingsAccount } from '@/lib/api';
 import { theme } from '@/styles/tokens';
 
 const { colors, font, spacing } = theme;
@@ -17,6 +17,7 @@ import { SectionHeader } from '@/components/shared/SectionHeader';
 import { KpiGrid, KpiCard } from '@/components/shared/KpiGrid';
 import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
+import { ConfirmModal } from '@/components/shared/ConfirmModal';
 import { AccountCard, type HistoricalSnapshotWithBalance, type ReviewPeriod } from './AccountCard';
 import type { SavingsAccount, SavingsSnapshot, HistoricalSnapshot } from '@/types/entities';
 import { FieldLabel, FieldInput, FieldSelect, ModalActions } from './SavingsPage.styles';
@@ -40,6 +41,8 @@ export default function SavingsPage() {
   const [showAddModal, setShowAddModal] = useState(false);
   const [addingAccount, setAddingAccount] = useState(false);
   const [newAccount, setNewAccount] = useState({ name: '', institution: '', type: 'HYSA' });
+  const [deleteAccountId, setDeleteAccountId] = useState<number | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     apiGet<{ accounts: SavingsAccount[]; snapshots: SavingsSnapshot[]; allSnapshots: HistoricalSnapshot[]; allReviews: ReviewPeriod[] }>(`/api/reviews/${reviewId}/savings`)
@@ -111,6 +114,24 @@ export default function SavingsPage() {
     setShowAddModal(false);
     setNewAccount({ name: '', institution: '', type: 'HYSA' });
   }, [newAccount, reviewId]);
+
+  const confirmDelete = useCallback(async () => {
+    if (deleteAccountId === null) return;
+    setDeleting(true);
+    try {
+      await deleteSavingsAccount(deleteAccountId);
+      setAccounts((prev) => prev.filter((a) => a.id !== deleteAccountId));
+      setAllSnapshots((prev) => prev.filter((s) => s.accountId !== deleteAccountId));
+      setSnapshots((prev) => {
+        const next = { ...prev };
+        delete next[deleteAccountId];
+        return next;
+      });
+      setDeleteAccountId(null);
+    } finally {
+      setDeleting(false);
+    }
+  }, [deleteAccountId]);
 
   const toggleExpand = useCallback((id: number) => {
     setExpandedIds((prev) => {
@@ -213,6 +234,7 @@ export default function SavingsPage() {
           onSaveRowField={saveRowField}
           onSaveAccountField={saveAccountField}
           onAddNewRow={addNewRow}
+          onDelete={setDeleteAccountId}
         />
       ))}
 
@@ -263,6 +285,17 @@ export default function SavingsPage() {
           </Button>
         </ModalActions>
       </Modal>
+
+      <ConfirmModal
+        isOpen={deleteAccountId !== null}
+        onClose={() => setDeleteAccountId(null)}
+        onConfirm={confirmDelete}
+        title="Delete Account"
+        message="This will remove the account and all of its saved monthly balances. This cannot be undone."
+        confirmLabel={deleting ? 'Deleting…' : 'Delete'}
+        confirmVariant="danger"
+        loading={deleting}
+      />
     </StepShell>
   );
 }

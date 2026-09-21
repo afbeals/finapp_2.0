@@ -21,7 +21,7 @@ import {
   ProgressWrap, ProgressLabel, ProgressTrack, ProgressFill,
   SplitBar, SplitSegment, SplitLegend, SplitDot, PiCardWrap,
   PaymentCard, PaymentCardTitle, PaymentRow, FieldGroup, FieldLabel, FieldInput,
-  PmiCard, PmiTitle, GearBtn, ActionsRow,
+  PmiCard, PmiTitle, GearBtn, ActionsRow, PaidOffBtn,
 } from './MortgageSection.styles';
 import { MortgageSettingsPanel } from './MortgageSettingsPanel';
 
@@ -47,6 +47,7 @@ interface MortgageSectionProps {
   onSaveMortgagePayment: (loan: Loan) => void;
   onSaveLoanField: (loanId: number, fields: Partial<Loan>) => Promise<void>;
   onShowAmortization: (loan: Loan) => void;
+  onDeleteLoan?: (loanId: number) => void;
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
@@ -63,6 +64,7 @@ export const MortgageSection = React.memo(function MortgageSection({
   onSaveMortgagePayment,
   onSaveLoanField,
   onShowAmortization,
+  onDeleteLoan,
 }: MortgageSectionProps) {
   const [showSettings, setShowSettings] = useState(false);
   // Applied extra principal: only updates when Submit is clicked, so the
@@ -131,6 +133,14 @@ export const MortgageSection = React.memo(function MortgageSection({
         title={`🏠 Mortgage — ${loan.name}`}
         actions={
           <ActionsRow>
+            {!readOnly && (
+              <PaidOffBtn
+                active={loan.paidOff}
+                onClick={() => onSaveLoanField(loan.id, { paidOff: !loan.paidOff })}
+              >
+                {loan.paidOff ? '↩ Reopen' : '✓ Mark Paid Off'}
+              </PaidOffBtn>
+            )}
             <GearBtn
               onClick={() => setShowSettings((v) => !v)}
               title="Loan settings"
@@ -142,7 +152,7 @@ export const MortgageSection = React.memo(function MortgageSection({
       />
 
       {/* ── Record Payment ── */}
-      {!readOnly && (
+      {!readOnly && !loan.paidOff && (
         <PaymentCard>
           <PaymentCardTitle>📅 Record This Month&apos;s Payment</PaymentCardTitle>
           <PaymentRow>
@@ -185,6 +195,7 @@ export const MortgageSection = React.memo(function MortgageSection({
           loan={loan}
           readOnly={readOnly}
           onSaveLoanField={onSaveLoanField}
+          onDelete={onDeleteLoan}
         />
       )}
 

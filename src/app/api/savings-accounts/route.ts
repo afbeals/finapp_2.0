@@ -50,3 +50,26 @@ export async function PATCH(req: NextRequest) {
   const account = await prisma.savingsAccount.update({ where: { id }, data: fields });
   return NextResponse.json({ account });
 }
+
+const deleteSchema = z.object({
+  id: z.number().int().positive(),
+});
+
+export async function DELETE(req: NextRequest) {
+  const session = await requireAuth().catch(() => null);
+  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
+  const body = await req.json().catch(() => null);
+  const parsed = deleteSchema.safeParse(body);
+  if (!parsed.success) return badRequest('Invalid');
+
+  const { id } = parsed.data;
+  const result = await requireHouseholdResource(
+    (id) => prisma.savingsAccount.findUnique({ where: { id } }),
+    id,
+  ).catch(() => null);
+  if (!result) return NextResponse.json({ error: 'Not found' }, { status: 404 });
+
+  await prisma.savingsAccount.delete({ where: { id } });
+  return NextResponse.json({ ok: true });
+}

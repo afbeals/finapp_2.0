@@ -17,7 +17,7 @@ import type { Purchase } from '@/types/entities';
 import type { RetirementAccountFormValues } from '@/app/(app)/review/[id]/investments/EditRetirementAccountModal';
 import {
   TAXABLE_TYPES,
-  RETIREMENT_TYPES,
+  SINGLE_BALANCE_TYPES,
   buildPositions,
   buildCategoryColorMap,
 } from '@/app/(app)/review/[id]/investments/investmentHelpers';
@@ -86,7 +86,7 @@ export function useInvestmentsData(reviewId: string) {
   }, [s.livePrices]);
 
   const taxableAccounts = useMemo(() => s.accounts.filter((a) => TAXABLE_TYPES.has(a.type)), [s.accounts]);
-  const retirementAccounts = useMemo(() => s.accounts.filter((a) => RETIREMENT_TYPES.has(a.type)), [s.accounts]);
+  const retirementAccounts = useMemo(() => s.accounts.filter((a) => SINGLE_BALANCE_TYPES.has(a.type)), [s.accounts]);
   const taxablePositions = useMemo(() => buildPositions(taxableAccounts, s.livePrices), [taxableAccounts, s.livePrices]);
 
   const retirementBalanceByAccount = useMemo(() => {
@@ -283,9 +283,13 @@ export function useInvestmentsData(reviewId: string) {
     // retirement state
     expandedRetirementIds: s.expandedRetirementIds,
     retirementModalMode: s.retirementModalMode,
-    setRetirementModalMode: (mode: 'add' | 'edit' | null) => dispatch(mode ? { type: 'OPEN_RETIREMENT_MODAL', mode, accountId: s.retirementModalAccountId } : { type: 'CLOSE_RETIREMENT_MODAL' }),
+    // Single dispatch carrying both mode + accountId together — two separate setters each
+    // reconstructing the full action from stale closure state caused a real bug where closing
+    // (or opening in 'edit' mode) would race and silently revert to a stale mode/accountId.
+    openRetirementModal: (mode: 'add' | 'edit', accountId: number | null) =>
+      dispatch({ type: 'OPEN_RETIREMENT_MODAL', mode, accountId }),
+    closeRetirementModal: () => dispatch({ type: 'CLOSE_RETIREMENT_MODAL' }),
     retirementModalAccountId: s.retirementModalAccountId,
-    setRetirementModalAccountId: (id: number | null) => dispatch({ type: 'OPEN_RETIREMENT_MODAL', mode: s.retirementModalMode ?? 'add', accountId: id }),
     deleteAccountId: s.deleteAccountId,
     setDeleteAccountId: (id: number | null) => id != null ? dispatch({ type: 'OPEN_DELETE_RETIREMENT', accountId: id }) : dispatch({ type: 'CLOSE_DELETE_RETIREMENT' }),
     deleting: s.deleting,

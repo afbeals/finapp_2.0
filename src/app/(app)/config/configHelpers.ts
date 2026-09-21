@@ -7,6 +7,7 @@ export const ACCOUNT_TYPES = [
   { value: 'TRADITIONAL_IRA', label: 'Traditional IRA' },
   { value: 'ROTH_IRA', label: 'Roth IRA' },
   { value: 'HSA', label: 'HSA' },
+  { value: 'ROBO_ADVISOR', label: 'Robo-Advisor' },
   { value: 'OTHER', label: 'Other' },
 ];
 

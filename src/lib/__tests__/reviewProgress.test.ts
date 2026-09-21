@@ -14,8 +14,8 @@ function makeSteps(keys: string[], completeKeys: string[] = []): ReviewStep[] {
 }
 
 describe('MONTHLY_STEP_ORDER', () => {
-  it('has 6 entries', () => {
-    expect(MONTHLY_STEP_ORDER).toHaveLength(6);
+  it('has 7 entries', () => {
+    expect(MONTHLY_STEP_ORDER).toHaveLength(7);
   });
 
   it('starts with expense', () => {
@@ -26,8 +26,8 @@ describe('MONTHLY_STEP_ORDER', () => {
     expect(MONTHLY_STEP_ORDER[MONTHLY_STEP_ORDER.length - 1]).toBe('finalize');
   });
 
-  it('does not include loans or portfolio', () => {
-    expect(MONTHLY_STEP_ORDER).not.toContain('loans');
+  it('includes loans but not portfolio', () => {
+    expect(MONTHLY_STEP_ORDER).toContain('loans');
     expect(MONTHLY_STEP_ORDER).not.toContain('portfolio');
   });
 });

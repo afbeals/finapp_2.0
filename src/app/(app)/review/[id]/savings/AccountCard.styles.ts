@@ -11,10 +11,18 @@ export const AccountRow = styled.div`
   overflow: visible;
 `;
 
+// Wraps AccountRowHeader (a <button>) alongside the delete button so neither
+// is nested inside the other — nested <button> elements are invalid HTML.
+export const HeaderRow = styled.div`
+  display: flex;
+  align-items: stretch;
+`;
+
 export const AccountRowHeader = styled.button.withConfig({
   shouldForwardProp: (p) => p !== 'expanded',
 })<{ expanded: boolean }>`
-  width: 100%;
+  flex: 1;
+  min-width: 0;
   display: flex;
   align-items: center;
   gap: ${spacing[4]};
@@ -23,9 +31,26 @@ export const AccountRowHeader = styled.button.withConfig({
   border: none;
   cursor: pointer;
   text-align: left;
-  border-radius: ${({ expanded }) => expanded ? `${radius.lg} ${radius.lg} 0 0` : radius.lg};
+  border-radius: ${({ expanded }) => expanded ? `${radius.lg} 0 0 0` : `${radius.lg} 0 0 ${radius.lg}`};
   transition: background ${transition.quick};
   &:hover { background: ${colors.primaryLight}; }
+`;
+
+export const DeleteBtn = styled.button.withConfig({
+  shouldForwardProp: (p) => p !== 'expanded',
+})<{ expanded: boolean }>`
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  padding: 0 ${spacing[4]};
+  background: ${({ expanded }) => expanded ? colors.primaryLight : colors.surface};
+  border: none;
+  cursor: pointer;
+  font-size: 13px;
+  opacity: 0.6;
+  border-radius: ${({ expanded }) => expanded ? `0 ${radius.lg} 0 0` : `0 ${radius.lg} ${radius.lg} 0`};
+  transition: background ${transition.quick};
+  &:hover { opacity: 1; background: ${colors.primaryLight}; }
 `;
 
 export const AccountIcon = styled.span`font-size: ${font.size['2xl']}; flex-shrink: 0;`;

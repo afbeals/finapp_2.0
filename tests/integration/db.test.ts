@@ -160,6 +160,65 @@ describe('SavingsSnapshot', () => {
   });
 });
 
+// ─── Loan ───────────────────────────────────────────────────────────────────
+
+describe('Loan', () => {
+  it('cascades delete loan → loan snapshots', async () => {
+    const { household } = await createHousehold();
+    const loan = await prisma.loan.create({
+      data: {
+        householdId: household.id,
+        name: 'Test Student Loan',
+        category: 'SCHOOL',
+        principal: 1000000,
+        rate: 0.05,
+        termMonths: 120,
+        startDate: new Date('2024-01-01'),
+      },
+    });
+    const review = await prisma.review.create({
+      data: { householdId: household.id, periodYear: 2026, periodMonth: 6, type: 'MONTHLY' },
+    });
+    await prisma.loanSnapshot.create({
+      data: { loanId: loan.id, reviewId: review.id, balance: 950000, paymentsMade: 3, interestPaid: 12000 },
+    });
+
+    await prisma.loan.delete({ where: { id: loan.id } });
+
+    expect(await prisma.loanSnapshot.findMany({ where: { loanId: loan.id } })).toHaveLength(0);
+  });
+
+  it('accepts ROBO_ADVISOR as a valid investment account type', async () => {
+    const { household } = await createHousehold();
+    const account = await prisma.investmentAccount.create({
+      data: { householdId: household.id, name: 'Test Robo', type: 'ROBO_ADVISOR', institution: 'Betterment' },
+    });
+
+    expect(account.type).toBe('ROBO_ADVISOR');
+  });
+});
+
+// ─── SavingsAccount ───────────────────────────────────────────────────────────
+
+describe('SavingsAccount', () => {
+  it('cascades delete account → savings snapshots', async () => {
+    const { household } = await createHousehold();
+    const account = await prisma.savingsAccount.create({
+      data: { householdId: household.id, name: 'Test HYSA to Delete', type: 'HYSA' },
+    });
+    const review = await prisma.review.create({
+      data: { householdId: household.id, periodYear: 2026, periodMonth: 2, type: 'MONTHLY' },
+    });
+    await prisma.savingsSnapshot.create({
+      data: { accountId: account.id, reviewId: review.id, startingBalance: 10000, deposits: 5000, interest: 100, endingBalance: 15100 },
+    });
+
+    await prisma.savingsAccount.delete({ where: { id: account.id } });
+
+    expect(await prisma.savingsSnapshot.findMany({ where: { accountId: account.id } })).toHaveLength(0);
+  });
+});
+
 // ─── HoldingSnapshot unique constraint ──────────────────────────────────────
 
 describe('HoldingSnapshot', () => {

@@ -11,7 +11,7 @@ import type { SavingsAccount, SavingsSnapshot, HistoricalSnapshot } from '@/type
 import type { ReviewPeriod } from '@/types/review';
 export type { ReviewPeriod };
 import {
-  AccountRow, AccountRowHeader, AccountIcon, AccountName, AccountMeta, MetaItem,
+  AccountRow, HeaderRow, AccountRowHeader, DeleteBtn, AccountIcon, AccountName, AccountMeta, MetaItem,
   MetaLabel, MetaValue, ChevronIcon, ExpandedPanel, EditingBadge, SnapKpiRow,
   SnapKpi, SnapKpiLabel, SnapKpiValue, HistoryTable, HistoryThead, HistoryTh,
   HistoryTr, HistoryTd, GoalPercent, CurrentDot, MutedDash, EmptyTd,
@@ -34,11 +34,12 @@ interface AccountCardProps {
   onSaveRowField: (accountId: number, reviewId: number, field: 'startingBalance' | 'deposits' | 'interest', value: string) => Promise<void>;
   onSaveAccountField: (accountId: number, field: 'rate' | 'goal', value: string) => Promise<void>;
   onAddNewRow: (accountId: number, reviewId: number) => Promise<void>;
+  onDelete?: (id: number) => void;
 }
 
 export const AccountCard = React.memo(function AccountCard({
   account, snap, isExpanded, history, allReviews, currentReviewId, readOnly,
-  onToggleExpand, onSaveRowField, onSaveAccountField, onAddNewRow,
+  onToggleExpand, onSaveRowField, onSaveAccountField, onAddNewRow, onDelete,
 }: AccountCardProps) {
   const rate = account.rate ?? 0;
   const goal = account.goal ?? 0;
@@ -60,32 +61,43 @@ export const AccountCard = React.memo(function AccountCard({
 
   return (
     <AccountRow>
-      <AccountRowHeader expanded={isExpanded} onClick={() => onToggleExpand(account.id)}>
-        <AccountIcon>🏦</AccountIcon>
-        <AccountName>
-          {account.name}
-          {isExpanded && <EditingBadge>✏️ Editing</EditingBadge>}
-        </AccountName>
+      <HeaderRow>
+        <AccountRowHeader expanded={isExpanded} onClick={() => onToggleExpand(account.id)}>
+          <AccountIcon>🏦</AccountIcon>
+          <AccountName>
+            {account.name}
+            {isExpanded && <EditingBadge>✏️ Editing</EditingBadge>}
+          </AccountName>
 
-        <AccountMeta>
-          <MetaItem>
-            <MetaLabel>Balance</MetaLabel>
-            <MetaValue>{formatDollars(currentBalance)}</MetaValue>
-          </MetaItem>
-          <MetaItem>
-            <MetaLabel>Rate</MetaLabel>
-            <MetaValue textColor={colors.success}>{(rate * 100).toFixed(2)}%</MetaValue>
-          </MetaItem>
-          <MetaItem>
-            <MetaLabel>YTD Growth</MetaLabel>
-            <MetaValue textColor={ytdGrowth >= 0 ? colors.success : colors.danger}>
-              {ytdGrowth >= 0 ? '+' : ''}{formatDollars(ytdGrowth)}
-            </MetaValue>
-          </MetaItem>
-        </AccountMeta>
+          <AccountMeta>
+            <MetaItem>
+              <MetaLabel>Balance</MetaLabel>
+              <MetaValue>{formatDollars(currentBalance)}</MetaValue>
+            </MetaItem>
+            <MetaItem>
+              <MetaLabel>Rate</MetaLabel>
+              <MetaValue textColor={colors.success}>{(rate * 100).toFixed(2)}%</MetaValue>
+            </MetaItem>
+            <MetaItem>
+              <MetaLabel>YTD Growth</MetaLabel>
+              <MetaValue textColor={ytdGrowth >= 0 ? colors.success : colors.danger}>
+                {ytdGrowth >= 0 ? '+' : ''}{formatDollars(ytdGrowth)}
+              </MetaValue>
+            </MetaItem>
+          </AccountMeta>
 
-        <ChevronIcon open={isExpanded}>▶</ChevronIcon>
-      </AccountRowHeader>
+          <ChevronIcon open={isExpanded}>▶</ChevronIcon>
+        </AccountRowHeader>
+
+        {!readOnly && onDelete && (
+          <DeleteBtn
+            type="button"
+            expanded={isExpanded}
+            onClick={() => onDelete(account.id)}
+            title="Delete account"
+          >🗑️</DeleteBtn>
+        )}
+      </HeaderRow>
 
       {isExpanded && (
         <ExpandedPanel>

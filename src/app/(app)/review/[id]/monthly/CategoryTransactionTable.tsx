@@ -142,9 +142,20 @@ export function CategoryTransactionTable({
                 {isOpen && c.items.map((item) => (
                   <LineItemRow key={item.id}>
                     <LineItemTd>
-                      <div>{item.name}</div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                        {item.member && (
+                          <span style={{
+                            display: 'inline-block', width: 8, height: 8, borderRadius: '50%',
+                            background: item.member.color, flexShrink: 0,
+                          }} />
+                        )}
+                        {item.name}
+                        {item.member && (
+                          <span style={{ fontSize: '10px', color: colors.textMuted }}>· {item.member.name}</span>
+                        )}
+                      </div>
                       {item.notes && (
-                        <div style={{ fontSize: '10px', color: colors.textMuted, fontStyle: 'italic', marginTop: 2 }}>{item.notes}</div>
+                        <div style={{ fontSize: '10px', color: colors.textMuted, fontStyle: 'italic', marginTop: 2, paddingLeft: 14 }}>{item.notes}</div>
                       )}
                     </LineItemTd>
                     <LineItemTd>{formatDollars(item.amount)}</LineItemTd>

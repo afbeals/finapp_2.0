@@ -33,7 +33,11 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Incorrect PIN' }, { status: 401 });
   }
 
-  await createSession(member.id, member.householdId);
+  try {
+    await createSession(member.id, member.householdId);
+  } catch {
+    return NextResponse.json({ error: 'Could not start session — please try again' }, { status: 500 });
+  }
 
   return NextResponse.json({
     memberId: member.id,

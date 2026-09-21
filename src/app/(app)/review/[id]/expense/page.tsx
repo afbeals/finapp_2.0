@@ -16,8 +16,10 @@ import { theme } from '@/styles/tokens';
 const { colors, semanticColors, font, spacing } = theme;
 import { LoadingState } from '@/components/shared/LoadingState';
 import { ErrorState } from '@/components/shared/ErrorState';
+import { Button } from '@/components/ui/Button';
 import { IncomeAccordion } from './IncomeAccordion';
 import { CategoryAccordion } from './CategoryAccordion';
+import { CopyFromPreviousMonthModal } from './CopyFromPreviousMonthModal';
 import type { ExpenseCategory as Category, ExpenseEntry, IncomeEntry } from '@/types/entities';
 import { GroupSeparator, SummaryBar, SummaryLabel, SummaryValue } from './ExpensePage.styles';
 
@@ -36,6 +38,7 @@ export default function ExpensePage() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(false);
+  const [showCopyModal, setShowCopyModal] = useState(false);
 
   useEffect(() => {
     Promise.all([
@@ -93,7 +96,26 @@ export default function ExpensePage() {
       onNext={goNext}
       saving={saving}
       readOnly={readOnly}
+      extraActions={!readOnly && (
+        <Button variant="secondary" size="sm" onClick={() => setShowCopyModal(true)}>
+          📋 Copy from Previous Month
+        </Button>
+      )}
     >
+      {showCopyModal && reviewState.activeReview && (
+        <CopyFromPreviousMonthModal
+          reviewId={reviewId}
+          periodYear={reviewState.activeReview.periodYear}
+          periodMonth={reviewState.activeReview.periodMonth}
+          currentMemberId={currentMemberId}
+          onClose={() => setShowCopyModal(false)}
+          onCopied={({ income: newIncome, expenses: newExpenses }) => {
+            setIncome((prev) => [...prev, ...newIncome]);
+            setExpenses((prev) => [...prev, ...newExpenses]);
+          }}
+        />
+      )}
+
       <IncomeAccordion
         entries={income}
         members={sessionState.members}

@@ -100,6 +100,19 @@ export const patchLoanSnapshot = (reviewId: string | number, loanId: number, fie
 export const patchLoan = (loanId: number, fields: Partial<Loan>): Promise<{ loan: Loan }> =>
   apiPatch(`/api/loans/${loanId}`, fields);
 
+export const createLoan = (data: {
+  name: string;
+  category: string;
+  principal: number;
+  rate: number;
+  termMonths: number;
+  startDate: string;
+}): Promise<{ loan: Loan }> =>
+  apiPost('/api/loans', data);
+
+export const deleteLoan = (loanId: number): Promise<{ ok: boolean }> =>
+  apiDelete(`/api/loans/${loanId}`);
+
 // Savings
 export const getReviewSavings = (reviewId: string | number): Promise<PortfolioSavingsResponse> =>
   apiGet<PortfolioSavingsResponse>(`/api/reviews/${reviewId}/savings`);
@@ -109,6 +122,9 @@ export const putReviewSavings = (reviewId: string | number, snapshots: Partial<S
 
 export const patchSavingsAccount = (id: number, fields: Partial<SavingsAccount>): Promise<{ account: SavingsAccount }> =>
   apiPatch(`/api/savings-accounts/${id}`, fields);
+
+export const deleteSavingsAccount = (id: number): Promise<{ ok: boolean }> =>
+  apiDelete('/api/savings-accounts', { id });
 
 // Vaults
 export const getReviewVaults = (reviewId: string | number): Promise<VaultsResponse> =>

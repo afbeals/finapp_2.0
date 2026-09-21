@@ -22,7 +22,7 @@ export default defineConfig({
           setupFiles: ['./tests/setup.ts'],
           include: [
             'tests/integration/**/*.test.{ts,tsx}',
-            'src/lib/__tests__/**/*.test.{ts,tsx}',
+            'src/lib/**/__tests__/**/*.test.{ts,tsx}',
             'src/app/(app)/config/__tests__/configHelpers.test.ts',
           ],
           env,
@@ -39,6 +39,7 @@ export default defineConfig({
           setupFiles: ['./tests/setup.ts'],
           include: [
             'src/app/**/__tests__/**/*.test.{ts,tsx}',
+            'src/components/**/__tests__/**/*.test.{ts,tsx}',
           ],
           env,
         },

@@ -19,10 +19,11 @@ interface SchoolLoansTableProps {
   readOnly: boolean;
   onPatchSnapshot: (loanId: number, fields: Partial<Omit<LoanSnapshot, 'loanId'>>) => Promise<void>;
   onPatchLoan: (loanId: number, fields: Partial<Pick<Loan, 'name' | 'rate' | 'paidOff'>>) => Promise<void>;
+  onDeleteLoan?: (loanId: number) => void;
 }
 
 export const SchoolLoansTable = React.memo(function SchoolLoansTable({
-  loans, snapshots, readOnly, onPatchSnapshot, onPatchLoan,
+  loans, snapshots, readOnly, onPatchSnapshot, onPatchLoan, onDeleteLoan,
 }: SchoolLoansTableProps) {
   const highestRateSchool = useMemo(
     () => loans.filter((l) => !l.paidOff).reduce<Loan | null>((h, l) => !h || l.rate > h.rate ? l : h, null),
@@ -86,6 +87,7 @@ export const SchoolLoansTable = React.memo(function SchoolLoansTable({
             <Th w={80}>Time Saved</Th>
             <Th w={100}>Payoff Date</Th>
             <Th w={90}>Status</Th>
+            <Th w={36}></Th>
           </tr>
         </Thead>
         <tbody>
@@ -185,6 +187,16 @@ export const SchoolLoansTable = React.memo(function SchoolLoansTable({
                     </PaidOffBtn>
                   )}
                 </Td>
+                <Td>
+                  {!readOnly && onDeleteLoan && (
+                    <button
+                      type="button"
+                      onClick={() => onDeleteLoan(loan.id)}
+                      style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontSize: 13, opacity: 0.6 }}
+                      title="Delete loan"
+                    >🗑️</button>
+                  )}
+                </Td>
               </Tr>
             );
           })}
@@ -200,12 +212,12 @@ export const SchoolLoansTable = React.memo(function SchoolLoansTable({
               <Td purple bold>{formatDollars(totals.totIntAll)}</Td>
               <Td success bold>{totals.totSaved > 0 ? formatDollars(totals.totSaved) : '—'}</Td>
               <Td success bold>{totals.totMonthsSaved > 0 ? `${totals.totMonthsSaved} mo` : '—'}</Td>
-              <Td /><Td />
+              <Td /><Td /><Td />
             </Tr>
           )}
 
           {loans.length === 0 && (
-            <tr><Td colSpan={11} muted style={{ textAlign: 'center', fontStyle: 'italic' }}>No school loans.</Td></tr>
+            <tr><Td colSpan={12} muted style={{ textAlign: 'center', fontStyle: 'italic' }}>No school loans.</Td></tr>
           )}
         </tbody>
       </Table>

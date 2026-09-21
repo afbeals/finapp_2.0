@@ -39,6 +39,7 @@ enum InvestmentAccountType {
   TRADITIONAL_IRA
   ROTH_IRA
   HSA
+  ROBO_ADVISOR
   OTHER
 }
 

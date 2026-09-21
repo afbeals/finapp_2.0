@@ -22,6 +22,10 @@ export interface Position {
 
 export const TAXABLE_TYPES = new Set(['TAXABLE']);
 export const RETIREMENT_TYPES = new Set(['TRADITIONAL_401K', 'ROTH_401K', 'TRADITIONAL_IRA', 'ROTH_IRA', 'HSA', 'OTHER']);
+export const ROBO_TYPES = new Set(['ROBO_ADVISOR']);
+// Non-taxable accounts tracked with a single directly-entered balance per review
+// (retirement accounts + robo-advisors), as opposed to taxable accounts' per-position purchases.
+export const SINGLE_BALANCE_TYPES = new Set([...RETIREMENT_TYPES, ...ROBO_TYPES]);
 
 export const AccountTypeLabel: Record<string, string> = {
   TAXABLE: 'Brokerage',
@@ -30,6 +34,7 @@ export const AccountTypeLabel: Record<string, string> = {
   TRADITIONAL_IRA: 'Traditional IRA',
   ROTH_IRA: 'Roth IRA',
   HSA: 'HSA',
+  ROBO_ADVISOR: 'Robo-Advisor',
   OTHER: 'Other',
 };
 

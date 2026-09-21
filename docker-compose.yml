@@ -1,0 +1,17 @@
+services:
+  financial-review:
+    build:
+      context: .
+    container_name: financial-review
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    volumes:
+      # Persists data/prod.db and data/backups/ outside the container.
+      # Change the host-side path if you'd rather use a different appdata location.
+      - /mnt/user/appdata/financial-review/data:/app/data
+    environment:
+      DATABASE_URL: "file:../data/prod.db"
+      SESSION_SECRET: ${SESSION_SECRET}
+      # Only set to "true" if this is served over HTTPS (e.g. behind a reverse proxy).
+      COOKIE_SECURE: "false"

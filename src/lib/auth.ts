@@ -35,7 +35,9 @@ export async function createSession(memberId: number, householdId: number): Prom
   const cookieStore = await cookies();
   cookieStore.set(SESSION_COOKIE, token, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
+    // Explicit opt-in only — a Secure cookie is silently dropped by the browser
+    // over plain HTTP, which broke every login when this defaulted off NODE_ENV.
+    secure: process.env.COOKIE_SECURE === 'true',
     sameSite: 'lax',
     expires: expiresAt,
     path: '/',

@@ -7,9 +7,9 @@
     "node": ">=22.12"
   },
   "scripts": {
-    "dev": "next dev",
+    "dev": "next dev -p 8775",
     "build": "next build",
-    "start": "next start",
+    "start": "next start -p 8775",
     "lint": "eslint",
     "db:init": "npx prisma generate",
     "db:migrate": "prisma migrate dev",

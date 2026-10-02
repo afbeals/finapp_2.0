@@ -99,7 +99,7 @@ All data is baked into the script — no internet connection required.
 DATABASE_URL="file:../data/prod.db" yarn dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) — you will be redirected to `/login`.
+Open [http://localhost:8775](http://localhost:8775) — you will be redirected to `/login`.
 
 Select your name and enter the PIN you chose during setup.
 
@@ -260,7 +260,7 @@ Delete the `fr_session` cookie: Chrome DevTools → Application → Cookies → 
 ### App won't start — port in use
 
 ```bash
-# Kill whatever is on port 3000
-lsof -ti:3000 | xargs kill
+# Kill whatever is on port 8775
+lsof -ti:8775 | xargs kill
 yarn dev
 ```

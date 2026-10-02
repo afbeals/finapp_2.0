@@ -5,7 +5,7 @@ services:
     container_name: financial-review
     restart: unless-stopped
     ports:
-      - "3000:3000"
+      - "8775:8775"
     volumes:
       # Persists data/prod.db and data/backups/ outside the container.
       # Change the host-side path if you'd rather use a different appdata location.

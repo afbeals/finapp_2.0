@@ -29,6 +29,6 @@ COPY --from=builder /app/package.json ./package.json
 COPY docker/entrypoint.sh ./docker/entrypoint.sh
 RUN chmod +x ./docker/entrypoint.sh
 
-EXPOSE 3000
+EXPOSE 8775
 ENTRYPOINT ["./docker/entrypoint.sh"]
 CMD ["yarn", "start"]

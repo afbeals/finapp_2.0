@@ -11,11 +11,11 @@ just walks through using them on Unraid.
 
 ## Prerequisites
 
-| Requirement | Notes |
-|--------------|-------|
-| Unraid 6.9+ | Anything with Docker support |
+| Requirement                                                                                            | Notes                                                                |
+| ------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------- |
+| Unraid 6.9+                                                                                            | Anything with Docker support                                         |
 | [Docker Compose Manager](https://forums.unraid.net/topic/114415-plugin-docker-compose-manager/) plugin | Install via **Apps** (Community Applications) if not already present |
-| SSH access to Unraid | To clone the repo and create folders |
+| SSH access to Unraid                                                                                   | To clone the repo and create folders                                 |
 
 ---
 
@@ -89,22 +89,22 @@ it survives container rebuilds.
 
 ## Step 6 — Get a URL
 
-- **On your home network:** `http://<unraid-ip>:3000/`
+- **On your home network:** `http://<unraid-ip>:8775/`
 - **A friendlier local name:** point a DNS entry (e.g. via Unraid's own `mDNS`/router)
   at the Unraid IP, or add it to your router's local DNS / `/etc/hosts` on client
   devices.
 - **From outside your network / a real domain:** put a reverse proxy in front (e.g.
   [SWAG](https://forums.unraid.net/topic/104556-support-linuxserverio-swag-secure-web-app-gateway/)
   or Nginx Proxy Manager, both common Unraid Community Apps) terminating HTTPS and
-  forwarding to `financial-review:3000`. If you do this, set `COOKIE_SECURE=true` (see
+  forwarding to `financial-review:8775`. If you do this, set `COOKIE_SECURE=true` (see
   Step 3) — otherwise logins will silently fail.
 
 Optionally, add a `WebUI` label so the app gets a clickable icon on the Unraid
 dashboard, by adding this under the service in `docker-compose.yml`:
 
 ```yaml
-    labels:
-      net.unraid.docker.webui: "http://[IP]:[PORT:3000]/"
+labels:
+  net.unraid.docker.webui: "http://[IP]:[PORT:8775]/"
 ```
 
 ## Step 7 — Updating after code changes
@@ -123,11 +123,11 @@ rebuild is enough for schema changes too.
 
 ## Environment variables reference
 
-| Variable | Purpose | Set where |
-|----------|---------|-----------|
-| `SESSION_SECRET` | Signs the session cookie | `.env` next to `docker-compose.yml` (Step 3) |
-| `DATABASE_URL` | Path to the SQLite file | Already set in `docker-compose.yml` — leave as-is unless you change the volume mount |
-| `COOKIE_SECURE` | Whether the session cookie requires HTTPS | `docker-compose.yml` — `false` for plain HTTP, `true` behind a reverse proxy |
+| Variable         | Purpose                                   | Set where                                                                            |
+| ---------------- | ----------------------------------------- | ------------------------------------------------------------------------------------ |
+| `SESSION_SECRET` | Signs the session cookie                  | `.env` next to `docker-compose.yml` (Step 3)                                         |
+| `DATABASE_URL`   | Path to the SQLite file                   | Already set in `docker-compose.yml` — leave as-is unless you change the volume mount |
+| `COOKIE_SECURE`  | Whether the session cookie requires HTTPS | `docker-compose.yml` — `false` for plain HTTP, `true` behind a reverse proxy         |
 
 ---
 

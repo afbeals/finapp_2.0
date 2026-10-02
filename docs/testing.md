@@ -37,6 +37,7 @@ Vitest is configured with **two separate environments** in `vitest.config.ts`:
 Used for: API logic, utility functions, DB helpers.
 
 Matches:
+
 - `tests/integration/**/*.test.ts`
 - `src/lib/__tests__/**/*.test.ts`
 - `src/app/**/config/__tests__/configHelpers.test.ts`
@@ -48,6 +49,7 @@ Uses a real SQLite test database at `data/test.db` (separate from `data/dev.db`)
 Used for: React component smoke tests.
 
 Matches:
+
 - `src/app/**/config/__tests__/*Section.test.tsx`
 - `src/app/**/review/**/__tests__/**/*.test.tsx`
 
@@ -79,23 +81,23 @@ src/app/(app)/config/
 
 ## Existing Tests
 
-| File | What it tests |
-|------|--------------|
-| `src/lib/__tests__/money.test.ts` | `toCents`, `toDollars`, `formatDollars`, `currencyFormatter` |
-| `src/lib/__tests__/fire.test.ts` | `monthlyPayment`, `amortizationSchedule`, `futureValue`, `yearsToFire`, `fireNumber`, `projectedScheduleFrom` |
-| `src/lib/__tests__/reviewProgress.test.ts` | `reviewProgress` canonical ordering, `MONTHLY_STEP_ORDER`, `QUARTERLY_STEP_ORDER` |
-| `src/lib/__tests__/useStepNav.test.ts` | `goNext`, `goBack` PATCH calls and router navigation |
-| `src/lib/__tests__/useAsyncData.test.ts` | Loading state, resolution, stale-request cancellation, error surfacing |
-| `src/lib/__tests__/investmentsReducer.test.ts` | All discriminated-union actions in the investments reducer |
-| `src/lib/__tests__/routes.vaults.test.ts` | `PUT /api/reviews/[id]/vaults` — snapshots + pctUpdates |
-| `src/lib/__tests__/routes.loans.test.ts` | `PATCH /api/loan-snapshots/[id]` — balance/interest/principal |
-| `src/lib/__tests__/routes.investment-accounts.test.ts` | `PATCH` update, `DELETE` happy path, 409 in-use, transfer-and-delete |
-| `src/lib/__tests__/routes.vault-category-order.test.ts` | `PATCH /api/vault-category-order` — upsert, validation |
-| `src/app/(app)/config/__tests__/configHelpers.test.ts` | `accountTypeLabel`, `badgeColors` |
-| `src/app/(app)/review/[id]/vaults/__tests__/` | Vaults page smoke tests |
-| `src/app/(app)/review/[id]/investments/__tests__/` | Investments page smoke tests |
-| `src/app/(app)/review/[id]/loans/__tests__/` | Loans page smoke tests |
-| `src/app/(app)/review/[id]/portfolio/__tests__/` | Portfolio page smoke tests |
+| File                                                    | What it tests                                                                                                 |
+| ------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| `src/lib/__tests__/money.test.ts`                       | `toCents`, `toDollars`, `formatDollars`, `currencyFormatter`                                                  |
+| `src/lib/__tests__/fire.test.ts`                        | `monthlyPayment`, `amortizationSchedule`, `futureValue`, `yearsToFire`, `fireNumber`, `projectedScheduleFrom` |
+| `src/lib/__tests__/reviewProgress.test.ts`              | `reviewProgress` canonical ordering, `MONTHLY_STEP_ORDER`, `QUARTERLY_STEP_ORDER`                             |
+| `src/lib/__tests__/useStepNav.test.ts`                  | `goNext`, `goBack` PATCH calls and router navigation                                                          |
+| `src/lib/__tests__/useAsyncData.test.ts`                | Loading state, resolution, stale-request cancellation, error surfacing                                        |
+| `src/lib/__tests__/investmentsReducer.test.ts`          | All discriminated-union actions in the investments reducer                                                    |
+| `src/lib/__tests__/routes.vaults.test.ts`               | `PUT /api/reviews/[id]/vaults` — snapshots + pctUpdates                                                       |
+| `src/lib/__tests__/routes.loans.test.ts`                | `PATCH /api/loan-snapshots/[id]` — balance/interest/principal                                                 |
+| `src/lib/__tests__/routes.investment-accounts.test.ts`  | `PATCH` update, `DELETE` happy path, 409 in-use, transfer-and-delete                                          |
+| `src/lib/__tests__/routes.vault-category-order.test.ts` | `PATCH /api/vault-category-order` — upsert, validation                                                        |
+| `src/app/(app)/config/__tests__/configHelpers.test.ts`  | `accountTypeLabel`, `badgeColors`                                                                             |
+| `src/app/(app)/review/[id]/vaults/__tests__/`           | Vaults page smoke tests                                                                                       |
+| `src/app/(app)/review/[id]/investments/__tests__/`      | Investments page smoke tests                                                                                  |
+| `src/app/(app)/review/[id]/loans/__tests__/`            | Loans page smoke tests                                                                                        |
+| `src/app/(app)/review/[id]/portfolio/__tests__/`        | Portfolio page smoke tests                                                                                    |
 
 **Current pass count: 313 tests across 26 test files.**
 
@@ -105,15 +107,15 @@ src/app/(app)/config/
 
 ```typescript
 // src/lib/__tests__/myUtil.test.ts
-import { describe, it, expect } from 'vitest';
-import { myFunction } from '../myUtil';
+import { describe, it, expect } from "vitest";
+import { myFunction } from "../myUtil";
 
-describe('myFunction', () => {
-  it('returns the correct value', () => {
+describe("myFunction", () => {
+  it("returns the correct value", () => {
     expect(myFunction(100)).toBe(200);
   });
 
-  it('handles zero', () => {
+  it("handles zero", () => {
     expect(myFunction(0)).toBe(0);
   });
 });
@@ -124,12 +126,12 @@ describe('myFunction', () => {
 All monetary values in tests are **cents**:
 
 ```typescript
-import { formatDollars, toCents, toDollars } from '@/lib/money';
+import { formatDollars, toCents, toDollars } from "@/lib/money";
 
-it('formats cents as dollars', () => {
-  expect(formatDollars(1250)).toBe('$12.50');
-  expect(formatDollars(0)).toBe('$0.00');
-  expect(formatDollars(-500)).toBe('-$5.00');
+it("formats cents as dollars", () => {
+  expect(formatDollars(1250)).toBe("$12.50");
+  expect(formatDollars(0)).toBe("$0.00");
+  expect(formatDollars(-500)).toBe("-$5.00");
 });
 ```
 
@@ -159,15 +161,26 @@ Integration tests in `tests/integration/` test the full request/response cycle a
 
 ```typescript
 // tests/integration/expenses.test.ts
-import { describe, it, expect, beforeAll } from 'vitest';
+import { describe, it, expect, beforeAll } from "vitest";
 
-describe('POST /api/reviews/[id]/expenses', () => {
-  it('creates an expense entry', async () => {
-    const res = await fetch(`http://localhost:3000/api/reviews/${reviewId}/expenses`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Cookie: `fr_session=${token}` },
-      body: JSON.stringify({ name: 'Test', categoryId: 1, amount: 1000, date: '2026-04-01' }),
-    });
+describe("POST /api/reviews/[id]/expenses", () => {
+  it("creates an expense entry", async () => {
+    const res = await fetch(
+      `http://localhost:8775/api/reviews/${reviewId}/expenses`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Cookie: `fr_session=${token}`,
+        },
+        body: JSON.stringify({
+          name: "Test",
+          categoryId: 1,
+          amount: 1000,
+          date: "2026-04-01",
+        }),
+      },
+    );
     expect(res.status).toBe(200);
     const { entry } = await res.json();
     expect(entry.amount).toBe(1000);

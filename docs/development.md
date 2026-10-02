@@ -2,12 +2,13 @@
 
 ## Prerequisites
 
-| Requirement | Version | Check |
-|-------------|---------|-------|
-| Node.js | >= 22.12 | `node --version` |
-| Yarn | 1.x | `yarn --version` |
+| Requirement | Version  | Check            |
+| ----------- | -------- | ---------------- |
+| Node.js     | >= 22.12 | `node --version` |
+| Yarn        | 1.x      | `yarn --version` |
 
 If you're on the wrong Node version:
+
 ```bash
 # Using nvm:
 nvm install 22 && nvm use 22
@@ -37,7 +38,7 @@ yarn db:seed
 yarn dev
 ```
 
-Open http://localhost:3000 → redirects to `/login`.
+Open http://localhost:8775 → redirects to `/login`.
 
 Select **Allan** or **Malia**, enter PIN **1234**.
 
@@ -52,6 +53,7 @@ DATABASE_URL="file:../data/prod.db" yarn db:import-prod
 ```
 
 The script will:
+
 1. Back up any existing `prod.db` to `data/backups/`
 2. Apply pending migrations
 3. Prompt for household name, PIN, emails, and a few account details
@@ -77,12 +79,13 @@ DATABASE_URL="file:../data/dev.db"
 SESSION_SECRET="replace-with-secure-random-32-char-string"
 ```
 
-| Variable | Purpose | Example |
-|----------|---------|---------|
-| `DATABASE_URL` | Path to SQLite database | `file:../data/dev.db` |
+| Variable         | Purpose                            | Example                     |
+| ---------------- | ---------------------------------- | --------------------------- |
+| `DATABASE_URL`   | Path to SQLite database            | `file:../data/dev.db`       |
 | `SESSION_SECRET` | Secret for signing session cookies | 32+ character random string |
 
 Generate a secure session secret:
+
 ```bash
 node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 ```
@@ -92,7 +95,7 @@ node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 ## Scripts Reference
 
 ```bash
-yarn dev             # Start Next.js dev server (http://localhost:3000)
+yarn dev             # Start Next.js dev server (http://localhost:8775)
 yarn build           # Production build
 yarn start           # Start production server (after build)
 yarn lint            # Run ESLint
@@ -141,6 +144,7 @@ Here's a complete example of how to add a new feature (e.g., adding a "notes" fi
 ### 1. Update the database schema
 
 Edit `prisma/schema.prisma`:
+
 ```prisma
 model Vault {
   // ... existing fields
@@ -149,6 +153,7 @@ model Vault {
 ```
 
 Create and apply the migration:
+
 ```bash
 yarn db:migrate
 # Name it: "add_vault_notes"
@@ -157,6 +162,7 @@ yarn db:migrate
 ### 2. Update types
 
 Edit `src/types/entities.ts`:
+
 ```typescript
 export interface Vault {
   // ... existing fields
@@ -167,6 +173,7 @@ export interface Vault {
 ### 3. Update the API route
 
 Edit `src/app/api/vaults/[id]/route.ts` to accept `notes` in the PATCH body:
+
 ```typescript
 const { name, notes, ... } = await req.json();
 await prisma.vault.update({ where: { id }, data: { name, notes } });
@@ -175,6 +182,7 @@ await prisma.vault.update({ where: { id }, data: { name, notes } });
 ### 4. Update the API client
 
 Edit `src/lib/api.ts` to include `notes` in the patch function's type:
+
 ```typescript
 export async function patchVault(id: number, data: { name?: string; notes?: string; ... }) {
   return apiPatch(`/api/vaults/${id}`, data);
@@ -186,11 +194,13 @@ export async function patchVault(id: number, data: { name?: string; notes?: stri
 Add an input to the vault edit form. Import `patchVault` and call it on save.
 
 ### 6. Type check
+
 ```bash
 yarn typecheck
 ```
 
 ### 7. Test
+
 ```bash
 yarn test:ci
 ```
@@ -222,11 +232,11 @@ All API routes are at `/api/...`. You can test them with curl or any HTTP client
 
 ```bash
 # Get all reviews (need session cookie)
-curl http://localhost:3000/api/reviews \
+curl http://localhost:8775/api/reviews \
   -H "Cookie: fr_session=YOUR_TOKEN"
 
 # Get members (public, no auth needed)
-curl http://localhost:3000/api/households/members
+curl http://localhost:8775/api/households/members
 ```
 
 To get your session token: open Chrome DevTools → Application → Cookies → `fr_session`.
@@ -243,6 +253,7 @@ yarn db:backup
 ## Project Conventions
 
 ### File naming
+
 - Components: `PascalCase.tsx`
 - Styles: `PascalCase.styles.ts` (co-located with component)
 - Hooks: `useCamelCase.ts`
@@ -251,6 +262,7 @@ yarn db:backup
 - API routes: always `route.ts` (Next.js convention)
 
 ### TypeScript
+
 - Use `interface` over `type` for object shapes
 - Use `Foo[]` not `Array<Foo>`
 - Use `undefined` not `null` for missing values (Prisma returns `null` from DB — convert at the boundary)
@@ -258,12 +270,14 @@ yarn db:backup
 - `import type` for type-only imports
 
 ### Components
+
 - Named exports — no default exports for components (exception: Next.js page/layout files require default exports)
 - Prop types named `ComponentNameProps`
 - Event handlers prefixed with `handle`: `handleSubmit`, `handleClose`
 - Keep logic and JSX in `.tsx`, styled-components in `.styles.ts`
 
 ### API routes
+
 - Always call `requireAuth()` at the top (or `requireReviewAccess()` for review-scoped routes)
 - Validate input with Zod schemas
 - All monetary values in/out as integer cents
@@ -274,20 +288,25 @@ yarn db:backup
 ## Troubleshooting
 
 ### "Cannot find module" errors after adding a new file
+
 TypeScript may need a restart. In VS Code: `Cmd+Shift+P → TypeScript: Restart TS Server`.
 
 ### Database is out of sync
+
 ```bash
 yarn db:migrate   # apply any pending migrations
 ```
 
 ### Want to start completely fresh
+
 ```bash
 yarn db:reset     # wipes and re-seeds (loses all data)
 ```
 
 ### Styled-components "unknown prop" warning
+
 Use transient props (`$propName`) or `withConfig({ shouldForwardProp })`. See [styling.md](./styling.md).
 
 ### Session expired / stuck on login screen
+
 Delete the `fr_session` cookie in browser DevTools → Application → Cookies, then reload and log in again.

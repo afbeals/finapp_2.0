@@ -554,7 +554,7 @@ Map:
 
 ```text
 Host:
-/mnt/user/appdata/financial-review/data
+/mnt/user/appdata/finapp/data
 
 Container:
 /app/data

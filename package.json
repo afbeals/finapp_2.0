@@ -1,6 +1,6 @@
 {
   "name": "financial-review",
-  "version": "0.1.0",
+  "version": "2.0.0",
   "private": true,
   "type": "module",
   "engines": {
@@ -19,6 +19,11 @@
     "db:deploy": "prisma migrate deploy",
     "db:backup": "tsx scripts/backup-db.ts",
     "db:import-prod": "tsx scripts/import-prod-baseline.ts",
+    "docker:build": "node scripts/docker.js build",
+    "docker:tag": "node scripts/docker.js tag",
+    "docker:test": "node scripts/docker.js test",
+    "docker:push": "node scripts/docker.js push",
+    "docker:release": "node scripts/docker.js release",
     "test": "vitest",
     "test:ci": "vitest run",
     "test:ui": "vitest --ui",
@@ -49,7 +54,7 @@
     "@testing-library/user-event": "^14.6.1",
     "@types/bcryptjs": "^2.4.6",
     "@types/better-sqlite3": "^7.6.13",
-    "@types/node": "^20",
+    "@types/node": "^20.19.43",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "@types/styled-components": "^5.1.36",

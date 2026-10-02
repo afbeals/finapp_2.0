@@ -175,3 +175,703 @@ then `docker compose up -d`.
 ```bash
 docker exec -it financial-review sh
 ```
+
+---
+
+---
+
+---
+
+# Updated Financial Review Docker Deployment
+
+This document describes the Docker workflow for the Financial Review app.
+
+The deployment model is:
+
+1. Develop and test on the Windows PC using Docker Desktop.
+2. Build the complete application image locally.
+3. Test the image locally.
+4. Tag the image with the application version.
+5. Tag the same image as `latest`.
+6. Push both tags to Docker Hub.
+7. Run `afbeals/finapp:latest` on Unraid.
+8. Keep the persistent SQLite data outside the container.
+
+## Architecture
+
+```text
+Windows PC
+    |
+    | Docker Desktop
+    v
+Docker image
+    |
+    | docker push
+    v
+Docker Hub
+    |
+    | pull
+    v
+Unraid
+    |
+    +-- afbeals/finapp:latest
+    |
+    +-- /mnt/user/appdata/financial-review/data
+            |
+            +-- prod.db
+            +-- backups/
+```
+
+The application code, Node dependencies, Next.js build, Prisma client, and runtime files are contained in the Docker image.
+
+The production SQLite database is stored on Unraid:
+
+```text
+/mnt/user/appdata/financial-review/data/prod.db
+```
+
+and mounted into the container as:
+
+```text
+/app/data/prod.db
+```
+
+This means replacing or recreating the Docker container does not delete the production database.
+
+---
+
+## Docker Hub
+
+Docker Hub repository:
+
+```text
+afbeals/finapp
+```
+
+The application uses two types of tags.
+
+### Versioned tags
+
+```text
+afbeals/finapp:2.0.0
+afbeals/finapp:2.1.0
+```
+
+These are permanent release tags and can be used for rollback.
+
+### Latest tag
+
+```text
+afbeals/finapp:latest
+```
+
+This points to the current release and is the tag used by the Unraid container.
+
+---
+
+## Prerequisites
+
+The development machine should have:
+
+- Docker Desktop
+- Node.js
+- Yarn
+- Git
+- Access to the `afbeals/finapp` Docker Hub repository
+
+Log into Docker Hub:
+
+```powershell
+docker login
+```
+
+---
+
+## Package Version
+
+The Docker scripts use the `version` field from `package.json`.
+
+For example:
+
+```json
+{
+  "version": "2.0.0"
+}
+```
+
+produces:
+
+```text
+afbeals/finapp:2.0.0
+afbeals/finapp:latest
+```
+
+When creating a new release, update the version:
+
+```powershell
+yarn version --new-version 2.1.0
+```
+
+The Docker scripts automatically use the new version.
+
+---
+
+## Docker Scripts
+
+The repository contains:
+
+```text
+scripts/docker.js
+```
+
+The script handles:
+
+- Building the Docker image
+- Tagging the version
+- Tagging the image as `latest`
+- Running the image locally
+- Pushing images to Docker Hub
+- Releasing a new version
+
+### Build
+
+```powershell
+yarn docker:build
+```
+
+Builds:
+
+```text
+afbeals/finapp:<package.json version>
+```
+
+For example:
+
+```text
+afbeals/finapp:2.0.0
+```
+
+### Tag
+
+```powershell
+yarn docker:tag
+```
+
+Tags the current version as `latest`.
+
+For example:
+
+```powershell
+docker tag afbeals/finapp:2.0.0 afbeals/finapp:latest
+```
+
+The script automatically gets the version from `package.json`.
+
+### Local Test
+
+```powershell
+yarn docker:test
+```
+
+Runs:
+
+```text
+afbeals/finapp:latest
+```
+
+at:
+
+```text
+http://localhost:8775
+```
+
+The local test database is stored in:
+
+```text
+./docker-data/prod.db
+```
+
+The test container uses:
+
+```text
+SESSION_SECRET=temporary-test-secret
+DATABASE_URL=file:/app/data/prod.db
+```
+
+This database is completely separate from the production database on Unraid.
+
+Press `Ctrl+C` to stop the container.
+
+### Push
+
+```powershell
+yarn docker:push
+```
+
+Pushes both:
+
+```text
+afbeals/finapp:<version>
+afbeals/finapp:latest
+```
+
+to Docker Hub.
+
+### Release
+
+```powershell
+yarn docker:release
+```
+
+This performs:
+
+```text
+docker build
+    ↓
+docker tag <version> latest
+    ↓
+docker push <version>
+    ↓
+docker push latest
+```
+
+For example:
+
+```text
+afbeals/finapp:2.1.0
+afbeals/finapp:latest
+```
+
+---
+
+## Recommended Release Workflow
+
+### 1. Update the version
+
+```powershell
+yarn version --new-version 2.1.0
+```
+
+### 2. Build
+
+```powershell
+yarn docker:build
+```
+
+### 3. Tag as latest
+
+```powershell
+yarn docker:tag
+```
+
+### 4. Test locally
+
+```powershell
+yarn docker:test
+```
+
+Open:
+
+```text
+http://localhost:8775
+```
+
+Verify the application works.
+
+Press `Ctrl+C` when finished testing.
+
+### 5. Push to Docker Hub
+
+```powershell
+yarn docker:push
+```
+
+Alternatively, after testing you can use:
+
+```powershell
+yarn docker:release
+```
+
+However, `docker:release` builds and pushes immediately, so the separate build/test/push workflow is preferred when you want to verify the image before publishing it.
+
+---
+
+## Dockerfile
+
+The builder stage requires a temporary `DATABASE_URL` because Prisma requires the environment variable during `prisma generate`.
+
+The builder should contain:
+
+```dockerfile
+FROM base AS builder
+COPY --from=deps /app/node_modules ./node_modules
+COPY . .
+
+# Prisma config requires DATABASE_URL during build.
+# This is only a temporary build-time value.
+ENV DATABASE_URL="file:/tmp/build.db"
+
+RUN npx prisma generate
+RUN yarn build
+```
+
+The production database URL is supplied at runtime by Unraid:
+
+```text
+DATABASE_URL=file:/app/data/prod.db
+```
+
+The production database URL and `SESSION_SECRET` should not be placed directly in the Dockerfile.
+
+---
+
+## Unraid Configuration
+
+Create the persistent data directory:
+
+```text
+/mnt/user/appdata/finapp/data
+```
+
+### Repository
+
+```text
+afbeals/finapp:latest
+```
+
+### Port
+
+Map:
+
+```text
+Host:      8775
+Container: 8775
+```
+
+### Volume
+
+Map:
+
+```text
+Host:
+/mnt/user/appdata/financial-review/data
+
+Container:
+/app/data
+```
+
+Set the access mode to:
+
+```text
+Read/Write
+```
+
+### Environment Variables
+
+Set:
+
+```text
+SESSION_SECRET=<your production secret>
+DATABASE_URL=file:/app/data/prod.db
+COOKIE_SECURE=false
+```
+
+Use a strong, private value for `SESSION_SECRET`.
+
+Do not commit the production secret to Git.
+
+If the application is later placed behind HTTPS using a reverse proxy, change:
+
+```text
+COOKIE_SECURE=true
+```
+
+---
+
+## Starting the Unraid Container
+
+Start the container from the Unraid Docker interface.
+
+The application should be available at:
+
+```text
+http://<UNRAID-IP>:8775
+```
+
+The container's entrypoint runs Prisma migrations during startup.
+
+The runtime database URL must be:
+
+```text
+DATABASE_URL=file:/app/data/prod.db
+```
+
+---
+
+## Production Database
+
+The production database is stored at:
+
+```text
+/mnt/user/appdata/financial-review/data/prod.db
+```
+
+Inside the container, the same database is:
+
+```text
+/app/data/prod.db
+```
+
+Do not store the production database inside the Docker image.
+
+Do not commit the production database to Git.
+
+---
+
+## First Production Database Import
+
+If the application has an existing production database that needs to be imported, run:
+
+```bash
+docker exec -it financial-review yarn db:import-prod
+```
+
+Replace `financial-review` with the actual container name if necessary.
+
+Do not run an import against an existing production database unless the import command is intended to modify that database.
+
+---
+
+## Updating the Application
+
+Application updates are built on the Windows PC.
+
+Example:
+
+```powershell
+yarn version --new-version 2.1.0
+yarn docker:build
+yarn docker:tag
+yarn docker:test
+```
+
+After testing:
+
+```powershell
+yarn docker:push
+```
+
+Then update/recreate the Unraid container using:
+
+```text
+afbeals/finapp:latest
+```
+
+The existing database remains at:
+
+```text
+/mnt/user/appdata/financial-review/data/prod.db
+```
+
+The database is not replaced when the Docker image is updated.
+
+---
+
+## Rollback
+
+Every release has a versioned tag.
+
+For example:
+
+```text
+afbeals/finapp:2.0.0
+afbeals/finapp:2.1.0
+afbeals/finapp:latest
+```
+
+To roll back, change the Unraid image from:
+
+```text
+afbeals/finapp:latest
+```
+
+to a specific version:
+
+```text
+afbeals/finapp:2.0.0
+```
+
+Then recreate/restart the container.
+
+The production database remains mounted from:
+
+```text
+/mnt/user/appdata/financial-review/data
+```
+
+---
+
+## Database Backups
+
+The application provides a database backup command:
+
+```bash
+docker exec -it financial-review yarn db:backup
+```
+
+Backups are stored at:
+
+```text
+/app/data/backups
+```
+
+Because `/app/data` is mounted to Unraid, they are stored on the host at:
+
+```text
+/mnt/user/appdata/financial-review/data/backups
+```
+
+These backups should also be included in the normal Unraid backup strategy.
+
+---
+
+## Image vs. Persistent Data
+
+### Docker image
+
+The Docker image contains:
+
+- Application runtime
+- Node dependencies
+- Next.js build
+- Prisma client
+- Prisma schema
+- Public assets
+- Entrypoint script
+- Other application files required at runtime
+
+### Unraid volume
+
+The Unraid volume contains:
+
+```text
+/mnt/user/appdata/financial-review/data/
+```
+
+including:
+
+```text
+prod.db
+backups/
+```
+
+Application code changes require a new Docker image.
+
+Database changes do not require rebuilding the Docker image.
+
+---
+
+## Useful Docker Commands
+
+View local images:
+
+```powershell
+docker images afbeals/finapp
+```
+
+View running containers:
+
+```powershell
+docker ps
+```
+
+View all containers:
+
+```powershell
+docker ps -a
+```
+
+View container logs:
+
+```powershell
+docker logs -f <container-name>
+```
+
+Stop a container:
+
+```powershell
+docker stop <container-name>
+```
+
+Remove a container:
+
+```powershell
+docker rm <container-name>
+```
+
+---
+
+## Quick Reference
+
+### Build
+
+```powershell
+yarn docker:build
+```
+
+### Tag
+
+```powershell
+yarn docker:tag
+```
+
+### Test
+
+```powershell
+yarn docker:test
+```
+
+### Push
+
+```powershell
+yarn docker:push
+```
+
+### Full release
+
+```powershell
+yarn docker:release
+```
+
+### Version
+
+```powershell
+yarn version --new-version 2.1.0
+```
+
+### Docker tags
+
+```text
+afbeals/finapp:<version>
+afbeals/finapp:latest
+```
+
+### Production database
+
+```text
+Unraid:
+/mnt/user/appdata/financial-review/data/prod.db
+
+Container:
+/app/data/prod.db
+```
+
+### Production application
+
+```text
+Docker Hub:
+afbeals/finapp:latest
+
+Unraid:
+Host port 8775 → Container port 8775
+```

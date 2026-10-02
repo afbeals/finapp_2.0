@@ -15,6 +15,12 @@ RUN yarn install --frozen-lockfile
 FROM base AS builder
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
+
+# Prisma config requires DATABASE_URL during build.
+# This is only a temporary build-time value; production uses
+# the DATABASE_URL supplied to the running container.
+ENV DATABASE_URL="file:/tmp/build.db"
+
 RUN npx prisma generate
 RUN yarn build
 

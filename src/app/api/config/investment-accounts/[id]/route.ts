@@ -1,13 +1,29 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { z } from 'zod';
-import { prisma } from '@/lib/db';
-import { requireHouseholdResource, badRequest, conflict } from '@/lib/apiGuards';
+import { NextRequest, NextResponse } from "next/server";
+import type { Prisma } from "@prisma/client";
+import { z } from "zod";
+import { prisma } from "@/lib/db";
+import {
+  requireHouseholdResource,
+  badRequest,
+  conflict,
+} from "@/lib/apiGuards";
 
 type Params = { params: Promise<{ id: string }> };
 
 const patchSchema = z.object({
   name: z.string().min(1).max(128).optional(),
-  type: z.enum(['TAXABLE', 'TRADITIONAL_401K', 'ROTH_401K', 'TRADITIONAL_IRA', 'ROTH_IRA', 'HSA', 'ROBO_ADVISOR', 'OTHER']).optional(),
+  type: z
+    .enum([
+      "TAXABLE",
+      "TRADITIONAL_401K",
+      "ROTH_401K",
+      "TRADITIONAL_IRA",
+      "ROTH_IRA",
+      "HSA",
+      "ROBO_ADVISOR",
+      "OTHER",
+    ])
+    .optional(),
   institution: z.string().max(128).optional(),
   ownerMemberId: z.number().int().positive().nullable().optional(),
 });
@@ -19,15 +35,32 @@ export async function PATCH(req: NextRequest, { params }: Params) {
     (id) => prisma.investmentAccount.findUnique({ where: { id } }),
     id,
   ).catch(() => null);
-  if (!result) return NextResponse.json({ error: 'Not found' }, { status: 404 });
+  if (!result)
+    return NextResponse.json({ error: "Not found" }, { status: 404 });
 
   const body = await req.json().catch(() => null);
   const parsed = patchSchema.safeParse(body);
-  if (!parsed.success) return badRequest('Invalid request', parsed.error.issues);
+  if (!parsed.success)
+    return badRequest("Invalid request", parsed.error.issues);
+
+  const updateData: Prisma.InvestmentAccountUncheckedUpdateInput = {
+    ...(parsed.data.name !== undefined && { name: parsed.data.name }),
+    ...(parsed.data.type !== undefined && {
+      type: parsed.data
+        .type as Prisma.InvestmentAccountUncheckedUpdateInput["type"],
+    }),
+    ...(parsed.data.institution !== undefined && {
+      institution: parsed.data.institution,
+    }),
+    ...(parsed.data.ownerMemberId !== undefined && {
+      ownerMemberId: parsed.data
+        .ownerMemberId as Prisma.InvestmentAccountUncheckedUpdateInput["ownerMemberId"],
+    }),
+  };
 
   const updated = await prisma.investmentAccount.update({
     where: { id },
-    data: parsed.data,
+    data: updateData,
     include: { owner: { select: { id: true, name: true, color: true } } },
   });
   return NextResponse.json({ account: updated });
@@ -40,20 +73,32 @@ export async function DELETE(req: NextRequest, { params }: Params) {
     (id) => prisma.investmentAccount.findUnique({ where: { id } }),
     id,
   ).catch(() => null);
-  if (!result) return NextResponse.json({ error: 'Not found' }, { status: 404 });
+  if (!result)
+    return NextResponse.json({ error: "Not found" }, { status: 404 });
 
-  const purchaseCount = await prisma.purchase.count({ where: { accountId: id } });
+  const purchaseCount = await prisma.purchase.count({
+    where: { accountId: id },
+  });
   const body = await req.json().catch(() => ({}));
   const transferToId: number | undefined = body?.transferToId;
   const force: boolean = body?.force === true;
 
-  if (purchaseCount > 0 && !transferToId && !force) return conflict({ inUse: true, purchaseCount });
+  if (purchaseCount > 0 && !transferToId && !force)
+    return conflict({ inUse: true, purchaseCount });
 
   if (purchaseCount > 0 && transferToId) {
-    const target = await prisma.investmentAccount.findUnique({ where: { id: transferToId } });
+    const target = await prisma.investmentAccount.findUnique({
+      where: { id: transferToId },
+    });
     if (!target || target.householdId !== result.session.householdId)
-      return NextResponse.json({ error: 'Transfer target not found' }, { status: 400 });
-    await prisma.purchase.updateMany({ where: { accountId: id }, data: { accountId: transferToId } });
+      return NextResponse.json(
+        { error: "Transfer target not found" },
+        { status: 400 },
+      );
+    await prisma.purchase.updateMany({
+      where: { accountId: id },
+      data: { accountId: transferToId },
+    });
   }
 
   await prisma.investmentAccount.delete({ where: { id } });

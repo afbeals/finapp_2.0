@@ -1,37 +1,58 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { z } from 'zod';
-import { prisma } from '@/lib/db';
-import { requireAuth, badRequest } from '@/lib/apiGuards';
+import { NextRequest, NextResponse } from "next/server";
+import type { Prisma } from "@prisma/client";
+import { z } from "zod";
+import { prisma } from "@/lib/db";
+import { requireAuth, badRequest } from "@/lib/apiGuards";
 
 export async function GET() {
   const session = await requireAuth().catch(() => null);
-  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  if (!session)
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const accounts = await prisma.investmentAccount.findMany({
     where: { householdId: session.householdId },
     include: { owner: { select: { id: true, name: true, color: true } } },
-    orderBy: [{ type: 'asc' }, { name: 'asc' }],
+    orderBy: [{ type: "asc" }, { name: "asc" }],
   });
   return NextResponse.json({ accounts });
 }
 
 const createSchema = z.object({
   name: z.string().min(1).max(128),
-  type: z.enum(['TAXABLE', 'TRADITIONAL_401K', 'ROTH_401K', 'TRADITIONAL_IRA', 'ROTH_IRA', 'HSA', 'ROBO_ADVISOR', 'OTHER']),
-  institution: z.string().max(128).default(''),
+  type: z.enum([
+    "TAXABLE",
+    "TRADITIONAL_401K",
+    "ROTH_401K",
+    "TRADITIONAL_IRA",
+    "ROTH_IRA",
+    "HSA",
+    "ROBO_ADVISOR",
+    "OTHER",
+  ]),
+  institution: z.string().max(128).default(""),
   ownerMemberId: z.number().int().positive().nullable().default(null),
 });
 
 export async function POST(req: NextRequest) {
   const session = await requireAuth().catch(() => null);
-  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  if (!session)
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const body = await req.json().catch(() => null);
   const parsed = createSchema.safeParse(body);
-  if (!parsed.success) return badRequest('Invalid request', parsed.error.issues);
+  if (!parsed.success)
+    return badRequest("Invalid request", parsed.error.issues);
 
   const account = await prisma.investmentAccount.create({
-    data: { householdId: session.householdId, ...parsed.data },
+    data: {
+      householdId: session.householdId,
+      name: parsed.data.name,
+      type: parsed.data
+        .type as Prisma.InvestmentAccountUncheckedCreateInput["type"],
+      institution: parsed.data.institution,
+      ownerMemberId: parsed.data
+        .ownerMemberId as Prisma.InvestmentAccountUncheckedCreateInput["ownerMemberId"],
+    },
     include: { owner: { select: { id: true, name: true, color: true } } },
   });
   return NextResponse.json({ account }, { status: 201 });

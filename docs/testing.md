@@ -192,17 +192,28 @@ describe("POST /api/reviews/[id]/expenses", () => {
 
 ## End-to-End Tests (Playwright)
 
-Playwright tests live in the `tests/` directory and run against a live dev server.
+Playwright tests live in `tests/e2e`. Build the application before running them:
 
 ```bash
-# Start dev server first (in one terminal)
-yarn dev
-
-# Run e2e tests (in another terminal)
-yarn test:e2e
+npm run build
+npx playwright install chromium webkit
+npm run test:e2e
 ```
 
-The Playwright config is at `playwright.config.ts`.
+The runner starts a production server on port 8775 with a temporary SQLite database
+and seeded household data. It removes the database when the server stops and refuses
+to reuse an existing server. Keep that port free; no production database is used.
+
+The desktop Chromium, Pixel Chromium and iPhone WebKit projects cover copying across
+the year boundary, member/shared ownership, transient copied-row colors, editing and
+return navigation. The layout audit covers all review steps, dashboard, configuration
+and history at 320, 390, 768 and 1440 pixels; mobile screenshots are kept in test results.
+Component regressions also cover cancelled/failed edits and retrying partial copies
+without duplicating successful entries.
+
+`.github/workflows/quality.yml` runs lint, types, the full Vitest suite, a production
+build, and browser regressions on pull requests. Failure traces and screenshots are
+available in the uploaded browser-regressions artifact.
 
 ---
 

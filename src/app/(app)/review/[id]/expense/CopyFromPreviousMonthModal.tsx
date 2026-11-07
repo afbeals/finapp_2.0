@@ -4,6 +4,8 @@ import { useEffect, useMemo, useState } from 'react';
 import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
 import { apiGet, createExpenseEntry, createIncomeEntry } from '@/lib/api';
+import { MemberBadge } from './AccordionShared';
+import { theme } from '@/styles/tokens';
 import { formatDollars } from '@/lib/money';
 import type { ExpenseEntry, IncomeEntry } from '@/types/entities';
 import type { ReviewPeriod } from '@/types/review';
@@ -16,7 +18,6 @@ interface CopyFromPreviousMonthModalProps {
   reviewId: string;
   periodYear: number;
   periodMonth: number;
-  currentMemberId: number | null;
   onClose: () => void;
   onCopied: (result: { income: IncomeEntry[]; expenses: ExpenseEntry[] }) => void;
 }
@@ -32,7 +33,7 @@ function toggleId(set: Set<number>, id: number): Set<number> {
 }
 
 export function CopyFromPreviousMonthModal({
-  reviewId, periodYear, periodMonth, currentMemberId, onClose, onCopied,
+  reviewId, periodYear, periodMonth, onClose, onCopied,
 }: CopyFromPreviousMonthModalProps) {
   const { year: prevYear, month: prevMonth } = previousPeriod(periodYear, periodMonth);
 
@@ -43,6 +44,7 @@ export function CopyFromPreviousMonthModal({
   const [selectedIncome, setSelectedIncome] = useState<Set<number>>(new Set());
   const [selectedExpenses, setSelectedExpenses] = useState<Set<number>>(new Set());
   const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
 
   useEffect(() => {
     let cancelled = false;
@@ -80,8 +82,9 @@ export function CopyFromPreviousMonthModal({
 
   async function handleCopy() {
     setSaving(true);
+    setError('');
     try {
-      const copiedIncome = await Promise.all(
+      const copiedIncome = await Promise.allSettled(
         income.filter((e) => selectedIncome.has(e.id)).map((e) =>
           createIncomeEntry(reviewId, {
             memberId: e.member.id,
@@ -91,11 +94,11 @@ export function CopyFromPreviousMonthModal({
           }).then((d) => d.entry)
         )
       );
-      const copiedExpenses = await Promise.all(
+      const copiedExpenses = await Promise.allSettled(
         expenses.filter((e) => selectedExpenses.has(e.id)).map((e) =>
           createExpenseEntry(reviewId, {
             categoryId: e.category.id,
-            memberId: e.member?.id ?? currentMemberId ?? null,
+            memberId: e.member?.id ?? null,
             name: e.name,
             notes: e.notes ?? undefined,
             amount: e.amount,
@@ -103,8 +106,16 @@ export function CopyFromPreviousMonthModal({
           }).then((d) => d.entry)
         )
       );
-      onCopied({ income: copiedIncome, expenses: copiedExpenses });
-      onClose();
+      const successfulIncome = copiedIncome.flatMap((result) => result.status === 'fulfilled' ? [result.value] : []);
+      const successfulExpenses = copiedExpenses.flatMap((result) => result.status === 'fulfilled' ? [result.value] : []);
+      onCopied({ income: successfulIncome, expenses: successfulExpenses });
+      const sourceIncome = income.filter((e) => selectedIncome.has(e.id));
+      const sourceExpenses = expenses.filter((e) => selectedExpenses.has(e.id));
+      setSelectedIncome(new Set(sourceIncome.filter((_, i) => copiedIncome[i].status === 'rejected').map((e) => e.id)));
+      setSelectedExpenses(new Set(sourceExpenses.filter((_, i) => copiedExpenses[i].status === 'rejected').map((e) => e.id)));
+      if ([...copiedIncome, ...copiedExpenses].some((result) => result.status === 'rejected')) {
+        setError('Some entries could not be copied. Your successful copies were kept; retry the remaining selections.');
+      } else onClose();
     } finally {
       setSaving(false);
     }
@@ -127,6 +138,7 @@ export function CopyFromPreviousMonthModal({
         </>
       }
     >
+      {error && <p role="alert">{error}</p>}
       {loading ? (
         <EmptyMessage>Loading…</EmptyMessage>
       ) : !prevReviewFound ? (
@@ -155,6 +167,7 @@ export function CopyFromPreviousMonthModal({
                     onChange={() => setSelectedIncome(toggleId(selectedIncome, e.id))}
                   />
                   <EntryName>{e.name}</EntryName>
+                  <MemberBadge memberColor={e.member?.color ?? theme.colors.textMuted}>{e.member?.name ?? 'Shared'}</MemberBadge>
                   <EntryAmount>{formatDollars(e.amount)}</EntryAmount>
                 </EntryRow>
               ))}
@@ -185,6 +198,7 @@ export function CopyFromPreviousMonthModal({
                     onChange={() => setSelectedExpenses(toggleId(selectedExpenses, e.id))}
                   />
                   <EntryName>{e.name}</EntryName>
+                  <MemberBadge memberColor={e.member?.color ?? theme.colors.textMuted}>{e.member?.name ?? 'Shared'}</MemberBadge>
                   <EntryAmount>{formatDollars(e.amount)}</EntryAmount>
                 </EntryRow>
               ))}

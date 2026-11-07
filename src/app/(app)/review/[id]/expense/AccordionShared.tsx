@@ -32,6 +32,8 @@ export const AccordionHeader = styled.button.withConfig({
   cursor: pointer;
   text-align: left;
   border-radius: ${radius.lg} ${radius.lg} 0 0;
+
+  @media (max-width: 640px) { padding: 12px; flex-wrap: wrap; gap: 8px; }
 `;
 
 export const AccordionIcon = styled.span`font-size: ${font.size['2xl']}; flex-shrink: 0;`;
@@ -43,6 +45,8 @@ export const AccordionName = styled.span.withConfig({
   font-size: ${font.size.base};
   font-weight: ${font.weight.bold};
   color: ${({ textColor }) => textColor};
+
+  min-width: 0; overflow-wrap: anywhere;
 `;
 
 export const AccordionCount = styled.span.withConfig({
@@ -72,11 +76,27 @@ export const AccordionChevron = styled.span.withConfig({
   flex-shrink: 0;
 `;
 
-export const AccordionBody = styled.div`background: ${colors.surface};`;
+export const AccordionBody = styled.div`background: ${colors.surface};
+  @media (max-width: 640px) {
+  table, tbody { display: block; width: 100%; }
+  thead { position: absolute; width: 1px; height: 1px; padding: 0; clip-path: inset(50%); overflow: hidden; }
+  tr { display: grid; grid-template-columns: minmax(0, 1fr) auto; padding: 10px; gap: 4px; border-bottom: 1px solid ${colors.border}; }
+  td { display: block; min-width: 0; padding: 6px; white-space: normal; overflow-wrap: anywhere; border: none; }
+  td[data-label]::before { content: attr(data-label); display: block; font-size: 11px; color: ${colors.textMuted}; margin-bottom: 4px; }
+  td:first-child, td:nth-child(4) { grid-column: 1 / -1; }
+  td:last-child { grid-column: 2; justify-self: end; }
+  input { max-width: 100%; min-height: 40px; }
+}
+`;
 
 // ─── Entry table — canonical DataTable parts re-exported under accordion names ──
 
-export { DTable as EntryTable, DThead as EntryThead, DTh as EntryTh, DTr as EntryTr, DTd as EntryTd };
+export { DTable as EntryTable, DThead as EntryThead, DTh as EntryTh, DTd as EntryTd };
+export const EntryTr = styled(DTr)<{ $copied: boolean }>`
+  &, &:nth-child(even) {
+    background: ${({ $copied }) => $copied ? colors.warningLight : colors.surface};
+  }
+`;
 
 // ─── Editable cell — delegates to shared InlineEdit ───────────────────────────
 
@@ -220,11 +240,6 @@ export function AutocompleteInput({
     const data = await apiGet<{ names: string[] }>(buildUrl(q)).catch(() => null);
     if (data) { setSuggestions(data.names ?? []); setOpen((data.names ?? []).length > 0); }
   }
-
-  React.useEffect(() => {
-    fetchSuggestions(value);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
     const v = e.target.value;

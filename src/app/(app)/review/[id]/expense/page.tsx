@@ -26,6 +26,10 @@ import { GroupSeparator, SummaryBar, SummaryLabel, SummaryValue } from './Expens
 export default function ExpensePage() {
   const params = useParams();
   const reviewId = params.id as string;
+  return <ExpenseEntries key={reviewId} reviewId={reviewId} />;
+}
+
+function ExpenseEntries({ reviewId }: { reviewId: string }) {
   const { state: reviewState } = useReviewStore();
   const { state: sessionState } = useSessionStore();
   const { goNext, saving } = useStepNav('expense');
@@ -39,6 +43,9 @@ export default function ExpensePage() {
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(false);
   const [showCopyModal, setShowCopyModal] = useState(false);
+  const [copiedIncomeIds, setCopiedIncomeIds] = useState<Set<number>>(new Set());
+  const [copiedExpenseIds, setCopiedExpenseIds] = useState<Set<number>>(new Set());
+  const [entryError, setEntryError] = useState('');
 
   useEffect(() => {
     Promise.all([
@@ -54,14 +61,26 @@ export default function ExpensePage() {
 
   const handleUpdateIncome = useCallback(async (id: number, field: 'name' | 'notes' | 'amount', value: string) => {
     const payload = field === 'amount' ? { amount: toCents(parseFloat(value)) } : { [field]: value };
-    const data = await apiPatch<{ entry: IncomeEntry }>(`/api/reviews/${reviewId}/income/${id}`, payload);
-    setIncome((prev) => prev.map((e) => e.id === id ? { ...e, ...data.entry } : e));
+    setEntryError('');
+    try {
+      const data = await apiPatch<{ entry: IncomeEntry }>(`/api/reviews/${reviewId}/income/${id}`, payload);
+      setIncome((prev) => prev.map((e) => e.id === id ? { ...e, ...data.entry } : e));
+      setCopiedIncomeIds((previous) => { const next = new Set(previous); next.delete(id); return next; });
+    } catch {
+      setEntryError('Could not save the entry. Please try again.');
+    }
   }, [reviewId]);
 
   const handleUpdateExpense = useCallback(async (id: number, field: 'name' | 'notes' | 'amount', value: string) => {
     const payload = field === 'amount' ? { amount: toCents(parseFloat(value)) } : { [field]: value };
-    const data = await apiPatch<{ entry: ExpenseEntry }>(`/api/reviews/${reviewId}/expenses/${id}`, payload);
-    setExpenses((prev) => prev.map((e) => e.id === id ? { ...e, ...data.entry } : e));
+    setEntryError('');
+    try {
+      const data = await apiPatch<{ entry: ExpenseEntry }>(`/api/reviews/${reviewId}/expenses/${id}`, payload);
+      setExpenses((prev) => prev.map((e) => e.id === id ? { ...e, ...data.entry } : e));
+      setCopiedExpenseIds((previous) => { const next = new Set(previous); next.delete(id); return next; });
+    } catch {
+      setEntryError('Could not save the entry. Please try again.');
+    }
   }, [reviewId]);
 
   const handleDeleteIncome = useCallback(async (id: number) => {
@@ -93,7 +112,11 @@ export default function ExpensePage() {
     <StepShell
       title={STEP_META.expense.title}
       subtitle={STEP_META.expense.subtitle}
-      onNext={goNext}
+      onNext={async () => {
+        await goNext();
+        setCopiedIncomeIds(new Set());
+        setCopiedExpenseIds(new Set());
+      }}
       saving={saving}
       readOnly={readOnly}
       extraActions={!readOnly && (
@@ -102,14 +125,16 @@ export default function ExpensePage() {
         </Button>
       )}
     >
+      {entryError && <p role="alert">{entryError}</p>}
       {showCopyModal && reviewState.activeReview && (
         <CopyFromPreviousMonthModal
           reviewId={reviewId}
           periodYear={reviewState.activeReview.periodYear}
           periodMonth={reviewState.activeReview.periodMonth}
-          currentMemberId={currentMemberId}
           onClose={() => setShowCopyModal(false)}
           onCopied={({ income: newIncome, expenses: newExpenses }) => {
+            setCopiedIncomeIds((prev) => new Set([...prev, ...newIncome.map((e) => e.id)]));
+            setCopiedExpenseIds((prev) => new Set([...prev, ...newExpenses.map((e) => e.id)]));
             setIncome((prev) => [...prev, ...newIncome]);
             setExpenses((prev) => [...prev, ...newExpenses]);
           }}
@@ -117,6 +142,7 @@ export default function ExpensePage() {
       )}
 
       <IncomeAccordion
+        copiedIds={copiedIncomeIds}
         entries={income}
         members={sessionState.members}
         reviewId={reviewId}
@@ -133,6 +159,7 @@ export default function ExpensePage() {
         <CategoryAccordion
           key={cat.id}
           category={cat}
+          copiedIds={copiedExpenseIds}
           entries={expenses.filter((e) => e.category.id === cat.id)}
           reviewId={reviewId}
           readOnly={readOnly}

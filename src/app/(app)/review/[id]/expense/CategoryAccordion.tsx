@@ -19,6 +19,7 @@ import {
 
 interface CategoryAccordionProps {
   category: Category;
+  copiedIds: ReadonlySet<number>;
   entries: ExpenseEntry[];
   reviewId: string;
   readOnly: boolean;
@@ -30,7 +31,7 @@ interface CategoryAccordionProps {
 }
 
 export const CategoryAccordion = React.memo(function CategoryAccordion({
-  category, entries, reviewId, readOnly, currentMemberId, currentMember, onAdd, onDelete, onUpdate,
+  copiedIds, category, entries, reviewId, readOnly, currentMemberId, currentMember, onAdd, onDelete, onUpdate,
 }: CategoryAccordionProps) {
   const [open, setOpen] = useState(false);
   const [newRow, setNewRow] = useState<NewRow | null>(null);
@@ -80,16 +81,16 @@ export const CategoryAccordion = React.memo(function CategoryAccordion({
             </EntryThead>
             <tbody>
               {entries.map((e) => (
-                <EntryTr key={e.id}>
-                  <EntryTd><EditableCell value={e.name} readOnly={readOnly} onSave={(v) => onUpdate(e.id, 'name', v)} /></EntryTd>
-                  <EntryTd><EditableCell value={toDollars(e.amount).toFixed(2)} isAmount allowDelta readOnly={readOnly} onSave={(v) => onUpdate(e.id, 'amount', v)} /></EntryTd>
-                  <EntryTd>
+                <EntryTr key={e.id} $copied={copiedIds.has(e.id)} title={copiedIds.has(e.id) ? "Copied from previous month" : undefined}>
+                  <EntryTd data-label="Name"><EditableCell value={e.name} readOnly={readOnly} onSave={(v) => onUpdate(e.id, 'name', v)} /></EntryTd>
+                  <EntryTd data-label="Amount"><EditableCell value={toDollars(e.amount).toFixed(2)} isAmount allowDelta readOnly={readOnly} onSave={(v) => onUpdate(e.id, 'amount', v)} /></EntryTd>
+                  <EntryTd data-label="Entered by">
                     {e.member
                       ? <MemberBadge memberColor={e.member.color}>{e.member.name}</MemberBadge>
                       : <MemberBadge memberColor={colors.textMuted}>Shared</MemberBadge>}
                   </EntryTd>
-                  <EntryTd><EditableCell value={e.notes ?? ''} readOnly={readOnly} onSave={(v) => onUpdate(e.id, 'notes', v)} /></EntryTd>
-                  <EntryTd>{!readOnly && <TrashBtn onClick={() => onDelete(e.id)}>🗑</TrashBtn>}</EntryTd>
+                  <EntryTd data-label="Notes"><EditableCell value={e.notes ?? ''} readOnly={readOnly} onSave={(v) => onUpdate(e.id, 'notes', v)} /></EntryTd>
+                  <EntryTd>{!readOnly && <TrashBtn aria-label={`Delete ${e.name}`} onClick={() => onDelete(e.id)}>🗑</TrashBtn>}</EntryTd>
                 </EntryTr>
               ))}
 

@@ -12,7 +12,7 @@ async function login(page: Page) {
   return members as { id: number; name: string }[];
 }
 
-test('copy preserves ownership, highlights only this visit, and allows unchanged entries', async ({ page }, info) => {
+test('copy preserves ownership, highlights only this visit, and allows unchanged entries', async ({ page, isMobile }, info) => {
   const members = await login(page);
   const year = 2080 + ['chromium', 'mobile-chromium', 'mobile-webkit'].indexOf(info.project.name);
   const { review: previous } = await jsonPost(page.request, '/api/reviews', { periodYear: year, periodMonth: 12, type: 'MONTHLY' });
@@ -40,6 +40,7 @@ test('copy preserves ownership, highlights only this visit, and allows unchanged
   await expect(shared).toHaveAttribute('title', 'Copied from previous month');
   await expect(salary).toHaveAttribute('title', 'Copied from previous month');
   await personal.locator('[title="Click to edit"]').first().click();
+  if (isMobile) expect(await page.getByRole('textbox').evaluate(el => parseFloat(getComputedStyle(el).fontSize))).toBeGreaterThanOrEqual(16);
   await page.getByRole('textbox').fill('Changed groceries');
   await page.getByRole('textbox').press('Enter');
   await expect(personal).toHaveCount(0);

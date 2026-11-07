@@ -56,7 +56,7 @@ const GlobalStyles = createGlobalStyle`
   img, svg { max-width: 100%; }
   :focus-visible { outline: 2px solid ${colors.primary}; outline-offset: 3px; }
   @media (max-width: 640px) {
-    input, select, textarea { font-size: 16px; }
+    input, select, textarea, input[class], select[class], textarea[class] { font-size: 16px; }
     button, [role="button"] { min-height: 44px; }
   }
 

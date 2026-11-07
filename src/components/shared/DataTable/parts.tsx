@@ -7,12 +7,14 @@ const { colors, font, semanticColors } = theme;
 
 // ─── Scroll wrapper ───────────────────────────────────────────────────────────
 
-export const TableScroll = styled.div`
+export const TableScroll = styled.div.attrs({ role: 'region', tabIndex: 0, 'aria-label': 'Financial data table' })`
   overflow-x: auto;
   scrollbar-width: thin;
   scrollbar-color: ${colors.border} transparent;
   &::-webkit-scrollbar { height: 6px; }
   &::-webkit-scrollbar-thumb { background: ${colors.border}; border-radius: 3px; }
+
+max-width: 100%; min-width: 0;
 `;
 
 // ─── Table ─────────────────────────────────────────────────────────────────────

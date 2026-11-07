@@ -36,7 +36,7 @@ export const PieCardTitle = styled.p`
 export const PieLegend = styled.div`
   margin-top: 6px;
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 3px 6px;
 `;
 

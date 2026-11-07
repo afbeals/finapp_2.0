@@ -52,6 +52,14 @@ const GlobalStyles = createGlobalStyle`
     line-height: ${font.lineHeight.tight};
   }
 
+  main, section, article { min-width: 0; }
+  img, svg { max-width: 100%; }
+  :focus-visible { outline: 2px solid ${colors.primary}; outline-offset: 3px; }
+  @media (max-width: 640px) {
+    input, select, textarea { font-size: 16px; }
+    button, [role="button"] { min-height: 44px; }
+  }
+
   /* Scrollbar */
   ::-webkit-scrollbar {
     width: 6px;

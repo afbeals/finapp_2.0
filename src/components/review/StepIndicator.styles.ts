@@ -7,6 +7,8 @@ export const Wrapper = styled.div`
   background: ${colors.surface};
   border-bottom: 1px solid ${colors.border};
   padding: ${spacing[4]} ${spacing[6]};
+
+  @media (max-width: 640px) { padding: 12px; }
 `;
 
 export const Inner = styled.div`
@@ -36,6 +38,8 @@ export const ContentRow = styled.div`
   display: flex;
   align-items: flex-start;
   gap: ${spacing[4]};
+
+  @media (max-width: 640px) { flex-direction: column; }
 `;
 
 export const StepsArea = styled.div`
@@ -43,6 +47,8 @@ export const StepsArea = styled.div`
   display: flex;
   align-items: flex-start;
   min-width: 0;
+
+  @media (max-width: 640px) { width: 100%; overflow-x: auto; padding-bottom: 8px; flex: auto; }
 `;
 
 export const BADGE_H = 20;
@@ -159,6 +165,8 @@ export const Legend = styled.div`
   flex-direction: column;
   gap: 4px;
   min-width: 140px;
+
+  @media (max-width: 640px) { width: 100%; flex-direction: row; flex-wrap: wrap; gap: 8px 12px; }
 `;
 
 export const LegendTitle = styled.p`

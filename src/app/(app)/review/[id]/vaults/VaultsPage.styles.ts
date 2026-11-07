@@ -45,7 +45,9 @@ export const AddRowBtn = styled.button`
   &:hover { background: ${colors.bg}; color: ${colors.textPrimary}; border-color: ${colors.primary}; }
 `;
 
-export const TableWrap = styled.div`overflow-x: auto;`;
+export const TableWrap = styled.div`overflow-x: auto;
+  max-width: 100%; min-width: 0;
+`;
 export const FTable = styled.table`width: 100%; border-collapse: collapse; font-size: ${font.size.sm}; min-width: 860px;`;
 export const FThead = styled.thead`background: ${colors.bg}; position: sticky; top: 0; z-index: 1;`;
 export const FTh = styled.th.withConfig({ shouldForwardProp: (p) => !['right', 'w', 'center'].includes(p) })<{ right?: boolean; w?: number; center?: boolean }>`

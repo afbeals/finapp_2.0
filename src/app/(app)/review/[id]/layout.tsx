@@ -17,24 +17,21 @@ export default function ReviewLayout({ children }: { children: React.ReactNode }
   const reviewId = params.id as string;
   const { state, actions } = useReviewStore();
   const [showEnableEdit, setShowEnableEdit] = useState(false);
-  const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
     if (state.activeReview?.id === Number(reviewId)) {
-      setLoaded(true);
       return;
     }
 
     apiGet<{ review: ActiveReview }>(`/api/reviews/${reviewId}`)
       .then((data) => {
         actions.setActiveReview(data.review);
-        setLoaded(true);
       })
       .catch(() => router.replace('/dashboard'));
   // intentional: only re-fetch when reviewId changes, not on every render cycle
   }, [reviewId]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  if (!loaded) {
+  if (state.activeReview?.id !== Number(reviewId)) {
     return <LoadingState centered />;
   }
 

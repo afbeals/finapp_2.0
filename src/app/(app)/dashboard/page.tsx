@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { theme } from '@/styles/tokens';
 import {
@@ -51,31 +51,22 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(false);
   const [showNewModal, setShowNewModal] = useState(false);
-  const [selectedHistoryId, setSelectedHistoryId] = useState<number | null>(null);
+  const [chosenHistoryId, setSelectedHistoryId] = useState<number | null>(null);
 
-  const load = useCallback(async () => {
-    try {
-      const { reviews: data } = await apiGet<{ reviews: Review[] }>('/api/reviews');
+  useEffect(() => {
+    let active = true;
+    apiGet<{ reviews: Review[] }>('/api/reviews').then(({ reviews: data }) => {
+      if (!active) return;
       setReviews(data);
-      const active = data.find((r: Review) => r.status === 'IN_PROGRESS');
-      reviewActions.setActiveReview(active ?? null);
-    } catch {
-      setLoadError(true);
-    } finally {
-      setLoading(false);
-    }
+      reviewActions.setActiveReview(data.find((r) => r.status === 'IN_PROGRESS') ?? null);
+    }).catch(() => { if (active) setLoadError(true); }).finally(() => { if (active) setLoading(false); });
+    return () => { active = false; };
   }, [reviewActions]);
-
-  useEffect(() => { load(); }, [load]);
 
   const activeReview = reviews.find((r) => r.status === 'IN_PROGRESS');
   const history = reviews.filter((r) => r.status !== 'IN_PROGRESS');
 
-  useEffect(() => {
-    if (history.length > 0 && selectedHistoryId === null) {
-      setSelectedHistoryId(history[0].id);
-    }
-  }, [history, selectedHistoryId]);
+  const selectedHistoryId = chosenHistoryId ?? history[0]?.id ?? null;
 
   function handleContinueReview() {
     if (!activeReview) return;
@@ -188,6 +179,7 @@ export default function DashboardPage() {
         <p style={{ color: colors.textMuted, fontSize: font.size.base }}>No completed reviews yet.</p>
       ) : (
         <Card padding="sm">
+          <div role="region" aria-label="Review history" tabIndex={0} style={{ overflowX: 'auto' }}>
           <Table>
             <Thead>
               <tr>
@@ -237,6 +229,7 @@ export default function DashboardPage() {
               })}
             </tbody>
           </Table>
+          </div>
         </Card>
       )}
 

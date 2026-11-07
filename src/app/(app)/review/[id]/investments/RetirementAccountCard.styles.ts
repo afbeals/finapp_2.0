@@ -101,7 +101,7 @@ export const Kpi = styled.div`
   border: 1px solid ${colors.border};
   border-radius: ${radius.md};
   padding: 10px 14px;
-  min-width: 140px;
+  min-width: min(140px, 100%);
   flex: 1;
 `;
 

@@ -16,6 +16,8 @@ export const Overlay = styled.div`
   z-index: 50;
   padding: 16px;
   animation: ${fadeIn} 150ms ease;
+
+  @media (max-width: 640px) { padding: 8px; }
 `;
 
 export const Dialog = styled.div.withConfig({
@@ -29,6 +31,8 @@ export const Dialog = styled.div.withConfig({
   max-height: 90vh;
   overflow-y: auto;
   animation: ${slideUp} 200ms ease;
+
+max-height: 90dvh;
 `;
 
 export const ModalHeader = styled.div`
@@ -36,6 +40,8 @@ export const ModalHeader = styled.div`
   align-items: center;
   justify-content: space-between;
   padding: ${spacing[6]} ${spacing[6]} 0;
+
+  @media (max-width: 640px) { padding-left: 16px; padding-right: 16px; }
 `;
 
 export const ModalTitle = styled.h2`
@@ -61,10 +67,14 @@ export const CloseButton = styled.button`
     background: ${colors.bg};
     color: ${colors.textPrimary};
   }
+
+flex-shrink: 0;
 `;
 
 export const ModalBody = styled.div`
   padding: ${spacing[5]} ${spacing[6]};
+
+  @media (max-width: 640px) { padding-left: 16px; padding-right: 16px; }
 `;
 
 export const ModalFooter = styled.div`
@@ -73,4 +83,8 @@ export const ModalFooter = styled.div`
   justify-content: flex-end;
   gap: ${spacing[2]};
   padding: 0 ${spacing[6]} ${spacing[6]};
+
+  @media (max-width: 640px) { padding-left: 16px; padding-right: 16px; }
+
+flex-wrap: wrap;
 `;

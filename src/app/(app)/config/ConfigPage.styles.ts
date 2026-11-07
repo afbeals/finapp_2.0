@@ -8,6 +8,9 @@ export const Page = styled.div`
   max-width: 960px;
   margin: 0 auto;
   padding: ${spacing[8]} ${spacing[6]};
+
+  min-width: 0; > * { min-width: 0; }
+  @media (max-width: 640px) { padding: 20px 12px; }
 `;
 
 export const PageTitle = styled.h1`
@@ -26,6 +29,8 @@ export const ExportBox = styled.div`
   align-items: center;
   justify-content: space-between;
   margin-bottom: ${spacing[4]};
+
+  gap: 12px; flex-wrap: wrap;
 `;
 
 export const SubText = styled.p`

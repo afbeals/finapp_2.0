@@ -60,7 +60,7 @@ export const SectionLabel = styled.p`
 
 export const MemberGrid = styled.div`
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: ${spacing[3]};
   margin-bottom: ${spacing[6]};
 `;
@@ -134,7 +134,7 @@ export const PinDot = styled.div.withConfig({
 
 export const Keypad = styled.div`
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: ${spacing[2]};
   margin-bottom: ${spacing[6]};
 `;

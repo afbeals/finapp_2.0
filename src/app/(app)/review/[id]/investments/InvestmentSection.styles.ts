@@ -22,6 +22,8 @@ export const SectionHeaderRow = styled.div.withConfig({ shouldForwardProp: (p) =
   background: ${({ green }) => green ? semanticColors.successBg : colors.surface};
   border-bottom: 1px solid ${({ green }) => green ? colors.successLight : colors.border};
   &:hover { background: ${({ green }) => green ? colors.successLight : colors.primaryLight}; }
+
+  @media (max-width: 640px) { flex-wrap: wrap; padding: 12px; }
 `;
 
 export const Chevron = styled.span.withConfig({ shouldForwardProp: (p) => p !== 'open' && p !== 'green' })<{ open: boolean; green?: boolean }>`
@@ -37,6 +39,8 @@ export const SectionName = styled.span.withConfig({ shouldForwardProp: (p) => p 
   font-weight: ${font.weight.semibold};
   color: ${({ green }) => green ? semanticColors.successText : colors.textPrimary};
   min-width: 220px;
+
+  @media (max-width: 640px) { min-width: 0; flex: 1; overflow-wrap: anywhere; }
 `;
 
 export const HeaderStats = styled.div`
@@ -45,6 +49,8 @@ export const HeaderStats = styled.div`
   gap: 22px;
   flex: 1;
   flex-wrap: wrap;
+
+  @media (max-width: 640px) { flex-basis: 100%; gap: 12px; }
 `;
 
 export const HStat = styled.div`display: flex; flex-direction: column; gap: 1px;`;
@@ -82,6 +88,8 @@ export const SubHeader = styled.div`
   justify-content: flex-end;
   gap: 8px;
   margin-bottom: 12px;
+
+flex-wrap: wrap;
 `;
 
 export const FilterInput = styled.input`
@@ -94,6 +102,8 @@ export const FilterInput = styled.input`
   background: ${colors.bg} url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='13' height='13' viewBox='0 0 24 24' fill='none' stroke='%2364748B' stroke-width='2'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='m21 21-4.35-4.35'/%3E%3C/svg%3E") no-repeat 9px center;
   width: 200px;
   &:focus { outline: none; border-color: ${colors.primary}; }
+
+  max-width: 100%;
 `;
 
 export const FilterSelect = styled.select`
@@ -116,7 +126,9 @@ export const CollapseBtn = styled.button`
   &:hover { background: ${colors.bg}; }
 `;
 
-export const TableScroll = styled.div`overflow-x: auto;`;
+export const TableScroll = styled.div.attrs({ role: 'region', tabIndex: 0, 'aria-label': 'Financial data table' })`overflow-x: auto;
+  max-width: 100%; min-width: 0;
+`;
 
 export const HTable = styled.table`
   width: 100%;

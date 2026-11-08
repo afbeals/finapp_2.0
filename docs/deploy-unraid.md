@@ -9,6 +9,36 @@ just walks through using them on Unraid.
 
 ---
 
+## Current release and update quick reference
+
+For an existing installation, build on your local machine and publish to Docker Hub.
+Start Docker Desktop and run these commands from the Finapp checkout after merging the release changes:
+
+```sh
+git switch main
+git pull --ff-only
+docker login --username afbeals
+npm version patch --no-git-tag-version
+npm run docker:release
+```
+
+Commit the version change in `package.json` and any updated lockfile. Choose a fresh version for each release so older version tags remain useful for rollback.
+
+The shortcut builds, tags and pushes `afbeals/finapp:<package.json version>` and `afbeals/finapp:latest`. It does not run tests or update Unraid.
+For an Intel/AMD Unraid server, set `export DOCKER_DEFAULT_PLATFORM=linux/amd64` before building on an Apple Silicon Mac; in PowerShell use `$env:DOCKER_DEFAULT_PLATFORM = "linux/amd64"`.
+
+To inspect the exact image before publishing, run `npm run docker:build`, `npm run docker:tag`, then `npm run docker:test`. Open http://localhost:8775 and press Ctrl+C when finished. Publish that tested image with `npm run docker:push`; `docker:release` starts a fresh build.
+
+Before updating Unraid, take a consistent backup of the existing host data directory using the [backup procedure](#database-backups). In Unraid choose **Docker → Check for Updates → Update** for the container using `afbeals/finapp:latest`. Keep its existing production environment variables and its existing host directory mapped to `/app/data`. Then check `docker logs --tail=100 financial-review` and open `http://<unraid-ip>:8775/login`.
+
+If you manage the published image through Compose, the service must use `image: afbeals/finapp:latest`; pull it and run `docker compose up -d --no-build financial-review`. The repository's older build-based Compose file instead builds source on Unraid, as described in the legacy setup below.
+
+Updating an image reuses the mounted database; most startup errors also leave its files intact. Migrations modify the stored database, so a backup is still necessary. Normal updates do not require seeding or importing production data again.
+
+## Legacy setup: build directly on Unraid
+
+The following initial-setup steps describe the older source-build deployment. The Docker Hub workflow above and the detailed release reference later in this guide are the current approach.
+
 ## Prerequisites
 
 | Requirement                                                                                            | Notes                                                                |
@@ -115,9 +145,7 @@ git pull
 docker compose up -d --build
 ```
 
-Migrations run automatically on every container start (`prisma migrate deploy` is
-non-destructive — it only applies pending migrations), so a normal `git pull` +
-rebuild is enough for schema changes too.
+Migrations run automatically on every container start (`prisma migrate deploy`). Back up the mounted data before rebuilding: the effect on existing data depends on the migrations being applied.
 
 ---
 
@@ -133,15 +161,7 @@ rebuild is enough for schema changes too.
 
 ## Backing up
 
-The `data/` volume (`/mnt/user/appdata/financial-review/data` on the host) is exactly
-what needs to be backed up — it's plain SQLite files. Either back it up as part of your
-normal Unraid appdata backup (e.g. the CA Backup / Restore Appdata plugin), or run the
-app's own backup script from inside the container:
-
-```bash
-docker exec -it financial-review yarn db:backup
-# Creates data/backups/prod-YYYY-MM-DD-HHMM.db on the mounted volume
-```
+Back up the existing mounted `data/` directory using the [consistent backup procedure](#database-backups) below, or your Unraid appdata backup tool with the application stopped. Preserve the actual host path already mounted into your container.
 
 ---
 
@@ -165,9 +185,9 @@ Check `docker logs financial-review` — the entrypoint runs `prisma migrate dep
 before starting the server, so a failed migration will show up there before any
 Next.js output.
 
-### Port 3000 already in use on Unraid
+### Port 8775 already in use on Unraid
 
-Change the host side of the port mapping in `docker-compose.yml`, e.g. `"3001:3000"`,
+Change the host side of the port mapping in `docker-compose.yml`, e.g. `"8778:8775"`,
 then `docker compose up -d`.
 
 ### Need a shell inside the container
@@ -309,7 +329,7 @@ afbeals/finapp:latest
 When creating a new release, update the version:
 
 ```powershell
-yarn version --new-version 2.1.0
+npm version patch --no-git-tag-version
 ```
 
 The Docker scripts automatically use the new version.
@@ -449,7 +469,7 @@ afbeals/finapp:latest
 ### 1. Update the version
 
 ```powershell
-yarn version --new-version 2.1.0
+npm version patch --no-git-tag-version
 ```
 
 ### 2. Build
@@ -530,7 +550,7 @@ The production database URL and `SESSION_SECRET` should not be placed directly i
 Create the persistent data directory:
 
 ```text
-/mnt/user/appdata/finapp/data
+/mnt/user/appdata/financial-review/data
 ```
 
 ### Repository
@@ -554,7 +574,7 @@ Map:
 
 ```text
 Host:
-/mnt/user/appdata/finapp/data
+/mnt/user/appdata/financial-review/data
 
 Container:
 /app/data
@@ -649,7 +669,7 @@ Application updates are built on the Windows PC.
 Example:
 
 ```powershell
-yarn version --new-version 2.1.0
+npm version patch --no-git-tag-version
 yarn docker:build
 yarn docker:tag
 yarn docker:test
@@ -713,25 +733,20 @@ The production database remains mounted from:
 
 ## Database Backups
 
-The application provides a database backup command:
+Use the actual host directory already mapped to `/app/data`. This guide uses `/mnt/user/appdata/financial-review/data`; an older installation may use a different path. Confirm it in the Unraid container configuration before proceeding.
+
+Stop the application while archiving SQLite and its companion files so the backup is consistent:
 
 ```bash
-docker exec -it financial-review yarn db:backup
+docker stop financial-review
+sudo tar -czf "/mnt/user/appdata/financial-review/backup-$(date +%Y%m%d-%H%M%S).tar.gz" \
+  -C /mnt/user/appdata/financial-review data
+docker start financial-review
 ```
 
-Backups are stored at:
+Check that the archive command succeeded before continuing with an upgrade, and copy the archive to separate backup storage. Substitute your actual container name and mounted host path when they differ.
 
-```text
-/app/data/backups
-```
-
-Because `/app/data` is mounted to Unraid, they are stored on the host at:
-
-```text
-/mnt/user/appdata/financial-review/data/backups
-```
-
-These backups should also be included in the normal Unraid backup strategy.
+The current production image does not include the source backup script, so use this host-level procedure rather than invoking `yarn db:backup` inside the container. A normal update keeps the same `/app/data` mapping and production `SESSION_SECRET`, `DATABASE_URL` and `COOKIE_SECURE` settings. Image rollback does not roll back database migrations.
 
 ---
 
@@ -846,7 +861,7 @@ yarn docker:release
 ### Version
 
 ```powershell
-yarn version --new-version 2.1.0
+npm version patch --no-git-tag-version
 ```
 
 ### Docker tags

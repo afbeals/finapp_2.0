@@ -34,3 +34,7 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+
+## Docker release and update
+
+The existing `npm run docker:release` (or `yarn docker:release`) builds, tags and pushes `afbeals/finapp:<package.json version>` and `afbeals/finapp:latest`. See the [optional release notes](docs/deploy-unraid.md#optional-release-shortcut-and-update-notes) for shortcut behavior and conditional setup guidance. Existing release, backup and deployment workflows are retained.

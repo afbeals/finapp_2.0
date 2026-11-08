@@ -9,6 +9,24 @@ just walks through using them on Unraid.
 
 ---
 
+## Optional release shortcut and update notes
+
+The existing release, backup and deployment commands below remain available. Keep the process that already works for your installation, including its actual container name, host ports, data mounts, production environment settings and Docker authentication. The guide contains example paths for both `finapp` and `financial-review`; retain the path already mounted into your running container rather than moving data to match an example.
+
+From a checkout containing your intended release, the existing shortcut is:
+
+```sh
+npm run docker:release
+```
+
+This invokes the same script as `yarn docker:release`: build `afbeals/finapp:<package.json version>`, tag latest and push both tags. It does not run tests, change the version, log in or update Unraid. The separate build/tag/test/push commands below remain available. After testing an image, `npm run docker:push` publishes that image; `docker:release` starts a new build.
+
+Use your existing versioning process. Only choose a fresh package version when needed; do not bump again if the release version is already committed. An optional npm alternative is `npm version patch --no-git-tag-version`; commit any resulting package/lockfile changes. Only if Docker Hub authentication is missing or expired, run `docker login` with your usual account. Neither step is required just because you use the shortcut.
+
+If you build on an Apple Silicon Mac for an Intel/AMD Unraid server, target `linux/amd64` (for example, `export DOCKER_DEFAULT_PLATFORM=linux/amd64` before building). This is only relevant when the build host and deployment architecture differ; keep an existing working Windows build setup unchanged.
+
+Back up using your established method before updating. Existing Docker Hub installations can use Unraid's **Docker → Check for Updates → Update** with their current image tag. The source-build Compose workflow documented below is also retained. Keep the same data mount and production settings in either workflow. No Windows or Unraid host has been inspected to validate installation-specific settings.
+
 ## Prerequisites
 
 | Requirement                                                                                            | Notes                                                                |
@@ -164,6 +182,8 @@ This is the `Secure`-cookie-over-HTTP issue described in Step 3 — make sure
 Check `docker logs financial-review` — the entrypoint runs `prisma migrate deploy`
 before starting the server, so a failed migration will show up there before any
 Next.js output.
+
+The current repository's package scripts, Dockerfile and Compose file use container port `8775`. Your actual host port may differ. The inherited `3000` example below applies only to a deployment configured to listen on that container port; for the current repository defaults, an alternate host mapping would be `8778:8775`. Keep your existing working mapping when updating.
 
 ### Port 3000 already in use on Unraid
 
@@ -732,6 +752,22 @@ Because `/app/data` is mounted to Unraid, they are stored on the host at:
 ```
 
 These backups should also be included in the normal Unraid backup strategy.
+
+### Optional host-level backup fallback
+
+Keep using `docker exec -it financial-review yarn db:backup` if that is your established working backup command. The checked-in production Dockerfile does not copy `scripts/backup-db.ts`, which the package command references; this was identified from repository files, not by testing your running image. If the command is unavailable in your image, a stopped-container archive is an alternative.
+
+The following example assumes container `financial-review` and host data directory `/mnt/user/appdata/financial-review/data`. Substitute the actual values from your existing Unraid configuration:
+
+```bash
+docker stop financial-review
+sudo tar -czf "/mnt/user/appdata/financial-review/backup-$(date +%Y%m%d-%H%M%S).tar.gz" \
+  -C /mnt/user/appdata/financial-review data
+docker start financial-review
+```
+
+Check that the archive succeeded before upgrading, and copy it to separate backup storage. This is an optional alternative to your existing backup process. Preserve the existing `/app/data` mount, `SESSION_SECRET`, `DATABASE_URL` and `COOKIE_SECURE` settings. Migrations modify the stored database; rolling back an image does not roll back migrations.
+
 
 ---
 

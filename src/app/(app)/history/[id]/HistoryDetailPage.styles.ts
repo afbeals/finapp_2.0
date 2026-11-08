@@ -8,6 +8,9 @@ export const Page = styled.div`
   max-width: 960px;
   margin: 0 auto;
   padding: ${spacing[8]} ${spacing[6]};
+
+  min-width: 0; > * { min-width: 0; }
+  @media (max-width: 640px) { padding: 20px 12px; }
 `;
 
 export const Banner = styled.div<{ $editing: boolean }>`

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
 } from 'recharts';
@@ -25,14 +25,13 @@ interface WealthProjectionProps {
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export function WealthProjection({ totalPortfolioValue }: WealthProjectionProps) {
-  const [projStarting, setProjStarting] = useState('');
+  const [startingOverride, setProjStarting] = useState<string | null>(null);
+  const projStarting = startingOverride ?? (totalPortfolioValue > 0 ? toDollars(totalPortfolioValue).toFixed(2) : '');
   const [projMonthly, setProjMonthly] = useState('0');
   const [projRate, setProjRate] = useState('4.75');
   const [projMonths, setProjMonths] = useState('36');
-  const [projData, setProjData] = useState<{ month: string; value: number }[]>([]);
-  const [projEndYear, setProjEndYear] = useState(new Date().getFullYear() + 2);
-
-  const computeProjection = useCallback((starting: string, monthly: string, rate: string, months: string) => {
+  const { projData, projEndYear } = useMemo(() => {
+    const starting = projStarting, monthly = projMonthly, rate = projRate, months = projMonths;
     const startCents = toCents(toNumber(starting));
     const monthlyCents = toCents(toNumber(monthly));
     const annualRate = toNumber(rate) / 100;
@@ -46,27 +45,11 @@ export function WealthProjection({ totalPortfolioValue }: WealthProjectionProps)
       const d = new Date(now.getFullYear(), now.getMonth() + i, 1);
       rows.push({ month: `${MONTH_NAMES_SHORT[d.getMonth()]} ${d.getFullYear()}`, value: balance });
     }
-    setProjData(rows);
-    if (rows.length > 0) {
-      const lastDate = new Date(now.getFullYear(), now.getMonth() + numMonths, 1);
-      setProjEndYear(lastDate.getFullYear());
-    }
-  }, []);
-
-  // Init projection starting amount from portfolio total once loaded
-  useEffect(() => {
-    if (totalPortfolioValue > 0 && projStarting === '') {
-      setProjStarting(toDollars(totalPortfolioValue).toFixed(2));
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [totalPortfolioValue]);
-
-  // Recompute whenever inputs change
-  useEffect(() => {
-    if (projStarting !== '') {
-      computeProjection(projStarting, projMonthly, projRate, projMonths);
-    }
-  }, [projStarting, projMonthly, projRate, projMonths, computeProjection]);
+    return {
+      projData: rows,
+      projEndYear: new Date(now.getFullYear(), now.getMonth() + numMonths, 1).getFullYear(),
+    };
+  }, [projStarting, projMonthly, projRate, projMonths]);
 
   return (
     <PanelCard mb={spacing[6]}>

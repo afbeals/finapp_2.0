@@ -25,12 +25,21 @@ export const CardHeaderBtn = styled.button.withConfig({
   text-align: left;
   border-radius: ${({ expanded }) => (expanded ? `${radius.lg} ${radius.lg} 0 0` : radius.lg)};
   &:hover { background: ${colors.bg}; }
+
+  @media (max-width: 640px) {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    gap: ${spacing[3]};
+    padding: ${spacing[3]};
+  }
 `;
 
 export const Icon = styled.span`font-size: ${font.size['2xl']}; flex-shrink: 0;`;
 
 export const TitleCol = styled.div`
   flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
   display: flex;
   flex-direction: column;
   gap: 2px;
@@ -72,7 +81,14 @@ export const OwnerChip = styled.span.withConfig({ shouldForwardProp: (p) => p !=
   border-radius: ${radius.full};
 `;
 
-export const Meta = styled.div`display: flex; align-items: center; gap: ${spacing[5]};`;
+export const Meta = styled.div`
+  display: flex;
+  align-items: center;
+  gap: ${spacing[5]};
+  flex-wrap: wrap;
+  overflow-wrap: anywhere;
+  @media (max-width: 640px) { grid-column: 1 / -1; grid-row: 2; }
+`;
 export const MetaItem = styled.div`display: flex; flex-direction: column; align-items: flex-end; gap: 2px;`;
 export const MetaLabel = styled.span`font-size: ${font.size.xs}; color: ${colors.textMuted};`;
 export const MetaValue = styled.span.withConfig({ shouldForwardProp: (p) => p !== 'textColor' })<{ textColor?: string }>`
@@ -88,6 +104,7 @@ export const Chevron = styled.span.withConfig({ shouldForwardProp: (p) => p !== 
   transition: transform ${transition.moderate};
   flex-shrink: 0;
   margin-left: ${spacing[2]};
+  @media (max-width: 640px) { grid-column: 3; grid-row: 1; margin-left: 0; }
 `;
 
 export const Panel = styled.div`border-top: 1px solid ${colors.border}; background: ${colors.bg};`;
@@ -101,7 +118,7 @@ export const Kpi = styled.div`
   border: 1px solid ${colors.border};
   border-radius: ${radius.md};
   padding: 10px 14px;
-  min-width: 140px;
+  min-width: min(140px, 100%);
   flex: 1;
 `;
 
@@ -126,6 +143,7 @@ export const Actions = styled.div`
   gap: ${spacing[2]};
   padding: ${spacing[3]} ${spacing[5]};
   border-top: 1px dashed ${colors.border};
+  flex-wrap: wrap;
 `;
 
 export const ActionBtn = styled.button.withConfig({ shouldForwardProp: (p) => p !== 'tone' })<{ tone?: 'danger' | 'primary' }>`
@@ -140,6 +158,10 @@ export const ActionBtn = styled.button.withConfig({ shouldForwardProp: (p) => p 
   &:hover { background: ${({ tone }) => (tone === 'danger' ? colors.dangerLight : colors.primaryLight)}; }
 `;
 
+export const HistoryScroll = styled.div.attrs({ role: 'region', tabIndex: 0 })`
+  overflow-x: auto;
+  max-width: 100%;
+`;
 export const HistoryTable = styled.table`width: 100%; border-collapse: collapse;`;
 export const Thead = styled.thead`background: ${colors.bg};`;
 export const Th = styled.th`

@@ -5,7 +5,8 @@ const { colors, font, radius, spacing } = theme;
 
 export const TypeGrid = styled.div`
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  @media (max-width: 640px) { grid-template-columns: minmax(0, 1fr); }
   gap: ${spacing[3]};
   margin-bottom: ${spacing[6]};
 `;
@@ -48,7 +49,8 @@ export const FieldLabel = styled.label`
 
 export const SelectRow = styled.div`
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  @media (max-width: 640px) { grid-template-columns: minmax(0, 1fr); }
   gap: ${spacing[3]};
   margin-bottom: ${spacing[6]};
 `;

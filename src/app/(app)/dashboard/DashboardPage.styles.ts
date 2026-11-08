@@ -9,6 +9,9 @@ export const Page = styled.div`
   max-width: 960px;
   margin: 0 auto;
   padding: ${spacing[8]} ${spacing[6]};
+
+  min-width: 0; > * { min-width: 0; }
+  @media (max-width: 640px) { padding: 20px 12px; }
 `;
 
 export const WelcomeBanner = styled.div`
@@ -21,6 +24,8 @@ export const WelcomeBanner = styled.div`
   padding: ${spacing[4]} ${spacing[5]};
   margin-bottom: ${spacing[6]};
   box-shadow: ${shadow.sm};
+
+  gap: 12px; flex-wrap: wrap;
 `;
 
 export const WelcomeText = styled.div`
@@ -37,7 +42,7 @@ export const WelcomeGreeting = styled.h1`
 
 export const CardRow = styled.div`
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: ${spacing[6]};
   margin-bottom: ${spacing[8]};
   @media (max-width: 680px) { grid-template-columns: 1fr; }

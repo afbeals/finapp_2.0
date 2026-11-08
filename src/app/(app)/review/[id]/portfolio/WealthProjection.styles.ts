@@ -9,7 +9,9 @@ export const ProjectionInputsBar = styled.div`
   padding: 14px 18px;
   display: flex; gap: ${spacing[4]}; flex-wrap: wrap; align-items: flex-end;
 `;
-export const ProjInputGroup = styled.div`display: flex; flex-direction: column; gap: 4px; min-width: 130px;`;
+export const ProjInputGroup = styled.div`display: flex; flex-direction: column; gap: 4px; min-width: 130px;
+  @media (max-width: 640px) { min-width: 0; width: 100%; }
+`;
 export const ProjLabel = styled.label`font-size: ${font.size.xs}; font-weight: ${font.weight.semibold}; color: ${colors.textMuted}; text-transform: uppercase; letter-spacing: 0.04em;`;
 export const ProjInput = styled.input`
   padding: 6px 10px; font-size: ${font.size.sm}; font-family: inherit;

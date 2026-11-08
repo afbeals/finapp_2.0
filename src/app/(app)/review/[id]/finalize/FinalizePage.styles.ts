@@ -6,7 +6,7 @@ const { colors, font, radius, spacing } = theme;
 
 export const SummaryGrid = styled.div`
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: ${spacing[4]};
   margin-bottom: ${spacing[6]};
   @media (max-width: 640px) { grid-template-columns: 1fr; }

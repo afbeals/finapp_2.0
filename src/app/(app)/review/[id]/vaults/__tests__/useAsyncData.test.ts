@@ -68,4 +68,16 @@ describe('useAsyncData', () => {
     await new Promise((r) => setTimeout(r, 10));
     expect(result.current.data).toEqual({ val: 2 });
   });
+  it('refetches when the stable fetcher changes and ignores the prior request', async () => {
+    let resolveOld!: (value: string) => void;
+    const oldFetcher = () => new Promise<string>((resolve) => { resolveOld = resolve; });
+    const newFetcher = () => Promise.resolve('new review');
+    const { result, rerender } = renderHook(({ fetcher }) => useAsyncData(fetcher), { initialProps: { fetcher: oldFetcher } });
+    rerender({ fetcher: newFetcher });
+    await waitFor(() => expect(result.current.data).toBe('new review'));
+    await act(async () => { resolveOld('old review'); });
+    expect(result.current.data).toBe('new review');
+    expect(result.current.loading).toBe(false);
+  });
+
 });

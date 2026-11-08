@@ -3,10 +3,20 @@ import { theme } from '@/styles/tokens';
 
 const { colors, semanticColors, font, spacing, radius, transition, shadow } = theme;
 
-export const FireGrid = styled.div`display: grid; grid-template-columns: 1fr 1px 1fr; gap: 0;`;
-export const Divider = styled.div`background: ${colors.border}; align-self: stretch;`;
-export const FireLeft = styled.div`padding: 0 18px 0 0;`;
-export const FireRight = styled.div`padding: 0 0 0 18px;`;
+export const FireGrid = styled.div`display: grid; grid-template-columns: 1fr 1px 1fr; gap: 0;
+  @media (max-width: 640px) { grid-template-columns: minmax(0, 1fr); gap: 16px; }
+`;
+export const Divider = styled.div`background: ${colors.border}; align-self: stretch;
+  @media (max-width: 640px) { height: 1px; }
+`;
+export const FireLeft = styled.div`padding: 0 18px 0 0;
+  min-width: 0;
+  @media (max-width: 640px) { padding: 0; }
+`;
+export const FireRight = styled.div`padding: 0 0 0 18px;
+  min-width: 0;
+  @media (max-width: 640px) { padding: 0; }
+`;
 
 export const ToggleGroup = styled.div`
   display: flex; background: ${colors.bg}; border-radius: ${radius.md}; padding: 3px; margin-bottom: 14px;

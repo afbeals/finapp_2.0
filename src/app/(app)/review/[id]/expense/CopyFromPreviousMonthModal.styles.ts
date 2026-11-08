@@ -37,6 +37,8 @@ export const EntryRow = styled.label`
   cursor: pointer;
   border-radius: ${radius.sm};
   &:hover { background: ${colors.bg}; }
+
+  @media (max-width: 640px) { display: grid; grid-template-columns: 20px minmax(0, 1fr) auto; gap: 6px; padding: 10px 0; > span:nth-last-child(2) { grid-column: 2; justify-self: start; } > span:last-child { grid-column: 3; grid-row: 1 / 3; } }
 `;
 
 export const EntryCheckbox = styled.input`
@@ -50,6 +52,8 @@ export const EntryName = styled.span`
   flex: 1;
   font-size: ${font.size.sm};
   color: ${colors.textPrimary};
+
+  min-width: 0; overflow-wrap: anywhere;
 `;
 
 export const EntryAmount = styled.span`

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useRef, useState } from 'react';
 import { toCents, toDollars } from '@/lib/money';
 import { theme } from '@/styles/tokens';
 import { Button } from '@/components/ui/Button';
@@ -54,13 +54,14 @@ function loanToDraft(loan: Loan): DraftState {
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
-export function MortgageSettingsPanel({ loan, readOnly, onSaveLoanField, onDelete }: MortgageSettingsPanelProps) {
+export function MortgageSettingsPanel(props: MortgageSettingsPanelProps) {
+  return <MortgageSettingsForm key={props.loan.id} {...props} />;
+}
+
+function MortgageSettingsForm({ loan, readOnly, onSaveLoanField, onDelete }: MortgageSettingsPanelProps) {
   const [draft, setDraft] = useState<DraftState>(() => loanToDraft(loan));
   const [saving, setSaving] = useState(false);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  // Sync draft if loan changes externally (e.g. after a save)
-  useEffect(() => { setDraft(loanToDraft(loan)); }, [loan.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const saveField = useCallback(
     async (fields: Partial<Loan>) => {

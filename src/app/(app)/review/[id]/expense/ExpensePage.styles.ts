@@ -21,6 +21,8 @@ export const SummaryBar = styled.div.withConfig({
   border: 1.5px solid ${({ borderColor }) => borderColor};
   border-radius: ${radius.lg};
   margin-bottom: ${spacing[2]};
+
+  gap: 12px; flex-wrap: wrap;
 `;
 
 export const SummaryLabel = styled.span.withConfig({

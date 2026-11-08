@@ -46,8 +46,8 @@ export function InlineEdit({
   const deltaRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    if (editing) { setDraft(value); ref.current?.select(); }
-  }, [editing, value]);
+    if (editing) { ref.current?.focus(); ref.current?.select(); }
+  }, [editing]);
 
   useEffect(() => {
     if (deltaMode) deltaRef.current?.focus();
@@ -125,7 +125,7 @@ export function InlineEdit({
 
   return (
     <DisplaySpan
-      onClick={() => setEditing(true)}
+      onClick={() => { setDraft(value); setEditing(true); }}
       title="Click to edit"
       style={{ color: color ?? colors.textPrimary }}
       className={className}

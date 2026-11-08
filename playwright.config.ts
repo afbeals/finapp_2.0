@@ -1,25 +1,23 @@
-import { defineConfig, devices } from "@playwright/test";
+import { defineConfig, devices } from '@playwright/test';
 
 export default defineConfig({
-  testDir: "./tests/e2e",
-  fullyParallel: true,
+  testDir: './tests/e2e',
+  fullyParallel: false,
+  workers: 1,
+  timeout: 45000,
   forbidOnly: !!process.env.CI,
-  retries: process.env.CI ? 2 : 0,
-  workers: process.env.CI ? 1 : undefined,
-  reporter: "html",
-  use: {
-    baseURL: "http://localhost:8775",
-    trace: "on-first-retry",
+  retries: process.env.CI ? 1 : 0,
+  reporter: [['list'], ['html', { open: 'never' }]],
+  use: { baseURL: 'http://localhost:8775', trace: 'retain-on-failure' },
+  webServer: {
+    command: 'node scripts/test-server.mjs',
+    url: 'http://localhost:8775/login',
+    reuseExistingServer: false,
+    timeout: 120000,
   },
   projects: [
-    {
-      name: "chromium",
-      use: { ...devices["Desktop Chrome"] },
-    },
+    { name: 'chromium', use: { ...devices['Desktop Chrome'] } },
+    { name: 'mobile-chromium', use: { ...devices['Pixel 7'] } },
+    { name: 'mobile-webkit', use: { ...devices['iPhone 13'] } },
   ],
-  webServer: {
-    command: "npm run dev",
-    url: "http://localhost:8775",
-    reuseExistingServer: !process.env.CI,
-  },
 });

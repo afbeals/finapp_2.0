@@ -6,6 +6,7 @@ const { colors, font, spacing } = theme;
 export const Wrap = styled.div`
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: ${spacing[3]};
   margin: ${spacing[6]} 0 ${spacing[3]};
 `;
@@ -14,7 +15,7 @@ export const Title = styled.h2`
   font-size: ${font.size.lg};
   font-weight: ${font.weight.bold};
   color: ${colors.textPrimary};
-  white-space: nowrap;
+  overflow-wrap: anywhere;
 `;
 
 export const Line = styled.div`

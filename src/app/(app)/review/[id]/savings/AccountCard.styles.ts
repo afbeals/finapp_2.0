@@ -34,6 +34,7 @@ export const AccountRowHeader = styled.button.withConfig({
   border-radius: ${({ expanded }) => expanded ? `${radius.lg} 0 0 0` : `${radius.lg} 0 0 ${radius.lg}`};
   transition: background ${transition.quick};
   &:hover { background: ${colors.primaryLight}; }
+  @media (max-width: 640px) { flex-wrap: wrap; padding: 12px; gap: 10px; }
 `;
 
 export const DeleteBtn = styled.button.withConfig({
@@ -63,7 +64,9 @@ export const AccountName = styled.span`
   text-align: left;
 `;
 
-export const AccountMeta = styled.div`display: flex; align-items: center; gap: ${spacing[5]};`;
+export const AccountMeta = styled.div`display: flex; align-items: center; gap: ${spacing[5]};
+  @media (max-width: 640px) { flex-basis: 100%; flex-wrap: wrap; gap: 12px; }
+`;
 
 export const MetaItem = styled.div`display: flex; flex-direction: column; align-items: flex-end; gap: 2px;`;
 
@@ -103,7 +106,7 @@ export const SnapKpiRow = styled.div`
 
 export const SnapKpi = styled.div`
   background: ${colors.surface}; border: 1px solid ${colors.border};
-  border-radius: ${radius.md}; padding: 10px 14px; min-width: 120px; flex: 1;
+  border-radius: ${radius.md}; padding: 10px 14px; min-width: min(120px, 100%); flex: 1;
 `;
 
 export const SnapKpiLabel = styled.p`

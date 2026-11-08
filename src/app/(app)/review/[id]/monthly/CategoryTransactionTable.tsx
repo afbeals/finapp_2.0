@@ -61,6 +61,7 @@ export function CategoryTransactionTable({
 
   return (
     <Card padding="sm">
+      <div role="region" aria-label="Category transactions" tabIndex={0} style={{ overflowX: 'auto' }}>
       <CatTable>
         <thead>
           <tr>
@@ -182,6 +183,7 @@ export function CategoryTransactionTable({
           </SummaryTr>
         </tfoot>
       </CatTable>
+      </div>
     </Card>
   );
 }

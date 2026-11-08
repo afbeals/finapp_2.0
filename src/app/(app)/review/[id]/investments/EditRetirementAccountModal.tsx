@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
 import { Input, Label, Select, FormGroup } from '@/components/ui/Input';
@@ -31,24 +31,16 @@ interface Props {
   defaultType?: string;
 }
 
-export function EditRetirementAccountModal({ isOpen, onClose, onSubmit, members, initialValues, mode, defaultType }: Props) {
-  const [name, setName] = useState('');
-  const [type, setType] = useState<string>('TRADITIONAL_401K');
-  const [institution, setInstitution] = useState('');
-  const [ownerMemberId, setOwnerMemberId] = useState<number | null>(null);
-  const [saving, setSaving] = useState(false);
+export function EditRetirementAccountModal(props: Props) {
+  return props.isOpen ? <RetirementAccountForm key={`${props.mode}:${props.initialValues?.id ?? props.defaultType ?? 'new'}`} {...props} /> : null;
+}
 
-  useEffect(() => {
-    if (!isOpen) return;
-    setName(initialValues?.name ?? '');
-    setType(
-      initialValues?.type && initialValues.type !== 'TAXABLE'
-        ? initialValues.type
-        : defaultType ?? 'TRADITIONAL_401K',
-    );
-    setInstitution(initialValues?.institution ?? '');
-    setOwnerMemberId(initialValues?.ownerMemberId ?? null);
-  }, [isOpen, initialValues, defaultType]);
+function RetirementAccountForm({ isOpen, onClose, onSubmit, members, initialValues, mode, defaultType }: Props) {
+  const [name, setName] = useState(initialValues?.name ?? '');
+  const [type, setType] = useState(initialValues?.type && initialValues.type !== 'TAXABLE' ? initialValues.type : defaultType ?? 'TRADITIONAL_401K');
+  const [institution, setInstitution] = useState(initialValues?.institution ?? '');
+  const [ownerMemberId, setOwnerMemberId] = useState<number | null>(initialValues?.ownerMemberId ?? null);
+  const [saving, setSaving] = useState(false);
 
   async function handleSubmit() {
     if (!name.trim()) return;

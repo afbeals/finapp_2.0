@@ -3,7 +3,8 @@ import { theme } from '@/styles/tokens';
 
 const { colors, font, spacing, radius, semanticColors } = theme;
 
-export const TableScroll = styled.div`
+export const TableScroll = styled.div.attrs({ role: 'region', tabIndex: 0, 'aria-label': 'School loans table' })`
+  max-width: 100%; min-width: 0;
   overflow-x: auto;
   border: 1px solid ${colors.border};
   border-radius: ${radius.lg};

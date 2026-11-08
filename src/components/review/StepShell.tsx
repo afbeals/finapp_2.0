@@ -36,7 +36,7 @@ export function StepShell({
             <StepTitle>{title}</StepTitle>
             {subtitle && <StepSubtitle>{subtitle}</StepSubtitle>}
           </TitleBlock>
-          <div style={{ display: 'flex', alignItems: 'center', gap: spacing[2] }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: spacing[2], flexWrap: 'wrap' }}>
             {extraActions}
             {!readOnly && (
               <Button onClick={onNext} disabled={saving}>

@@ -14,6 +14,8 @@ export const Nav = styled.nav`
   position: sticky;
   top: 0;
   z-index: 40;
+
+  @media (max-width: 640px) { height: auto; min-height: 56px; padding: 8px 12px; gap: 8px; flex-wrap: wrap; }
 `;
 
 export const Brand = styled(Link)`
@@ -22,6 +24,9 @@ export const Brand = styled(Link)`
   gap: ${spacing[2]};
   text-decoration: none;
   margin-right: auto;
+
+  min-width: 0;
+  @media (max-width: 640px) { gap: 6px; }
 `;
 
 export const BrandIcon = styled.span`
@@ -32,12 +37,16 @@ export const BrandName = styled.span`
   font-size: ${font.size.md};
   font-weight: ${font.weight.semibold};
   color: ${colors.navbarText};
+
+  @media (max-width: 640px) { font-size: 14px; }
 `;
 
 export const Right = styled.div`
   display: flex;
   align-items: center;
   gap: ${spacing[3]};
+
+  @media (max-width: 640px) { gap: 6px; }
 `;
 
 export const MemberDropdown = styled.div`
@@ -61,6 +70,9 @@ export const MemberTrigger = styled.button`
   &:hover {
     background: ${semanticColors.navbarOverlayLight};
   }
+
+  max-width: 100%;
+  @media (max-width: 640px) { max-width: 150px; padding: 4px 6px; overflow-wrap: anywhere; }
 `;
 
 export const Avatar = styled.div.withConfig({

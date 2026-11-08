@@ -7,7 +7,7 @@ import { theme } from '@/styles/tokens';
 import {
   Card, CardHeaderBtn, Icon, TitleCol, Name, SubRow, TypeBadge, SubText, OwnerChip,
   Meta, MetaItem, MetaLabel, MetaValue, Chevron, Panel, KpiRow, Kpi, KpiLabel, KpiValue,
-  Actions, ActionBtn, HistoryTable, Thead, Th, Tr, Td, EmptyTd, GrowthSpan, CurrentDot, AddRowBtn,
+  Actions, ActionBtn, HistoryScroll, HistoryTable, Thead, Th, Tr, Td, EmptyTd, GrowthSpan, CurrentDot, AddRowBtn,
 } from './RetirementAccountCard.styles';
 import { MONTH_NAMES_SHORT } from '@/lib/fire';
 import { accountTypeLabel } from '@/app/(app)/config/configHelpers';
@@ -69,7 +69,7 @@ export const RetirementAccountCard = React.memo(function RetirementAccountCard({
 
   return (
     <Card>
-      <CardHeaderBtn expanded={isExpanded} onClick={() => onToggleExpand(account.id)}>
+      <CardHeaderBtn aria-expanded={isExpanded} expanded={isExpanded} onClick={() => onToggleExpand(account.id)}>
         <Icon>🏛️</Icon>
         <TitleCol>
           <Name>{account.name}</Name>
@@ -131,56 +131,58 @@ export const RetirementAccountCard = React.memo(function RetirementAccountCard({
             </Kpi>
           </KpiRow>
 
-          <HistoryTable>
-            <Thead>
-              <tr>
-                <Th>Month</Th>
-                <Th>Balance</Th>
-                <Th>Growth</Th>
-              </tr>
-            </Thead>
-            <tbody>
-              {sortedHistory.map((row, i) => {
-                const isCurrent = row.reviewId === currentReviewId;
-                const prior = i > 0 ? sortedHistory[i - 1].balance : 0;
-                const rowGrowth = row.balance - prior;
-                return (
-                  <Tr key={`${row.accountId}-${row.reviewId}`} isCurrentMonth={isCurrent}>
-                    <Td>
-                      {MONTH_NAMES_SHORT[row.review.periodMonth - 1]} {row.review.periodYear}
-                      {isCurrent && <CurrentDot>● Current</CurrentDot>}
-                    </Td>
-                    <Td>
-                      {readOnly ? (
-                        formatDollars(row.balance)
-                      ) : (
-                        <InlineEdit
-                          value={toDollars(row.balance).toFixed(2)}
-                          type="number"
-                          onSave={(v) => onSaveBalance(account.id, row.reviewId, v)}
-                        />
-                      )}
-                    </Td>
-                    <Td>
-                      {i > 0 ? (
-                        <GrowthSpan positive={rowGrowth >= 0}>
-                          {rowGrowth >= 0 ? '+' : ''}
-                          {formatDollars(rowGrowth)}
-                        </GrowthSpan>
-                      ) : (
-                        <span style={{ color: colors.textMuted }}>—</span>
-                      )}
-                    </Td>
-                  </Tr>
-                );
-              })}
-              {sortedHistory.length === 0 && (
+          <HistoryScroll aria-label={`${account.name} balance history`}>
+            <HistoryTable>
+              <Thead>
                 <tr>
-                  <EmptyTd colSpan={3}>No entries yet — set a balance above.</EmptyTd>
+                  <Th>Month</Th>
+                  <Th>Balance</Th>
+                  <Th>Growth</Th>
                 </tr>
-              )}
-            </tbody>
-          </HistoryTable>
+              </Thead>
+              <tbody>
+                {sortedHistory.map((row, i) => {
+                  const isCurrent = row.reviewId === currentReviewId;
+                  const prior = i > 0 ? sortedHistory[i - 1].balance : 0;
+                  const rowGrowth = row.balance - prior;
+                  return (
+                    <Tr key={`${row.accountId}-${row.reviewId}`} isCurrentMonth={isCurrent}>
+                      <Td>
+                        {MONTH_NAMES_SHORT[row.review.periodMonth - 1]} {row.review.periodYear}
+                        {isCurrent && <CurrentDot>● Current</CurrentDot>}
+                      </Td>
+                      <Td>
+                        {readOnly ? (
+                          formatDollars(row.balance)
+                        ) : (
+                          <InlineEdit
+                            value={toDollars(row.balance).toFixed(2)}
+                            type="number"
+                            onSave={(v) => onSaveBalance(account.id, row.reviewId, v)}
+                          />
+                        )}
+                      </Td>
+                      <Td>
+                        {i > 0 ? (
+                          <GrowthSpan positive={rowGrowth >= 0}>
+                            {rowGrowth >= 0 ? '+' : ''}
+                            {formatDollars(rowGrowth)}
+                          </GrowthSpan>
+                        ) : (
+                          <span style={{ color: colors.textMuted }}>—</span>
+                        )}
+                      </Td>
+                    </Tr>
+                  );
+                })}
+                {sortedHistory.length === 0 && (
+                  <tr>
+                    <EmptyTd colSpan={3}>No entries yet — set a balance above.</EmptyTd>
+                  </tr>
+                )}
+              </tbody>
+            </HistoryTable>
+          </HistoryScroll>
 
           {!readOnly &&
             (() => {

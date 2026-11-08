@@ -82,6 +82,20 @@ test('all review screens and household pages fit narrow and wide viewports', asy
       expect([200, 304], route).toContain(response?.status());
       await expect(page.getByRole('heading').first()).toBeVisible();
       await page.waitForLoadState('networkidle');
+      if (route.endsWith('/investments') && width === 320) {
+        const accounts = page.getByRole('button', { name: /Balance.*Growth/ });
+        expect(await accounts.count()).toBeGreaterThan(0);
+        for (const account of await accounts.all()) {
+          const overflow = await account.evaluate(el => {
+            const childrenRight = Math.max(...[...el.children].map(child => child.getBoundingClientRect().right));
+            return childrenRight - el.getBoundingClientRect().right;
+          });
+          expect(overflow, 'Account details stay inside the card').toBeLessThanOrEqual(1);
+        }
+        await accounts.first().click();
+        await expect(accounts.first()).toHaveAttribute('aria-expanded', 'true');
+        await expect(page.getByRole('region', { name: /balance history/ }).first()).toBeVisible();
+      }
       const actualWidth = await page.evaluate(() => document.documentElement.scrollWidth);
       if (actualWidth > width + 1) console.log(route, width, await page.evaluate(() => [...document.querySelectorAll('body *')].filter(el => el.getBoundingClientRect().right > innerWidth + 1).slice(-12).map(el => ({ tag: el.tagName, class: el.className, text: el.textContent?.slice(0, 65), width: el.getBoundingClientRect().width }))));
       expect.soft(actualWidth, `${route} at ${width}px`).toBeLessThanOrEqual(width + 1);
